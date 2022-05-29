@@ -1,6 +1,6 @@
 # Bottango - Drivers and API Reference
 
-**Bottango** is an intuitive, visual tool for animating robots, animatronics, and all kinds of hardware. It's free, and can be downloaded at www.Bottango.com.
+**Bottango** is an intuitive, visual tool for animating robots, animatronics, and all kinds of hardware. It's free, and can be downloaded at <a href="http://www.Bottango.com/" target="_blank">www.Bottango.com</a>.
 
 The desktop Bottango app runs on a Windows, Linux, or Macintosh computer, and communicates with your hardware using one of the provided open source drivers.
 
