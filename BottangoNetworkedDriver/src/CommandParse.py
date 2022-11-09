@@ -104,6 +104,14 @@ def registerOnOffEvent(params, effectors):				## register an on off event
 	startingSignal = bool(int(params[2]))
 	effectors[identifier] = Effector("onOffEvent", identifier, minSignal, maxSignal, maxSignalChangePerSecond, startingSignal)
 
+def registerColorEvent(params, effectors):				## register a color event
+	identifier = params[1]	
+	minSignal = (0,0,0)
+	maxSignal = (255,255,255)
+	maxSignalChangePerSecond = 1
+	startingSignal = (int(params[2]), int(params[3]), int(params[4]))
+	effectors[identifier] = Effector("colorEvent", identifier, minSignal, maxSignal, maxSignalChangePerSecond, startingSignal)
+
 def registerTriggerEvent(params, effectors):			## register a trigger event
 	identifier = params[1]	
 	minSignal = 0
@@ -150,6 +158,23 @@ def setTriggerCurve(params, effectors):
 	if effector:
 		startTime = src.SocketDriverTime.lastSyncTime + int(params[2])
 		newCurve = TriggerCurve(startTime)
+		effector.curves.append(newCurve)
+
+def setColorCurve(params, effectors):
+	effector = effectors.get(params[1])
+	if effector:
+		startTime = src.SocketDriverTime.lastSyncTime + int(params[2])
+		duration = int(params[3])
+		startColor = (int(params[4]), int(params[5]), int(params[6]))
+		endColor = (int(params[7]), int(params[8]), int(params[9]))		
+		newCurve = ColorCurve(startTime, duration, startColor, endColor)
+		effector.curves.append(newCurve)
+
+def setColorCurveInstant(params, effectors):
+	effector = effectors.get(params[1])
+	if effector:
+		endColor = (int(params[2]), int(params[3]), int(params[4]))
+		newCurve = ColorCurve(src.SocketDriverTime.getTimeOnServer(), 0, endColor, endColor)
 		effector.curves.append(newCurve)
 
 ## Turn command into action, returns a string to send as a response
@@ -250,6 +275,12 @@ def parseCommand (command, effectors):
 		commandParsed = True
 		registerTriggerEvent(split, effectors)
 
+	if split[0] == "rECColor":
+		if log:
+			print ("<- Register color event")
+		commandParsed = True
+		registerColorEvent(split, effectors)
+
 	if split[0] == "rMTR":
 		if log:
 			print ("<- Register custom motor")
@@ -284,6 +315,18 @@ def parseCommand (command, effectors):
 			print ("<- Set trigger Curve")
 		commandParsed = True
 		setTriggerCurve(split, effectors)
+	
+	if split[0] == "sCC":
+		if log:
+			print ("<- Set Color Curve")
+		commandParsed = True
+		setColorCurve(split, effectors)
+
+	if split[0] == "sCCI":
+		if log:
+			print ("<- Set Color Curve Instant")
+		commandParsed = True
+		setColorCurveInstant(split, effectors)
 
 	if commandParsed:
 		# finally return "OK\n" as the response

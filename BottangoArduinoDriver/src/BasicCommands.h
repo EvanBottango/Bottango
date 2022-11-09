@@ -56,8 +56,11 @@ namespace BasicCommands
     /** Register an On Off Custom Event type effector with a [0] identifier, [1] starting on */
     const char REGISTER_ONOFF_EVENT[] PROGMEM = "rECOnOff";
 
-    /** Register an On Off Custom Event type effector with a [0] identifier, [1] starting on */
+    /** Register an On Off Custom Event type effector with a [0] identifier */
     const char REGISTER_TRIGGER_EVENT[] PROGMEM = "rECTrig";
+
+    /** Register an On Off Custom Event type effector with a [0] identifier, [1] starting r, [2] starting g, [3] starting b */
+    const char REGISTER_COLOR_EVENT[] PROGMEM = "rECColor";
 
     /** Register a custom motor with an [0]identifier, [1] minSignal, [2] maxSignal, [3] maxSignalPerSec, [4] startingSignal */
     const char REGISTER_CUSTOM_MOTOR[] PROGMEM = "rMTR";
@@ -88,6 +91,20 @@ namespace BasicCommands
     const char SET_TRIGGERCURVE[] PROGMEM = "sCT";
 
     /**
+     * Command to set a color curve on an effector with an
+     * [0]identifier, [1] start time relative to last sync, [2] duration of curve,
+     * [3] start Red, [4] start Green, [5] start Blue,
+     * [6] end Red, [7] end Green, [8] end Blue,
+     */
+    const char SET_COLOR_CURVE[] PROGMEM = "sCC";
+
+    /**
+     * Command to set an instant color curve on an effector with an
+     * [0]identifier, [1] final Red, [2] final Green, [3] final Blue,
+     */
+    const char SET_INSTANT_COLOR_CURVE[] PROGMEM = "sCCI";
+
+    /**
      * Command to change motor position in order to sync, without using movement
      * [0]identifier, [1] syncValue
      */
@@ -106,7 +123,7 @@ namespace BasicCommands
     const char HANDSHAKE[] PROGMEM = "btngoHSK";
 
     /** The version code of this driver */
-    const char DRIVER_VERSION[] PROGMEM = "0.5.0b";
+    const char DRIVER_VERSION[] PROGMEM = "0.5.3a";
 
     /** Arduino is ready for the next command */
     const char READY[] PROGMEM = "\nOK\n";
@@ -143,6 +160,8 @@ namespace BasicCommands
 
     void registerTriggerEvent(char **args);
 
+    void registerColorEvent(char **args);
+
     void registerCustomMotor(char **args);
 
     void deregisterEffector(char **args);
@@ -154,6 +173,10 @@ namespace BasicCommands
     void addOnOffCurve(char **args);
 
     void addTriggerCurve(char **args);
+
+    void addColorCurve(char **args);
+
+    void addInstantColorCurve(char **args);
 
     void manualSync(char **args);
 
