@@ -6,10 +6,12 @@
 #include "StepDirStepperEffector.h"
 #include "I2CStepperEffector.h"
 #include "CurvedCustomEvent.h"
+#include "ColorCustomEvent.h"
 #include "OnOffCustomEvent.h"
 #include "OnOffCurve.h"
 #include "TriggerCustomEvent.h"
 #include "TriggerCurve.h"
+#include "ColorCurve.h"
 #include "CustomMotorEffector.h"
 
 namespace BasicCommands
@@ -311,6 +313,24 @@ namespace BasicCommands
         BottangoCore::effectorPool.addEffector(newEffector);
     }
 
+    void registerColorEvent(char **args)
+    {
+        char *identifier = args[1];
+
+        byte r = atoi(args[2]);
+        byte g = atoi(args[3]);
+        byte b = atoi(args[4]);
+
+        LOG_MKBUF
+        LOG_LN(F("register color event"))
+        LOG(F("    id="))
+        LOG(identifier)
+        LOG_NEWLINE()
+
+        ColorCustomEvent *newEffector = new ColorCustomEvent(identifier, r, g, b);
+        BottangoCore::effectorPool.addEffector(newEffector);
+    }
+
     void registerCustomMotor(char **args)
     {
         char *identifier = args[1];
@@ -448,7 +468,7 @@ namespace BasicCommands
 
     /**
      * Command to set an instant and immediate curve on an effector with an
-     * [0]identifier, [2] targetMovement,
+     * [1]identifier, [2] targetMovement,
      */
     void addInstantCurve(char **args)
     {
@@ -557,6 +577,102 @@ namespace BasicCommands
         LOG_NEWLINE()
 
         BottangoCore::effectorPool.addCurveToEffector(identifier, new TriggerCurve(startTime));
+    }
+
+    void addColorCurve(char **args)
+    {
+        char *identifier = args[1];
+
+        // in order to keep the command short in char length, some shortcuts are taken in the string sent for a curve:
+
+        // start is time in MS since last time sync
+        long startXParsed = atol(args[2]);
+        unsigned long startX = Time::getLastSyncedTimeInMs();
+        if (startXParsed < 0 && startXParsed * -1 > startX)
+        {
+            startX = 0;
+        }
+        else
+        {
+            startX += startXParsed;
+        }
+
+        // end is duration of curve
+        unsigned long duration = atol(args[3]);
+
+        int startR = atoi(args[4]);
+        int startG = atoi(args[5]);
+        int startB = atoi(args[6]);
+
+        int endR = atoi(args[7]);
+        int endG = atoi(args[8]);
+        int endB = atoi(args[9]);
+
+        LOG_MKBUF
+        LOG_LN(F("addColorCurve"));
+
+        LOG(F("    last Sync="))
+        LOG_ULONG(Time::getLastSyncedTimeInMs())
+
+        LOG(F("    identifier="))
+        LOG(identifier)
+
+        LOG(F("    startTime("))
+        LOG(args[2])
+        LOG(F(")="))
+        LOG_ULONG(startX)
+
+        LOG(F("    duration("))
+        LOG(args[3])
+        LOG(F(")="))
+        LOG_ULONG(duration)
+
+        LOG(F("    startColor("))
+        LOG_INT(startR)
+        LOG(F(","))
+        LOG_INT(startG)
+        LOG(F(","))
+        LOG_INT(startB)
+        LOG(F(")="))
+
+        LOG(F("    endColor("))
+        LOG_INT(endR)
+        LOG(F(","))
+        LOG_INT(endG)
+        LOG(F(","))
+        LOG_INT(endB)
+        LOG(F(")="))
+
+        BottangoCore::effectorPool.addCurveToEffector(identifier, new ColorCurve(startX, duration, startR, startG, startB, endR, endG, endB));
+    }
+
+    /**
+     * Command to set an instant and immediate curve on an effector with an
+     * [1]identifier, [2] targetR, [3] targetG, [4] targetB
+     */
+    void addInstantColorCurve(char **args)
+    {
+        char *identifier = args[1];
+
+        int r = atoi(args[2]);
+        int g = atoi(args[3]);
+        int b = atoi(args[4]);
+
+        LOG_MKBUF
+        LOG_LN(F("addInstColorCrve"));
+
+        LOG(F("    identifier="))
+        LOG(identifier)
+
+        LOG(F("    endColor("))
+        LOG_INT(args[2])
+        LOG(F(","))
+        LOG_INT(args[3])
+        LOG(F(","))
+        LOG_INT(args[4])
+        LOG(F(")="))
+
+        BottangoCore::effectorPool.addCurveToEffector(identifier, new ColorCurve(Time::getCurrentTimeInMs(), 0, r, g, b, r, g, b));
     }
 
     void manualSync(char **args)

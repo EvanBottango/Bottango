@@ -7,7 +7,7 @@ address = '127.0.0.1'  						# The server's hostname or IP address
 port = 59225        						# The port used by the server
 log = True									# enable logging
 roundSignalToInt = True						# treat signal as an int (true) or as a float (false)
-apiVersion = "0.5.0b"						# api version to send in handshake response
+apiVersion = "0.5.3a"						# api version to send in handshake response
 
 ## callbacks -- !! Put your custom code here !! -- ##
 
@@ -26,6 +26,14 @@ def handleEffectorSetSignal(effectorType, identifier, signal):
 	## !!! Only called when the expected signal changes!!! ##
 	if log:
 		print ("Set signal on " + effectorType + " " + identifier + ": " + str(signal))
+
+def handleEffectorSetColor(effectorType, identifier, color):
+	## !!! put your color/light callback logic here. !!! ##	
+	r = color[0]
+	g = color[1]
+	b = color[2]
+	if log:
+		print ("Set color on " + effectorType + " " + identifier + ": (" + str(r) + "," + str(g) +"," + str(b) + ")")
 
 def handleEffectorSetOnOff(effectorType, identifier, on):
 	## !!! put your on / off event callback logic here. Will !!! ##

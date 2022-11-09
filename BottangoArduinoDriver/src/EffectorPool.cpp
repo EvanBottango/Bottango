@@ -41,7 +41,10 @@ void EffectorPool::removeEffector(char *identifier)
 {
     LOG_LN(F("remove Effector"))
 
+#ifdef __AVR__
     cli(); // stop interrupts
+#endif
+
     AbstractEffector *effector = getEffector(identifier);
     if (effector == NULL)
     {
@@ -52,7 +55,10 @@ void EffectorPool::removeEffector(char *identifier)
     effectors.remove(effector);
     effector->destroy();
     delete effector;
+
+#ifdef __AVR__
     sei(); // allow interrupts
+#endif
 
     dump();
 }
@@ -111,7 +117,10 @@ void EffectorPool::deregisterAll()
 {
     LOG_LN(F("deregister All"))
 
+#ifdef __AVR__
     cli(); // stop interrupts
+#endif
+
     for (int i = 0; i < effectors.size(); i++)
     {
         AbstractEffector *effector = effectors.get(i);
@@ -119,7 +128,10 @@ void EffectorPool::deregisterAll()
         delete effectors.get(i);
     }
     effectors.clear();
+
+#ifdef __AVR__
     sei(); // allow interrupts
+#endif
 
     dump();
 }

@@ -4,11 +4,8 @@ import src.CallbacksAndConfiguration
 from src.BezierCurve import *
 from src.OnOffCurve import *
 from src.TriggerCurve import *
+from src.ColorCurve import *
 from datetime import datetime
-
-### Effector logic here. This is the only thing you need to change if you're just using ###
-### this python script as is. Add logic to register, deregister, stop, and set signal 	###
-### for any given instance of an effector 												###
 
 ### All effectors (servos, steppers, etc.) are instances of the same Effector class.	###
 ### However, effectors do have an effector type string in case you want to keep track.	###
@@ -50,6 +47,10 @@ class Effector:
 
 	def setTrigger(self):
 		src.CallbacksAndConfiguration.handleEffectorSetTrigger(self.effectorType, self.identifier)		
+
+	def setColor(self, color):
+		src.CallbacksAndConfiguration.handleEffectorSetColor(self.effectorType, self.identifier, color)
+		self.currentSignal = color
 
 	def update(self):
 
@@ -110,7 +111,6 @@ class Effector:
 					self.setSignal(signal)
 			
 			elif isinstance(curveToExcecute, OnOffCurve):
-
 				on = curveToExcecute.evaluate(timeOnServer)
 				if not on == self.currentSignal:				
 					self.setOnOffSignal(on)
@@ -118,6 +118,12 @@ class Effector:
 			elif isinstance(curveToExcecute, TriggerCurve):				
 				self.setTrigger()
 				self.curves.remove(curveToExcecute) # trigger curves should only fire once
+
+			elif isinstance(curveToExcecute, ColorCurve):
+				color = curveToExcecute.evaluate(timeOnServer)
+				if not color == self.currentSignal:
+					self.setColor(color)
+
 					
 
 

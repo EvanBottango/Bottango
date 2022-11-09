@@ -64,6 +64,7 @@ namespace BottangoCore
         commandRegistry.addCommand(BasicCommands::REGISTER_ONOFF_EVENT, BasicCommands::registerOnOffEvent);
         commandRegistry.addCommand(BasicCommands::REGISTER_TRIGGER_EVENT, BasicCommands::registerTriggerEvent);
         commandRegistry.addCommand(BasicCommands::REGISTER_CUSTOM_MOTOR, BasicCommands::registerCustomMotor);
+        commandRegistry.addCommand(BasicCommands::REGISTER_COLOR_EVENT, BasicCommands::registerColorEvent);
 
         commandRegistry.addCommand(BasicCommands::DEREGISTER_EFFECTOR, BasicCommands::deregisterEffector);
         commandRegistry.addCommand(BasicCommands::DEREGISTER_ALL_EFFECTORS, BasicCommands::deregisterAllEffectors);
@@ -74,6 +75,9 @@ namespace BottangoCore
         commandRegistry.addCommand(BasicCommands::SET_ONOFFCURVE, BasicCommands::addOnOffCurve);
         commandRegistry.addCommand(BasicCommands::SET_TRIGGERCURVE, BasicCommands::addTriggerCurve);
         commandRegistry.addCommand(BasicCommands::CLEAR_EFFECTOR_CURVES, BasicCommands::clearCurvesForEffector);
+
+        commandRegistry.addCommand(BasicCommands::SET_COLOR_CURVE, BasicCommands::addColorCurve);
+        commandRegistry.addCommand(BasicCommands::SET_INSTANT_COLOR_CURVE, BasicCommands::addInstantColorCurve);
 
         commandRegistry.addCommand(BasicCommands::MANUAL_SYNC, BasicCommands::manualSync);
 
