@@ -122,4 +122,24 @@ namespace Callbacks
         // }
     }
 
+    void onColorCustomEventColorChanged(AbstractEffector *effector, byte newRed, byte newGreen, byte newBlue)
+    {
+        // example, set rgb LED on pins 3, 5, and 6 to given red, green, and blue colors (represented as a byte between 0 and 255)
+        // char effectorIdentifier[9];
+        // effector->getIdentifier(effectorIdentifier, 9);
+
+        // if (strcmp(effectorIdentifier, "myRGB") == 0)
+        // {
+        //     pinMode(3, OUTPUT);
+        //     pinMode(5, OUTPUT);
+        //     pinMode(6, OUTPUT);
+
+        //     analogWrite(3, newRed);
+        //     analogWrite(5, newGreen);
+        //     analogWrite(6, newBlue);
+        // }
+
+        // code free support for addressable LED's (neopixel, etc. coming soon)
+        // in the meanwhile, get support in the Bottango discord channel for "how to" info
+    }
 } // namespace Callbacks
