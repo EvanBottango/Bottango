@@ -14,6 +14,7 @@ def sendHandshakeResponse(params):			## respond to a handshake request in order 
 	response += params[1] + ','				# return back the random code to confirm recipt
 	response += "1"							# signal that live input is accepted
 	response += '\n'						# add terminating char to response
+	response += "OK\n"						# finally send ready for next command
 	return response
 
 def handleTimeSync(params):					## record sync time in MS with the Bottango server##	
@@ -72,14 +73,6 @@ def registerStepDirStepper(params, effectors):			## register a Step / Direction 
 	startingSignal = int(params[7])
 	effectors[identifier] = Effector("stepDirStepper", identifier, minSignal, maxSignal, maxSignalChangePerSecond, startingSignal)	
 
-def registerI2CStepper(params):				## register an i2c stepper
-	identifier = str(params[1]) + str(params[2])
-	minSignal = int(params[3])
-	maxSignal = int(params[4])
-	maxSignalChangePerSecond = int(params[5])
-	startingSignal = int(params[6])
-	effectors[identifier] = Effector("i2cStepper", identifier, minSignal, maxSignal, maxSignalChangePerSecond, startingSignal)	
-
 def registerCustomMotor(params, effectors):			## register a custom motor
 	identifier = params[1]
 	minSignal = float(params[2])
@@ -93,7 +86,7 @@ def registerCurvedEvent(params, effectors):			## register a curved event
 	minSignal = 0.0
 	maxSignal = 1.0
 	maxSignalChangePerSecond = float(params[2])
-	startingSignal = int(params[3]) / 1000
+	startingSignal = int(params[3]) / 8192
 	effectors[identifier] = Effector("curvedEvent", identifier, minSignal, maxSignal, maxSignalChangePerSecond, startingSignal)
 
 def registerOnOffEvent(params, effectors):				## register an on off event
@@ -125,15 +118,15 @@ def setCurve(params, effectors):
 	if effector:
 		startTime = src.SocketDriverTime.lastSyncTime + int(params[2])
 		duration = int(params[3])
-		startMovement = int(params[4]) / 1000
+		startMovement = int(params[4]) / 8192
 		
 		startControlX = int(params[5])
-		startControlY = int(params[6]) / 1000
+		startControlY = int(params[6]) / 8192
 		
-		endMovement = int(params[7]) / 1000
+		endMovement = int(params[7]) / 8192
 		
 		endControlX = int(params[8])
-		endControlY = int(params[9]) / 1000		
+		endControlY = int(params[9]) / 8192
 
 		newCurve = Curve(startTime, duration, startMovement, startControlX, startControlY, endMovement, endControlX, endControlY)
 		effector.curves.append(newCurve)
@@ -141,7 +134,7 @@ def setCurve(params, effectors):
 def setInstantCurve(params, effectors):
 	effector = effectors.get(params[1])
 	if effector:
-		endMovement = int(params[2]) / 1000
+		endMovement = int(params[2]) / 8192
 		newCurve = Curve(src.SocketDriverTime.getTimeOnServer(), 0, endMovement, 0, 0, endMovement, 0, 0)
 		effector.curves.append(newCurve)
 
@@ -216,9 +209,16 @@ def parseCommand (command, effectors):
 
 	if split[0] == "xC":
 		if log:
-			print ("<- clear all curves")
+			print("<- clear all curves")
 		commandParsed = True
 		clearAllCurves(split, effectors)
+
+	if split[0] == "STOP":
+		if log:
+			print ("<- Stop")
+		commandParsed = True
+		clearAllCurves(split, effectors)
+		socketThreadAlive = False
 
 	if split[0] == "xUC":
 		if log:
@@ -250,12 +250,6 @@ def parseCommand (command, effectors):
 			print ("<- Register step/direction stepper")
 		commandParsed = True
 		registerStepDirStepper(split, effectors)
-
-	if split[0] == "rSTi2c":
-		if log:
-			print ("<- Register i2c stepper")
-		commandParsed = True
-		registerI2CStepper(split, effectors)
 
 	if split[0] == "rECC":
 		if log:
