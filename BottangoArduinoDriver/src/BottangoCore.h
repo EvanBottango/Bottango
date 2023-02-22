@@ -5,6 +5,7 @@
 #include "CommandRegistry.h"
 #include "BasicCommands.h"
 #include "../BottangoArduinoConfig.h"
+#include "../BottangoArduinoCallbacks.h"
 #include "CommandStreamProvider.h"
 
 namespace BottangoCore
@@ -13,11 +14,12 @@ namespace BottangoCore
 
     void bottangoLoop();
 
+    void stop();
+
     extern CommandRegistry commandRegistry;
     extern EffectorPool effectorPool;
     extern CommandStreamProvider commandStreamProvider;
     extern bool initialized;
-    extern bool drivePaused;
 } // namespace BottangoCore
 
-#endif //BOTTANGO_CORE_H
+#endif // BOTTANGO_CORE_H

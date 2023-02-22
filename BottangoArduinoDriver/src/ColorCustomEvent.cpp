@@ -1,7 +1,7 @@
 #include "ColorCustomEvent.h"
 #include "Log.h"
 
-// Signal is 0 - 1000, and just use that for movement calculations, so that this can act like a bog standard loop driven effector
+// Signal is 0 - 255, and just use that for movement calculations, so that this can act like a bog standard loop driven effector
 ColorCustomEvent::ColorCustomEvent(char *identifier, byte startingRed, byte startingGreen, byte startingBlue) : ColorEffector(startingRed, startingGreen, startingBlue)
 {
     strcpy(myIdentifier, identifier);

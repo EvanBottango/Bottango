@@ -54,6 +54,7 @@ void CircularArray<T>::pushBack(T *data)
 template <class T>
 void CircularArray<T>::remove(T *toRemove)
 {
+    // find index of element to remove
     int index = -1;
     for (int i = 0; i < capacity; i++)
     {
@@ -64,23 +65,30 @@ void CircularArray<T>::remove(T *toRemove)
         }
     }
 
+    // abort if not found
     if (index == -1)
     {
         return;
     }
 
+    // Move everything ahead of the found index back one index
     for (int i = index; i < capacity - 1; i++)
     {
         array[i] = array[i + 1];
     }
 
+    // if next add would add past max, move next add back to end
     if (idx >= capacity)
     {
         idx = capacity - 1;
+        array[idx] = NULL;
     }
-
-    array[idx] = NULL;
-    idx--;
+    // otherwise just clear at wherever idx is and move idx down
+    else
+    {
+        array[idx] = NULL;
+        idx--;
+    }
 }
 
 template <class T>

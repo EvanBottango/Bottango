@@ -1,5 +1,6 @@
 import src.SocketDriverTime
 import src.CallbacksAndConfiguration
+import math
 
 from src.BezierCurve import *
 from src.OnOffCurve import *
@@ -24,6 +25,7 @@ class Effector:
 		self.curves = []
 
 		self.register()
+		self.lastSignalSetTime = 0
 
 	def register(self):
 		src.CallbacksAndConfiguration.handleEffectorRegistered(self.effectorType, self.identifier, self.minSignal, self.maxSignal, self.currentSignal)
@@ -39,7 +41,7 @@ class Effector:
 	def setSignal(self, signal):
 		src.CallbacksAndConfiguration.handleEffectorSetSignal(self.effectorType, self.identifier, signal)		
 		self.currentSignal = signal
-		self.lastSignalSetTime = datetime.now()
+		self.lastSignalSetTime = datetime.now().timestamp()
 
 	def setOnOffSignal(self, on):
 		src.CallbacksAndConfiguration.handleEffectorSetOnOff(self.effectorType, self.identifier, on)		
@@ -101,11 +103,10 @@ class Effector:
 					movement = curveToExcecute.evaluate(timeOnServer)			
 				
 				signal = lerp(self.minSignal, self.maxSignal, movement)			
-				
+				signal = self.speedLimitSignal(lerp(self.minSignal, self.maxSignal, movement))
+
 				if src.CallbacksAndConfiguration.roundSignalToInt:
 					signal = round(signal)
-				
-				# signal = self.speedLimitSignal(lerp(self.minSignal, self.maxSignal, movement))
 				
 				if not signal == self.currentSignal:				
 					self.setSignal(signal)
@@ -130,17 +131,19 @@ class Effector:
 	# limit signal change to max speed #
 	def speedLimitSignal (self, newTarget):
 
-		returnSignal = newTarget;
+		returnSignal = newTarget
 
-		nowInUS = (datetime.now().timestamp() * 1000)
-
-		maxSignalInElapsedTime = (nowInUS - (self.lastSignalSetTime.timestamp() * 1000)) / (1000000 / self.maxSignalChangePerSecond)
+		now = (datetime.now().timestamp())
+		elapsedTime = now - self.lastSignalSetTime
+		maxSignalInElapsedTime = self.maxSignalChangePerSecond * elapsedTime		
+		if src.CallbacksAndConfiguration.roundSignalToInt:
+			maxSignalInElapsedTime = math.floor(maxSignalInElapsedTime)
 
 		if abs(self.currentSignal - returnSignal) > maxSignalInElapsedTime:
 			if self.currentSignal < returnSignal: 								# move forward	        
 				returnSignal = self.currentSignal + maxSignalInElapsedTime
 			else:																# move backward
-				returnSignal = self.currentSignal - maxSignalInElapsedTime;	        
+				returnSignal = self.currentSignal - maxSignalInElapsedTime        
 		
 
 		if (returnSignal > self.maxSignal):	    

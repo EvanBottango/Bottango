@@ -2,7 +2,7 @@
 #include "Log.h"
 #include "BottangoCore.h"
 
-PinStepperEffector::PinStepperEffector(byte pin0, byte pin1, byte pin2, byte pin3, int maxCounterClockwiseSteps, int maxClockwiseSteps, int maxSignalPerSec, int startingSignal) : InterruptDrivenEffector(maxCounterClockwiseSteps, maxClockwiseSteps, maxSignalPerSec, startingSignal)
+PinStepperEffector::PinStepperEffector(byte pin0, byte pin1, byte pin2, byte pin3, int maxCounterClockwiseSteps, int maxClockwiseSteps, int maxSignalPerSec, int startingSignal) : VelocityEffector(maxCounterClockwiseSteps, maxClockwiseSteps, maxSignalPerSec, startingSignal)
 {
     this->pin0 = pin0;
     this->pin1 = pin1;
@@ -33,9 +33,9 @@ PinStepperEffector::PinStepperEffector(byte pin0, byte pin1, byte pin2, byte pin
     Callbacks::onEffectorRegistered(this);
 }
 
-void PinStepperEffector::driveOnInterrupt(bool forward)
+void PinStepperEffector::driveOnLoop()
 {
-    if (forward)
+    if (drive > 0)
     {
         if (stepLoop == 3)
         {
@@ -45,8 +45,11 @@ void PinStepperEffector::driveOnInterrupt(bool forward)
         {
             stepLoop++;
         }
+        pulse();
+        currentSignal++;
+        drive = 0;
     }
-    else
+    else if (drive < 0)
     {
         if (stepLoop == 0)
         {
@@ -56,8 +59,15 @@ void PinStepperEffector::driveOnInterrupt(bool forward)
         {
             stepLoop--;
         }
+        pulse();
+        currentSignal--;
+        drive = 0;
     }
+    VelocityEffector::driveOnLoop();
+}
 
+void PinStepperEffector::pulse()
+{
     switch (stepLoop)
     {
     case 0:

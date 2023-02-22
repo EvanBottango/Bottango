@@ -4,14 +4,45 @@
 
 namespace Callbacks
 {
+    // !!!!!!!!!!!!!!! //
+    // !! CONTROLLER LIFECYCLE CALLBACKS !! //
+    // !!!!!!!!!!!!!!! //
+
+    // called AFTER a successful handshake with the Bottango application, signifying that this controller has started.
+    // use for general case startup process
+    // Effector registration will happen after this callback, in their own callback.
+    // If you have effector registration specific needs, you should use onEffectorRegistered
+    void onThisControllerStarted()
+    {
+    }
+
+    // called after the controller recieves a stop command. The controller will stop all movement, deregister all effectors
+    // After which this call back is triggered.
+    void onThisControllerStopped()
+    {
+    }
+
+    // called each loop cycle. If you have timing based code you'd like to utilize outside of the Bottango animation
+    // This callback occurs BEFORE all effectors process their movement, at the end of the loop.
+    void onEarlyLoop()
+    {
+    }
+
+    // called each loop cycle.
+    // This callback occurs AFTER all effectors process their movement, at the end of the loop.
+    void onLateLoop()
+    {
+    }
+
+    // !!!!!!!!!!!!!!! //
+    // !! EFFECTOR CALLBACKS !! //
+    // !!!!!!!!!!!!!!! //
+
     // All effectors have an identifier. It is an 8 char or less string. Check Bottango to see the identifier for a given effector in app.
     // for most effectors, it is the first pin in their set of pins
     // i2c effectors have the i2c address before the first pin
     // you query for an effector with a c string char array, instanitated at 9 characters (8 for the identifier, and a null terminating char)
 
-    // !!!!!!!!!!!!!!! //
-    // !! CALLBACKS !! //
-    // !!!!!!!!!!!!!!! //
     // The below are called by built in effectors at various stages in their lifecycle
 
     // called by an effector when registered, after registration is complete
@@ -45,7 +76,6 @@ namespace Callbacks
     }
 
     // called by effectors each loop with its current signal (example: servo PWM or stepper steps from home )
-    // !!NOTE!! In order to keep interrupt driven effectors (Pin Stepper and Step/Dir Stepper) doing as little as possible in the interrupt, this is called on loop. That means you're not going to get a call every step, just a check in each loop frame of the current signal, on interrupt effectors.
     void effectorSignalOnLoop(AbstractEffector *effector, int signal)
     {
         // example, set built in led for effector with identifier "1" based on if signal is greater than 1500
@@ -141,5 +171,26 @@ namespace Callbacks
 
         // code free support for addressable LED's (neopixel, etc. coming soon)
         // in the meanwhile, get support in the Bottango discord channel for "how to" info
+    }
+
+    bool isStepperAutoHomeComplete(AbstractEffector *effector)
+    {
+        // return true if the given stepper is at home position
+        // else return false
+
+        // example, end homing on stepper with step on pin 6, when pin 10 is read high
+        // char effectorIdentifier[9];
+        // effector->getIdentifier(effectorIdentifier, 9);
+
+        // if (strcmp(effectorIdentifier, "6") == 0)
+        // {
+        //     pinMode(10, INPUT);
+        //     if (digitalRead(10) == HIGH)
+        //     {
+        //         return true;
+        //     }
+        // }
+
+        return false;
     }
 } // namespace Callbacks

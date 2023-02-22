@@ -3,7 +3,11 @@
 
 #include "LoopDrivenEffector.h"
 #include "Arduino.h"
+#ifdef ESP32
+#include <ESP32Servo.h>
+#else
 #include "Servo.h"
+#endif
 
 class PinServoEffector : public LoopDrivenEffector
 {

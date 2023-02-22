@@ -7,6 +7,7 @@
 #include "Errors.h"
 #include "Time.h"
 #include "../BottangoArduinoConfig.h"
+#include "../BottangoArduinoCallbacks.h"
 #include "BottangoCore.h"
 
 /** This is the set of basic supported commands, plus a loop() function that reads serial input and executes commands */
@@ -19,9 +20,10 @@ namespace BasicCommands
 
     /** Request to establish that the serial port is still open */
     const char HANDSHAKE_REQUEST[] PROGMEM = "hRQ";
-    const char COMMAND_SEQUENCE_BEGIN[] PROGMEM = "@";
-    const char COMMAND_SEQUENCE_END[] PROGMEM = "<";
     const char TIME_SYNC[] PROGMEM = "tSYN";
+
+    /** Stop this controller */
+    const char STOP[] PROGMEM = "STOP";
 
     /** Remove all registered effectors */
     const char DEREGISTER_ALL_EFFECTORS[] PROGMEM = "xE";
@@ -46,9 +48,6 @@ namespace BasicCommands
 
     /** Register a Stepper type effector with a [0] step Pin, [1] direction Pin, [2] should clockwise on Low, [3]maxCounterClockwiseSteps, [4]maxClockwiseSteps, [5]maxStepsPerSecond, [6] startingStepOffset */
     const char REGISTER_DIR_STEPPER[] PROGMEM = "rSTDir";
-
-    /** Register a Stepper type effector with a [0] address, [1] Pin, [2] maxCounterClockwiseSteps, [3]maxClockwiseSteps, [4]maxStepsPerSecond, [5] startingStepOffset */
-    const char REGISTER_I2C_STEPPER[] PROGMEM = "rSTi2c";
 
     /** Register a Curved Custom Event type effector with a [0] identifier, [1] max movement per second, [2] starting movement */
     const char REGISTER_CURVED_EVENT[] PROGMEM = "rECC";
@@ -108,7 +107,7 @@ namespace BasicCommands
      * Command to change motor position in order to sync, without using movement
      * [0]identifier, [1] syncValue
      */
-    const char MANUAL_SYNC[] PROGMEM = "sycM";
+    const char STEPPER_SYNC[] PROGMEM = "sycM";
 
     /** !!!!!!!!!! */
     /** OUTGOING STRINGS */
@@ -123,22 +122,24 @@ namespace BasicCommands
     const char HANDSHAKE[] PROGMEM = "btngoHSK";
 
     /** The version code of this driver */
-    const char DRIVER_VERSION[] PROGMEM = "0.5.3a";
+    const char DRIVER_VERSION[] PROGMEM = "0.6.1a";
 
     /** Arduino is ready for the next command */
     const char READY[] PROGMEM = "\nOK\n";
 
     const char HASH_FAIL[] PROGMEM = "\nHASH_FAIL\n";
 
+    const char TIMEOUT[] PROGMEM = "\nTIMEOUT\n";
+
+    const char SYNC_COMPLETE[] PROGMEM = "\nsycMDone,";
+
     void printOutputString(const char *targetOutput);
 
     void sendHandshakeResponse(char *args[]);
 
+    void stop(char *args[]);
+
     void syncTime(char *args[]);
-
-    void pauseDrive(char **args);
-
-    void unpauseDrive(char **args);
 
     void deregisterAllEffectors(char **args);
 
@@ -151,8 +152,6 @@ namespace BasicCommands
     void registerPinStepper(char **args);
 
     void registerDirStepper(char **args);
-
-    void registerI2CStepper(char **args);
 
     void registerCurvedEvent(char **args);
 
@@ -178,10 +177,10 @@ namespace BasicCommands
 
     void addInstantColorCurve(char **args);
 
-    void manualSync(char **args);
+    void stepperSync(char **args);
 
     void clearCurvesForEffector(char **args);
 
 } // namespace BasicCommands
 
-#endif //BOTTANGO_BASICCOMMANDS_H
+#endif // BOTTANGO_BASICCOMMANDS_H

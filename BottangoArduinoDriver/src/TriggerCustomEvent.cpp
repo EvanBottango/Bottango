@@ -3,7 +3,7 @@
 #include "TriggerCurve.h"
 #include "Time.h"
 
-// Signal is 0 - 1000, and just use that for movement calculations, so that this can act like a bog standard loop driven effector
+// Signal is 0 - 0, and just use that for movement calculations, so that this can act like a bog standard loop driven effector
 TriggerCustomEvent::TriggerCustomEvent(char *identifier) : AbstractEffector(0, 1)
 {
     strcpy(myIdentifier, identifier);

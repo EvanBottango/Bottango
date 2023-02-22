@@ -21,9 +21,12 @@ void LoopDrivenEffector::updateOnLoop()
     unsigned long currentTime = Time::getCurrentTimeInMs();
 
     BezierCurve *lastCurve = NULL;
+
     for (int i = 0; i < MAX_NUM_CURVES; ++i)
     {
+
         BezierCurve *curve = (BezierCurve *)curves[i];
+
         if (curve == NULL)
         {
             continue;
@@ -86,11 +89,11 @@ int LoopDrivenEffector::speedLimitSingal(int newTarget, unsigned long nowInUS)
 
     if (abs(currentSignal - returnSignal) > maxSignalInElapsedTime) // 100 > 50 // delta from
     {
-        if (currentSignal < returnSignal) //move forward
+        if (currentSignal < returnSignal) // move forward
         {
             returnSignal = currentSignal + maxSignalInElapsedTime;
         }
-        else //move backward
+        else // move backward
         {
             returnSignal = currentSignal - maxSignalInElapsedTime;
         }

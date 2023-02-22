@@ -45,18 +45,6 @@ namespace Error
         Serial.println(F("errMissingLibrary"));
     }
 
-    void reportError_EnableSteppers()
-    {
-        Serial.println();
-        Serial.println(F("errEnStep"));
-    }
-
-    void reportError_SteppersAndServos()
-    {
-        Serial.println();
-        Serial.println(F("errSrv+Stp"));
-    }
-
     void reportError_TooManyI2c()
     {
         Serial.println();

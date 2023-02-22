@@ -74,7 +74,7 @@ void EffectorPool::addCurveToEffector(char *identifier, Curve *curve)
     effector->addCurve(curve);
 }
 
-void EffectorPool::manualSyncEffector(char *identifier, int syncValue)
+void EffectorPool::syncEffector(char *identifier, int syncValue)
 {
     AbstractEffector *effector = getEffector(identifier);
     if (effector == NULL)
@@ -82,7 +82,7 @@ void EffectorPool::manualSyncEffector(char *identifier, int syncValue)
         Error::reportError_NoServoOnPin();
         return;
     }
-    effector->setSync(syncValue, false);
+    effector->setSync(syncValue);
 }
 
 void EffectorPool::clearCurvesForEffector(char *identifier)
@@ -96,20 +96,23 @@ void EffectorPool::clearCurvesForEffector(char *identifier)
     effector->clearCurves();
 }
 
+bool EffectorPool::effectorUsesFloatCurve(char *identifier)
+{
+    AbstractEffector *effector = getEffector(identifier);
+    if (effector == NULL)
+    {
+        Error::reportError_NoServoOnPin();
+        return true;
+    }
+    return effector->useFloatCurve();
+}
+
 void EffectorPool::updateAllDriveTargets()
 {
     for (byte i = 0; i < effectors.size(); i++)
     {
         effectors.get(i)->updateOnLoop();
         effectors.get(i)->driveOnLoop();
-    }
-}
-
-void EffectorPool::interruptDriveLoop()
-{
-    for (byte i = 0; i < effectors.size(); i++)
-    {
-        effectors.get(i)->interruptTick();
     }
 }
 

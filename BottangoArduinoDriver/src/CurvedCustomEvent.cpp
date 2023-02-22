@@ -1,8 +1,9 @@
 #include "CurvedCustomEvent.h"
 #include "Log.h"
+#include "../BottangoArduinoConfig.h"
 
-// Signal is 0 - 1000, and just use that for movement calculations, so that this can act like a bog standard loop driven effector
-CurvedCustomEvent::CurvedCustomEvent(char *identifier, float maxMovementPerSec, float startingMovement) : LoopDrivenEffector(0, 1000, maxMovementPerSec * 1000, startingMovement * 1000)
+// Signal is 0 - sig max, and just use that for movement calculations, so that this can act like a bog standard loop driven effector
+CurvedCustomEvent::CurvedCustomEvent(char *identifier, float maxMovementPerSec, float startingMovement) : LoopDrivenEffector(0, COMPRESSED_SIGNAL_MAX_INT, maxMovementPerSec * COMPRESSED_SIGNAL_MAX_INT, startingMovement * COMPRESSED_SIGNAL_MAX_INT)
 {
     strcpy(myIdentifier, identifier);
 
