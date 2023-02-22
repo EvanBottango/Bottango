@@ -19,7 +19,7 @@ public:
 
     virtual void getIdentifier(char *outArray, short arraySize) = 0;
 
-    virtual void setSync(int syncValue, bool isTracked);
+    virtual void setSync(int syncValue);
 
     virtual void addCurve(Curve *curve);
 
@@ -27,11 +27,9 @@ public:
 
     virtual void updateOnLoop();
 
-    virtual void interruptTick();
-
     virtual void driveOnLoop();
 
-    virtual void driveOnInterrupt(bool forward);
+    virtual bool useFloatCurve();
 
     virtual void dump();
 

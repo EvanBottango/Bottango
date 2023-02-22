@@ -2,9 +2,11 @@
 #define LoopDrivenEffector_h
 
 #include "AbstractEffector.h"
+#include "../BottangoArduinoConfig.h"
 #include "Arduino.h"
 #include "Time.h"
-#include "BezierCurve.h"
+#include "FloatBezierCurve.h"
+#include "FixedBezierCurve.h"
 
 class LoopDrivenEffector : public AbstractEffector
 {

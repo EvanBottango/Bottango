@@ -17,13 +17,11 @@ public:
 
     void addCurveToEffector(char *identifier, Curve *curve);
 
-    void manualSyncEffector(char *identifier, int syncValue);
+    void syncEffector(char *identifier, int syncValue);
 
     void clearCurvesForEffector(char *identifier);
 
     void updateAllDriveTargets();
-
-    void interruptDriveLoop();
 
     void deregisterAll();
 
@@ -31,10 +29,12 @@ public:
 
     void dump();
 
+    bool effectorUsesFloatCurve(char *identifier);
+
 private:
     AbstractEffector *getEffector(char *identifier);
 
     CircularArray<AbstractEffector> effectors = CircularArray<AbstractEffector>(MAX_REGISTERED_EFFECTORS);
 };
 
-#endif //BOTTANGOARDUINO_SERVOPOOL_H
+#endif // BOTTANGOARDUINO_SERVOPOOL_H

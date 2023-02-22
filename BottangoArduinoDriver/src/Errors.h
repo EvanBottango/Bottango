@@ -28,15 +28,9 @@ namespace Error
     /** register an effector without including the required library */
     void reportError_MissingLibrary();
 
-    /** register a stepper without enabling them*/
-    void reportError_EnableSteppers();
-
-    /** register a servo with Steppers enabled*/
-    void reportError_SteppersAndServos();
-
     /** regtister an effector without including the required library */
     void reportError_InvalidPin();
 
 } // namespace Error
 
-#endif //BOTTANGO_ERRORS_H
+#endif // BOTTANGO_ERRORS_H

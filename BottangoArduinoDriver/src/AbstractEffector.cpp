@@ -13,15 +13,7 @@ AbstractEffector::AbstractEffector(int minSignal, int maxSignal)
     }
 }
 
-void AbstractEffector::setSync(int syncValue, bool isTracked)
-{
-}
-
-void AbstractEffector::interruptTick()
-{
-}
-
-void AbstractEffector::driveOnInterrupt(bool forward)
+void AbstractEffector::setSync(int syncValue)
 {
 }
 
@@ -95,6 +87,17 @@ void AbstractEffector::clearCurves()
 void AbstractEffector::stop()
 {
     drive = false;
+}
+
+bool AbstractEffector::useFloatCurve()
+{
+#if defined(DEFAULT_FLOAT_CURVE)
+    return true;
+#elif defined(DEFAULT_FIXED_CURVE)
+    return false;
+#else
+    retue true;
+#endif
 }
 
 AbstractEffector::~AbstractEffector()

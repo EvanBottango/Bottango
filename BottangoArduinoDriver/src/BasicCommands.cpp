@@ -4,7 +4,6 @@
 #include "PinStepperEffector.h"
 #include "I2CServoEffector.h"
 #include "StepDirStepperEffector.h"
-#include "I2CStepperEffector.h"
 #include "CurvedCustomEvent.h"
 #include "ColorCustomEvent.h"
 #include "OnOffCustomEvent.h"
@@ -57,21 +56,20 @@ namespace BasicCommands
         Serial.flush();
 
         BottangoCore::effectorPool.dump();
+
+        Callbacks::onThisControllerStarted();
+    }
+
+    void stop(char *args[])
+    {
+        BottangoCore::effectorPool.deregisterAll();
+        BottangoCore::stop();
+        Callbacks::onThisControllerStopped();
     }
 
     void syncTime(char *args[])
     {
         Time::syncTime(atol(args[1]));
-    }
-
-    void pauseDrive(char **args)
-    {
-        BottangoCore::drivePaused = true;
-    }
-
-    void unpauseDrive(char **args)
-    {
-        BottangoCore::drivePaused = false;
     }
 
     void deregisterAllEffectors(char **args)
@@ -87,10 +85,6 @@ namespace BasicCommands
 
     void registerPinServo(char **args)
     {
-#ifdef ENABLE_STEPPERS
-        Error::reportError_SteppersAndServos();
-        return;
-#endif
 
         byte pinId = atoi(args[1]);
         int minPWM = atoi(args[2]);
@@ -150,11 +144,6 @@ namespace BasicCommands
     void registerPinStepper(char **args)
     {
 
-#ifndef ENABLE_STEPPERS
-        Error::reportError_EnableSteppers();
-        return;
-#endif
-
         byte pin0 = atoi(args[1]);
         byte pin1 = atoi(args[2]);
         byte pin2 = atoi(args[3]);
@@ -190,11 +179,6 @@ namespace BasicCommands
     void registerDirStepper(char **args)
     {
 
-#ifndef ENABLE_STEPPERS
-        Error::reportError_EnableSteppers();
-        return;
-#endif
-
         byte stepPin = atoi(args[1]);
         byte dirPin = atoi(args[2]);
 
@@ -220,51 +204,6 @@ namespace BasicCommands
         LOG_NEWLINE()
 
         StepDirStepperEffector *newEffector = new StepDirStepperEffector(stepPin, dirPin, clockwiseIsLow, maxCounterClockwiseSteps, maxClockwiseSteps, maxStepsPerSecond, startingStepOffset);
-        BottangoCore::effectorPool.addEffector(newEffector);
-    }
-
-    void registerI2CStepper(char **args)
-    {
-
-#ifndef ENABLE_STEPPERS
-        Error::reportError_EnableSteppers();
-        return;
-#endif
-
-#ifndef USE_ADAFRUIT_MOTOR_SHIELD_V2_LIBRARY
-        Error::reportError_MissingLibrary();
-        return;
-#endif
-
-        byte address = atoi(args[1]);
-        byte pin = atoi(args[2]);
-
-        if (pin > 2 || pin < 1)
-        {
-            Error::reportError_InvalidPin();
-            return;
-        }
-
-        int maxCounterClockwiseSteps = atoi(args[3]);
-        int maxClockwiseSteps = atoi(args[4]);
-        int maxStepsPerSecond = atoi(args[5]);
-        int startingStepOffset = atoi(args[6]);
-
-        LOG_MKBUF
-        LOG_LN(F("register i2c stepper()"))
-        LOG(F("    address="))
-        LOG_INT(address)
-        LOG(F("    pin="))
-        LOG_INT(pin)
-        LOG(F("    maxCC="))
-        LOG_INT(maxCounterClockwiseSteps)
-        LOG(F("    maxC="))
-        LOG_INT(maxClockwiseSteps)
-        LOG(F("    speed="))
-        LOG_INT(maxStepsPerSecond)
-        LOG_NEWLINE()
-
-        I2CStepperEffector *newEffector = new I2CStepperEffector(address, pin, maxCounterClockwiseSteps, maxClockwiseSteps, maxStepsPerSecond, startingStepOffset);
         BottangoCore::effectorPool.addEffector(newEffector);
     }
 
@@ -393,77 +332,34 @@ namespace BasicCommands
         }
 
         // end is duration of curve
-        unsigned long duration = atol(args[3]);
-
-        // start Y is int 0-1000
-        int startY = atoi(args[4]);
+        long duration = atol(args[3]);
 
         // start control x is relative to start
         long startControlX = atol(args[5]);
 
-        // start control Y is int 0-1000
-        int startControlY = atoi(args[6]);
-
-        // end Y is int 0-1000
-        int endY = atoi(args[7]);
-
         // end control x is relative to end
         long endControlX = atol(args[8]);
 
-        // end control Y is int 0-1000
+        // start Y is int 0 - COMPRESSED_SIGNAL_MAX
+        int startY = atoi(args[4]);
+
+        // start control Y is int 0 - COMPRESSED_SIGNAL_MAX
+        int startControlY = atoi(args[6]);
+
+        // end Y is int 0 - COMPRESSED_SIGNAL_MAX
+        int endY = atoi(args[7]);
+
+        // end control Y is int 0 - COMPRESSED_SIGNAL_MAX
         int endControlY = atoi(args[9]);
 
-        LOG_MKBUF
-        LOG_LN(F("addCurve"));
-
-        LOG(F("    last Sync="))
-        LOG_ULONG(Time::getLastSyncedTimeInMs())
-
-        LOG(F("    identifier="))
-        LOG(identifier)
-
-        LOG(F("    startTime("))
-        LOG(args[2])
-        LOG(F(")="))
-        LOG_ULONG(startX)
-
-        LOG(F("    duration("))
-        LOG(args[3])
-        LOG(F(")="))
-        LOG_ULONG(duration)
-
-        LOG(F("    startY("))
-        LOG(args[4])
-        LOG(F(")="))
-        LOG_INT(startY)
-
-        LOG(F("    startCtrlX("))
-        LOG(args[5])
-        LOG(F(")="))
-        LOG_LONG(startControlX)
-
-        LOG(F("    startCtrlY("))
-        LOG(args[6])
-        LOG(F(")="))
-        LOG_INT(startControlY)
-
-        LOG(F("    endY("))
-        LOG(args[7])
-        LOG(F(")="))
-        LOG_INT(endY)
-
-        LOG(F("    endCtrlX("))
-        LOG(args[8])
-        LOG(F(")="))
-        LOG_LONG(endControlX)
-
-        LOG(F("    endControlY("))
-        LOG(args[9])
-        LOG(F(")="))
-        LOG_INT(endControlY)
-        LOG_NEWLINE()
-
-        BottangoCore::effectorPool.addCurveToEffector(identifier, new BezierCurve(startX, duration, startY, startControlX, startControlY, endY, endControlX, endControlY));
+        if (BottangoCore::effectorPool.effectorUsesFloatCurve(identifier))
+        {
+            BottangoCore::effectorPool.addCurveToEffector(identifier, new FloatBezierCurve(startX, duration, startY, startControlX, startControlY, endY, endControlX, endControlY));
+        }
+        else
+        {
+            BottangoCore::effectorPool.addCurveToEffector(identifier, new FixedBezierCurve(startX, duration, startY, startControlX, startControlY, endY, endControlX, endControlY));
+        }
     }
 
     /**
@@ -474,7 +370,7 @@ namespace BasicCommands
     {
         char *identifier = args[1];
 
-        // end movement is int 0-1000
+        // end movement is int 0 - COMPRESSED_SIGNAL_MAX
         int endMovement = atoi(args[2]);
 
         LOG_MKBUF
@@ -488,7 +384,14 @@ namespace BasicCommands
         LOG(F(")="))
         LOG_INT(endMovement)
 
-        BottangoCore::effectorPool.addCurveToEffector(identifier, new BezierCurve(Time::getCurrentTimeInMs(), 0, endMovement, 0, 0, endMovement, 0, 0));
+        if (BottangoCore::effectorPool.effectorUsesFloatCurve(identifier))
+        {
+            BottangoCore::effectorPool.addCurveToEffector(identifier, new FloatBezierCurve(Time::getCurrentTimeInMs(), 0, endMovement, 0, 0, endMovement, 0, 0));
+        }
+        else
+        {
+            BottangoCore::effectorPool.addCurveToEffector(identifier, new FixedBezierCurve(Time::getCurrentTimeInMs(), 0, endMovement, 0, 0, endMovement, 0, 0));
+        }
     }
 
     /**
@@ -675,7 +578,11 @@ namespace BasicCommands
         BottangoCore::effectorPool.addCurveToEffector(identifier, new ColorCurve(Time::getCurrentTimeInMs(), 0, r, g, b, r, g, b));
     }
 
-    void manualSync(char **args)
+    /**
+     * Command to sync a stepper type effector
+     * [1]identifier, [2] targetSync (0 - 100 and 0 - -100 are manual sync) ( any number > 100 and <-100 are auto sync in the given direction)
+     */
+    void stepperSync(char **args)
     {
         char *identifier = args[1];
         int syncVal = atoi(args[2]);
@@ -686,7 +593,7 @@ namespace BasicCommands
         LOG(identifier)
         LOG_NEWLINE()
 
-        BottangoCore::effectorPool.manualSyncEffector(identifier, syncVal);
+        BottangoCore::effectorPool.syncEffector(identifier, syncVal);
     }
 
     void clearCurvesForEffector(char **args)
