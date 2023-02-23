@@ -122,7 +122,7 @@ namespace BasicCommands
     const char HANDSHAKE[] PROGMEM = "btngoHSK";
 
     /** The version code of this driver */
-    const char DRIVER_VERSION[] PROGMEM = "0.6.1a";
+    const char DRIVER_VERSION[] PROGMEM = "0.6.1b";
 
     /** Arduino is ready for the next command */
     const char READY[] PROGMEM = "\nOK\n";

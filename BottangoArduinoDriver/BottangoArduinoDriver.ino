@@ -1,4 +1,4 @@
-// !!!DRIVER VERSION:!!! 0.6.1a
+// !!!DRIVER VERSION:!!! 0.6.1b
 
 #include "src/BottangoCore.h"
 #include "src/BasicCommands.h"

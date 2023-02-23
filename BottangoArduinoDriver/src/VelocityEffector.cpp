@@ -16,8 +16,6 @@ VelocityEffector::VelocityEffector(int minSignal, int maxSignal, int maxSignalPe
     this->lastSignalChangeTimeUs = 0;
     this->signalChangePeriodUs = 0;
     this->inProgressCurveIdx = 0;
-
-    pinMode(7, INPUT);
 }
 
 void VelocityEffector::setSync(int syncValue)
@@ -112,11 +110,6 @@ void VelocityEffector::updateOnLoop()
                 signalChangePeriodUs = 0;
                 // and continue in method from here...
             }
-            // if curve hasn't started yet
-            else if (inProgressCurveIdx != 255 && (currentTimeMs < velocityInProgressCurve->getStartTimeMs()))
-            {
-                return; // wait for curve to start
-            }
             // time to drive
             else
             {
@@ -162,7 +155,6 @@ void VelocityEffector::updateOnLoop()
         // found a curve in progress
         if (curve->isInProgress(nextClickTime))
         {
-            // PRINT_LN("hitA");
             // get rate limited signal at next click time
             // IE now + click length
             float movement = curve->getValue(nextClickTime);
@@ -173,17 +165,8 @@ void VelocityEffector::updateOnLoop()
 
             if (signalDelta > 0)
             {
-                // PRINT_LN("hitB");
-                // over how long?
-                unsigned long timeDeltaUs;
-                if (curve->getStartTimeMs() >= currentTimeMs)
-                {
-                    timeDeltaUs = (nextClickTime - curve->getStartTimeMs()) * 1000L;
-                }
-                else
-                {
-                    timeDeltaUs = VELOCITY_SEGMENT_MS * 1000L;
-                }
+                // over how long in us?
+                unsigned long timeDeltaUs = VELOCITY_SEGMENT_MS * 1000L;
 
                 // ex move 50 signal
                 // over 100,000 us (IE 1/10th a second)
@@ -193,12 +176,6 @@ void VelocityEffector::updateOnLoop()
                 {
                     signalChangePeriodUs = minMicrosPerSignal;
                 }
-                // MKBUF
-                // PRINT("ch: ")
-                // PRINT_INT(signalChangePeriodUs)
-                // PRINT(" dl: ")
-                // PRINT_INT(signalDelta)
-                // PRINT_NEWLINE();
 
                 inProgressCurveIdx = i;
             }
