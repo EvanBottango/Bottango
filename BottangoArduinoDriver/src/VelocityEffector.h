@@ -33,6 +33,7 @@ protected:
     // for timing
     unsigned long lastSignalChangeTimeUs = 0;
     unsigned long sleepStartTime = 0;
+    unsigned long periodAbortTime = 0;
 
     byte inProgressCurveIdx;
 

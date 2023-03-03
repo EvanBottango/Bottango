@@ -44,8 +44,6 @@ protected:
 
     int maxSignal = 0;
 
-    volatile bool drive = false;
-
     Curve *curves[MAX_NUM_CURVES]{};
 
     byte curvesIdx = 0;

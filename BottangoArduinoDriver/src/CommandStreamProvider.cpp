@@ -75,7 +75,7 @@ void CommandStreamProvider::runInProgressCommand()
                 LOG_LN(commandBuffer);
             }
 
-            BottangoCore::commandRegistry.executeCommand(commandBuffer);
+            BottangoCore::executeCommand(commandBuffer);
         }
 
         if (streamInProgress->complete())

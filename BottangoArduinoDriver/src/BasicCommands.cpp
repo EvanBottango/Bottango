@@ -51,7 +51,7 @@ namespace BasicCommands
 #else
         Serial.print(F("0"));
 #endif
-        Serial.write("\n");
+        Serial.print(F("\n"));
 
         Serial.flush();
 

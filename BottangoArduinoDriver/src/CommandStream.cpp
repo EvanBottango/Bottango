@@ -91,7 +91,7 @@ bool CommandStream::readyForNextCommand()
         if (nextChar == '\n' || bufferIterator >= MAX_COMMAND_LENGTH)
         {
             buffer[bufferIterator] = '\0';
-            unsigned long commandTime = BottangoCore::commandRegistry.getMSTimeOfCommand(buffer);
+            unsigned long commandTime = BottangoCore::getMSTimeOfCommand(buffer);
 
             return commandTime <= Time::getCurrentTimeInMs();
         }

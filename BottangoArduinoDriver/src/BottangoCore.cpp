@@ -1,4 +1,3 @@
-#include "Arduino.h"
 #include "BottangoCore.h"
 
 #ifdef USE_COMMAND_STREAM
@@ -7,55 +6,22 @@
 
 namespace BottangoCore
 {
-    CommandRegistry commandRegistry = CommandRegistry();
     EffectorPool effectorPool = EffectorPool();
-    CommandStreamProvider commandStreamProvider = CommandStreamProvider();
-
     bool initialized = false;
+#ifdef USE_COMMAND_STREAM
+    CommandStreamProvider commandStreamProvider = CommandStreamProvider();
+#endif
 
     char serialCommandBuffer[MAX_COMMAND_LENGTH];
     int serialCommandIdx = 0;
 
     unsigned long timeOfLastChar = 0;
     bool commandInProgress = false;
+    char *splitCommandBuffer[COMMANDS_PARAMS_SIZE];
 
     void bottangoSetup()
     {
         Serial.begin(BAUD_RATE);
-
-        // Add the basic set of commands to the registry
-        // to add a custom command, give a string for the name, and a function that takes a char *args[] (the arguments)
-
-        commandRegistry.addCommand(BasicCommands::SET_CURVE, BasicCommands::addCurve);
-        commandRegistry.addCommand(BasicCommands::SET_INSTANTCURVE, BasicCommands::addInstantCurve);
-        commandRegistry.addCommand(BasicCommands::STOP, BasicCommands::stop);
-
-        commandRegistry.addCommand(BasicCommands::DEREGISTER_ALL_EFFECTORS, BasicCommands::deregisterAllEffectors);
-
-        commandRegistry.addCommand(BasicCommands::HANDSHAKE_REQUEST, BasicCommands::sendHandshakeResponse);
-        commandRegistry.addCommand(BasicCommands::TIME_SYNC, BasicCommands::syncTime);
-
-        commandRegistry.addCommand(BasicCommands::CLEAR_ALL_CURVES, BasicCommands::clearAllCurves);
-        commandRegistry.addCommand(BasicCommands::SET_ONOFFCURVE, BasicCommands::addOnOffCurve);
-        commandRegistry.addCommand(BasicCommands::SET_TRIGGERCURVE, BasicCommands::addTriggerCurve);
-        commandRegistry.addCommand(BasicCommands::CLEAR_EFFECTOR_CURVES, BasicCommands::clearCurvesForEffector);
-
-        commandRegistry.addCommand(BasicCommands::SET_COLOR_CURVE, BasicCommands::addColorCurve);
-        commandRegistry.addCommand(BasicCommands::SET_INSTANT_COLOR_CURVE, BasicCommands::addInstantColorCurve);
-
-        commandRegistry.addCommand(BasicCommands::DEREGISTER_EFFECTOR, BasicCommands::deregisterEffector);
-
-        commandRegistry.addCommand(BasicCommands::REGISTER_I2C_SERVO, BasicCommands::registerI2CServo);
-        commandRegistry.addCommand(BasicCommands::REGISTER_PIN_SERVO, BasicCommands::registerPinServo);
-        commandRegistry.addCommand(BasicCommands::REGISTER_PIN_STEPPER, BasicCommands::registerPinStepper);
-        commandRegistry.addCommand(BasicCommands::REGISTER_DIR_STEPPER, BasicCommands::registerDirStepper);
-        commandRegistry.addCommand(BasicCommands::REGISTER_CURVED_EVENT, BasicCommands::registerCurvedEvent);
-        commandRegistry.addCommand(BasicCommands::REGISTER_ONOFF_EVENT, BasicCommands::registerOnOffEvent);
-        commandRegistry.addCommand(BasicCommands::REGISTER_TRIGGER_EVENT, BasicCommands::registerTriggerEvent);
-        commandRegistry.addCommand(BasicCommands::REGISTER_CUSTOM_MOTOR, BasicCommands::registerCustomMotor);
-        commandRegistry.addCommand(BasicCommands::REGISTER_COLOR_EVENT, BasicCommands::registerColorEvent);
-
-        commandRegistry.addCommand(BasicCommands::STEPPER_SYNC, BasicCommands::stepperSync);
 
         Serial.print(F("\n\n"));
         BasicCommands::printOutputString(BasicCommands::BOOT);
@@ -63,6 +29,192 @@ namespace BottangoCore
 
 #ifdef USE_COMMAND_STREAM
         commandStreamProvider.runSetup();
+#endif
+    }
+
+    bool splitIntoBuffer(char *stringToSplit)
+    {
+        byte idxResult = 0;
+        char *wordStart;
+        char delimiters[] = ",";
+
+        if (idxResult + 1 >= COMMANDS_PARAMS_SIZE)
+        {
+            Error::reportError_TooManyParams();
+            return false;
+        }
+
+        wordStart = strtok(stringToSplit, delimiters);
+        while (wordStart != NULL)
+        {
+            splitCommandBuffer[idxResult++] = wordStart;
+            wordStart = strtok(NULL, delimiters);
+        }
+
+        splitCommandBuffer[idxResult] = ((char *)"\0");
+
+        return true;
+    }
+
+    // parses the serial buffer and turns it into commands
+    // param commandString: e.g. "rSP,9,1000,3000"
+    void executeCommand(char *commandString)
+    {
+        bool splitSuccess = splitIntoBuffer(commandString);
+        if (!splitSuccess)
+        {
+            return;
+        }
+
+        // The command name is the first string in the array, subsequent strings are parameters of that command
+        char *commandName = splitCommandBuffer[0];
+
+        // to all who may judge a giant list of if / else... I get it.
+        // but also, benchamarking proved this to be faster than any other more elegant looking approach
+        // so it may be ugly... but it's quick.
+
+        if (strcmp_P(commandName, BasicCommands::SET_CURVE) == 0)
+        {
+            BasicCommands::addCurve(splitCommandBuffer);
+        }
+        else if (strcmp_P(commandName, BasicCommands::SET_INSTANTCURVE) == 0)
+        {
+            BasicCommands::addInstantCurve(splitCommandBuffer);
+        }
+        else if (strcmp_P(commandName, BasicCommands::STOP) == 0)
+        {
+            BasicCommands::stop(splitCommandBuffer);
+        }
+        else if (strcmp_P(commandName, BasicCommands::DEREGISTER_ALL_EFFECTORS) == 0)
+        {
+            BasicCommands::deregisterAllEffectors(splitCommandBuffer);
+        }
+        else if (strcmp_P(commandName, BasicCommands::HANDSHAKE_REQUEST) == 0)
+        {
+            BasicCommands::sendHandshakeResponse(splitCommandBuffer);
+        }
+        else if (strcmp_P(commandName, BasicCommands::TIME_SYNC) == 0)
+        {
+            BasicCommands::syncTime(splitCommandBuffer);
+        }
+        else if (strcmp_P(commandName, BasicCommands::CLEAR_ALL_CURVES) == 0)
+        {
+            BasicCommands::clearAllCurves(splitCommandBuffer);
+        }
+        else if (strcmp_P(commandName, BasicCommands::SET_ONOFFCURVE) == 0)
+        {
+            BasicCommands::addOnOffCurve(splitCommandBuffer);
+        }
+        else if (strcmp_P(commandName, BasicCommands::SET_TRIGGERCURVE) == 0)
+        {
+            BasicCommands::addTriggerCurve(splitCommandBuffer);
+        }
+        else if (strcmp_P(commandName, BasicCommands::CLEAR_EFFECTOR_CURVES) == 0)
+        {
+            BasicCommands::clearCurvesForEffector(splitCommandBuffer);
+        }
+        else if (strcmp_P(commandName, BasicCommands::SET_COLOR_CURVE) == 0)
+        {
+            BasicCommands::addColorCurve(splitCommandBuffer);
+        }
+        else if (strcmp_P(commandName, BasicCommands::SET_INSTANT_COLOR_CURVE) == 0)
+        {
+            BasicCommands::addInstantColorCurve(splitCommandBuffer);
+        }
+        else if (strcmp_P(commandName, BasicCommands::DEREGISTER_EFFECTOR) == 0)
+        {
+            BasicCommands::deregisterEffector(splitCommandBuffer);
+        }
+        else if (strcmp_P(commandName, BasicCommands::REGISTER_I2C_SERVO) == 0)
+        {
+            BasicCommands::registerI2CServo(splitCommandBuffer);
+        }
+        else if (strcmp_P(commandName, BasicCommands::REGISTER_PIN_SERVO) == 0)
+        {
+            BasicCommands::registerPinServo(splitCommandBuffer);
+        }
+        else if (strcmp_P(commandName, BasicCommands::REGISTER_PIN_STEPPER) == 0)
+        {
+            BasicCommands::registerPinStepper(splitCommandBuffer);
+        }
+        else if (strcmp_P(commandName, BasicCommands::REGISTER_DIR_STEPPER) == 0)
+        {
+            BasicCommands::registerDirStepper(splitCommandBuffer);
+        }
+        else if (strcmp_P(commandName, BasicCommands::REGISTER_CURVED_EVENT) == 0)
+        {
+            BasicCommands::registerCurvedEvent(splitCommandBuffer);
+        }
+        else if (strcmp_P(commandName, BasicCommands::REGISTER_ONOFF_EVENT) == 0)
+        {
+            BasicCommands::registerOnOffEvent(splitCommandBuffer);
+        }
+        else if (strcmp_P(commandName, BasicCommands::REGISTER_TRIGGER_EVENT) == 0)
+        {
+            BasicCommands::registerTriggerEvent(splitCommandBuffer);
+        }
+        else if (strcmp_P(commandName, BasicCommands::REGISTER_CUSTOM_MOTOR) == 0)
+        {
+            BasicCommands::registerCustomMotor(splitCommandBuffer);
+        }
+        else if (strcmp_P(commandName, BasicCommands::REGISTER_COLOR_EVENT) == 0)
+        {
+            BasicCommands::registerColorEvent(splitCommandBuffer);
+        }
+        else if (strcmp_P(commandName, BasicCommands::STEPPER_SYNC) == 0)
+        {
+            BasicCommands::stepperSync(splitCommandBuffer);
+        }
+    }
+
+    unsigned long getMSTimeOfCommand(char *commandString)
+    {
+        unsigned long time = Time::getCurrentTimeInMs();
+        bool splitSuccess = splitIntoBuffer(commandString);
+        if (!splitSuccess)
+        {
+            return 0;
+        }
+
+        char *commandName = splitCommandBuffer[0];
+
+        // only curves have time different than now, so parse the string to find the time of each curve type
+        if (strcmp_P(commandName, BasicCommands::SET_CURVE) == 0)
+        {
+            time = Time::getLastSyncedTimeInMs() + atol(splitCommandBuffer[2]);
+        }
+        else if (strcmp_P(commandName, BasicCommands::SET_ONOFFCURVE) == 0)
+        {
+            time = Time::getLastSyncedTimeInMs() + atol(splitCommandBuffer[2]);
+        }
+        else if (strcmp_P(commandName, BasicCommands::SET_TRIGGERCURVE) == 0)
+        {
+            time = Time::getLastSyncedTimeInMs() + atol(splitCommandBuffer[2]);
+        }
+
+        return time;
+    }
+
+    bool externalCommandIsValid(char *commandString)
+    {
+#ifndef USE_COMMAND_STRING
+        return true;
+#else
+        bool splitSuccess = splitIntoBuffer(commandString);
+        if (!splitSuccess)
+        {
+            return false;
+        }
+
+        char *commandName = splitCommandBuffer[0];
+
+        // only handshake request is allowed
+        if (strcmp_P(commandName, BasicCommands::HANDSHAKE_REQUEST) == 0)
+        {
+            return true;
+        }
+
+        return false;
 #endif
     }
 
@@ -157,9 +309,9 @@ namespace BottangoCore
 
                 if (hashPasses)
                 {
-                    if (commandRegistry.externalCommandIsValid(serialCommandBuffer))
+                    if (externalCommandIsValid(serialCommandBuffer))
                     {
-                        commandRegistry.executeCommand(serialCommandBuffer);
+                        executeCommand(serialCommandBuffer);
                     }
 
                     LOG(F("t="))

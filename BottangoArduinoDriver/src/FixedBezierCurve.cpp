@@ -16,7 +16,7 @@ FixedBezierCurve::FixedBezierCurve(
     long endControlX,
     long endControlY) : BezierCurve()
 {
-    this->curveStartTimeInMs = startTimeInMs << PRECISION;
+    this->curveStartTimeInMs = startTimeInMs;
     this->duration = duration << PRECISION;
 
     this->startY = startY << PRECISION;
@@ -51,12 +51,12 @@ FixedBezierCurve::FixedBezierCurve(
 
 unsigned long FixedBezierCurve::getEndTimeMs()
 {
-    return (unsigned long)((curveStartTimeInMs + duration) >> PRECISION);
+    return (unsigned long)(curveStartTimeInMs + (duration >> PRECISION));
 }
 
 unsigned long FixedBezierCurve::getStartTimeMs()
 {
-    return (unsigned long)(curveStartTimeInMs >> PRECISION);
+    return (unsigned long)(curveStartTimeInMs);
 }
 
 float FixedBezierCurve::getValue(unsigned long currentTimeMs)

@@ -86,7 +86,6 @@ void AbstractEffector::clearCurves()
 
 void AbstractEffector::stop()
 {
-    drive = false;
 }
 
 bool AbstractEffector::useFloatCurve()

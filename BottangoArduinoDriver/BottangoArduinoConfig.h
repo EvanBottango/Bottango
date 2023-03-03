@@ -37,7 +37,6 @@
 // Probably leave these alone
 #define MAX_COMMAND_LENGTH 100                      // max character count of a command
 #define READ_TIMEOUT 50                             // time in MS before timeout while reading incoming serial
-#define COMMANDS_BUFFER_SIZE 30                     // max number of commands to check incoming command names against
 #define COMMANDS_PARAMS_SIZE 15                     // max number of paramaters in an incoming command
 #define BAUD_RATE 115200                            // serial speed at which Bottango and Arduino communicate with each other
 #define COMPRESSED_SIGNAL_MAX 8192.0f               // Movement is sent as a value between 0 and this value
