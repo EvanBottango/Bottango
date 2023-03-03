@@ -11,8 +11,8 @@
 #define PRINT(msg) Serial.print(msg);
 #define PRINT_LN(msg)  \
     Serial.print(msg); \
-    Serial.print("\n");
-#define PRINT_NEWLINE() Serial.print("\n");
+    Serial.print(F("\n"));
+#define PRINT_NEWLINE() Serial.print(F("\n"));
 #define PRINT_INT(i)               \
     sprintf(buffer, "%d", (int)i); \
     Serial.print(buffer);
@@ -31,11 +31,11 @@
                                                \
         int tmpInt1 = tmpVal;                  \
         if (flt < 0)                           \
-            PRINT("-")                         \
+            PRINT(F("-"))                      \
         PRINT_INT(tmpInt1)                     \
         float tmpFrac = tmpVal - tmpInt1;      \
         int tmpInt2 = trunc(tmpFrac * 10000);  \
-        PRINT(".")                             \
+        PRINT(F("."))                          \
         PRINT_INT(tmpInt2)                     \
     }
 
@@ -61,6 +61,6 @@
 #define LOG_LONG(l) ;
 #define LOG_FLOAT(flt) ;
 
-#endif //BOTTANGO_DEBUG
+#endif // BOTTANGO_DEBUG
 
-#endif //BOTTANGO_LOG_H
+#endif // BOTTANGO_LOG_H

@@ -102,7 +102,9 @@ void VelocityEffector::updateOnLoop()
                 velocityInProgressCurve = (BezierCurve *)curves[inProgressCurveIdx];
             }
 
-            // kill this velocity progress if curve is not found or finished
+            // kill this velocity progress if...
+            // curve is not found
+            // curve is finished
             if (inProgressCurveIdx != 255 && (velocityInProgressCurve == NULL || velocityInProgressCurve->getEndTimeMs() < currentTimeMs))
             {
                 // reset if not
@@ -124,7 +126,13 @@ void VelocityEffector::updateOnLoop()
                     signalChangePeriodUs = 0;
                     inProgressCurveIdx = 0;
                 }
-                return; // and wait for next signal change time
+
+                // repeat drive if period abort time is 0 or not met
+                // otherwise abort out of drive and get a new velocity target
+                if (periodAbortTime == 0 || currentTimeMs < periodAbortTime)
+                {
+                    return;
+                }
             }
         }
         else
@@ -178,6 +186,20 @@ void VelocityEffector::updateOnLoop()
                 }
 
                 inProgressCurveIdx = i;
+
+                // are we currently in an overshoot, and need to break out of evaluation from a period before hitting target?
+                // this will happen if you animate faster than the set max speeed
+                // unfortunatley when you happen to already be moving at max speed, there's a slight hitch with the calculation, so this tries to only
+                // do this abort out when it's anticipated to be needed.
+                int curveEndSignal = lerpSignal(curve->getEndMovement());
+                if ((currentSignal < targetSignal && currentSignal > curveEndSignal) || (currentSignal > targetSignal && currentSignal < curveEndSignal))
+                {
+                    periodAbortTime = nextClickTime + VELOCITY_SEGMENT_MS;
+                }
+                else
+                {
+                    periodAbortTime = 0;
+                }
             }
             else
             {

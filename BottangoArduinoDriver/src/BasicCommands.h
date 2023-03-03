@@ -1,7 +1,6 @@
 #ifndef BOTTANGO_BASICCOMMANDS_H
 #define BOTTANGO_BASICCOMMANDS_H
 
-#include "CommandRegistry.h"
 #include "Log.h"
 #include "EffectorPool.h"
 #include "Errors.h"
@@ -122,7 +121,7 @@ namespace BasicCommands
     const char HANDSHAKE[] PROGMEM = "btngoHSK";
 
     /** The version code of this driver */
-    const char DRIVER_VERSION[] PROGMEM = "0.6.1b";
+    const char DRIVER_VERSION[] PROGMEM = "0.6.1c";
 
     /** Arduino is ready for the next command */
     const char READY[] PROGMEM = "\nOK\n";
