@@ -6,6 +6,9 @@ PinServoEffector::PinServoEffector(byte pin, short minPWM, short maxPWM, int max
     this->pin = pin;
 
     servo.attach(pin);
+#ifdef ESP32
+    servo.setTimerWidth(16);
+#endif
     servo.writeMicroseconds(startSignal);
 
     Callbacks::onEffectorRegistered(this);

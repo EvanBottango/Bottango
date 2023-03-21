@@ -28,6 +28,7 @@ namespace BottangoCore
         Serial.print(F("\n\n"));
 
 #ifdef USE_COMMAND_STREAM
+        initialized = true;
         commandStreamProvider.runSetup();
 #endif
     }
