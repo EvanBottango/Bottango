@@ -33,7 +33,7 @@ Documentation for the Bottango Playback API can be found at: [Readme_PlaybackAPI
 
 ## Licence
 
-Copyright 2022 Bottango LLC
+Copyright 2023 Bottango LLC
 
 This license and copyright notice is in regards to the included driver source code(s), and API example code.
 
