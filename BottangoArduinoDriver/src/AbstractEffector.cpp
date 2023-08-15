@@ -25,6 +25,12 @@ void AbstractEffector::driveOnLoop()
 {
 }
 
+void AbstractEffector::updateSignalBounds(int minSignal, int maxSignal, int signalSpeed)
+{
+    this->minSignal = minSignal;
+    this->maxSignal = maxSignal;
+}
+
 void AbstractEffector::addCurve(Curve *curve)
 {
 

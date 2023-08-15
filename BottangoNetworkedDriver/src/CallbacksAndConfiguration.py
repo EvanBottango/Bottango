@@ -7,7 +7,7 @@ address = '127.0.0.1'  						# The server's hostname or IP address
 port = 59225        						# The port used by the server
 log = True									# enable logging
 roundSignalToInt = True						# treat signal as an int (true) or as a float (false)
-apiVersion = "0.6.1e"						# api version to send in handshake response
+apiVersion = "CUSTOM6"						# api version to send in handshake response
 
 ## callbacks -- !! Put your custom code here !! -- ##
 

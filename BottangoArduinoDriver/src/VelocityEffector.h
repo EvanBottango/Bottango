@@ -13,7 +13,7 @@ class VelocityEffector : public AbstractEffector
 {
 public:
     VelocityEffector(int minSignal, int maxSignal, int maxSignalPerSec, int startingSignal);
-
+    virtual void updateSignalBounds(int minSignal, int maxSignal, int signalSpeed) override;
     virtual void updateOnLoop() override;
     virtual void driveOnLoop() override;
     virtual void setSync(int syncValue) override;

@@ -25,6 +25,8 @@ public:
 
     virtual void clearCurves();
 
+    virtual void updateSignalBounds(int minSignal, int maxSignal, int signalSpeed);
+
     virtual void updateOnLoop();
 
     virtual void driveOnLoop();

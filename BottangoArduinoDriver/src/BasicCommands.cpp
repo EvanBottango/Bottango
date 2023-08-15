@@ -83,6 +83,16 @@ namespace BasicCommands
         BottangoCore::effectorPool.clearAllCurves();
     }
 
+    void updateEffectorSignalBounds(char **args)
+    {
+        char *identifier = args[1];
+        int minSignal = atoi(args[2]);
+        int maxSignal = atoi(args[3]);
+        int signalSpeed = atoi(args[4]);
+
+        BottangoCore::effectorPool.updateEffectorSignalBounds(identifier, minSignal, maxSignal, signalSpeed);
+    }
+
     void registerPinServo(char **args)
     {
 

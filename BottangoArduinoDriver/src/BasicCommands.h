@@ -36,6 +36,9 @@ namespace BasicCommands
     /** Clear all curves from effector with the given [0]pin */
     const char CLEAR_EFFECTOR_CURVES[] PROGMEM = "xUC";
 
+    /** Update an effectors signal bounds with [0] identifier, [1] min signal, [2] max signal, [3] max signal speed */
+    const char UPDATE_EFFECTOR_SIGNAL_BOUNDS[] PROGMEM = "upE";
+
     /** Register a Servo type effector with a [0]pin, [1] minPWM, [2] maxPWM, [3] maxPWMPerSec, [4] startingPWM */
     const char REGISTER_PIN_SERVO[] PROGMEM = "rSVPin";
 
@@ -121,7 +124,7 @@ namespace BasicCommands
     const char HANDSHAKE[] PROGMEM = "btngoHSK";
 
     /** The version code of this driver */
-    const char DRIVER_VERSION[] PROGMEM = "0.6.1e";
+    const char DRIVER_VERSION[] PROGMEM = "0.6.3a";
 
     /** Arduino is ready for the next command */
     const char READY[] PROGMEM = "\nOK\n";
@@ -143,6 +146,8 @@ namespace BasicCommands
     void deregisterAllEffectors(char **args);
 
     void clearAllCurves(char **args);
+
+    void updateEffectorSignalBounds(char **args);
 
     void registerPinServo(char **args);
 

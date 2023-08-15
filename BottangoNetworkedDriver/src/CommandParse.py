@@ -170,6 +170,12 @@ def setColorCurveInstant(params, effectors):
 		newCurve = ColorCurve(src.SocketDriverTime.getTimeOnServer(), 0, endColor, endColor)
 		effector.curves.append(newCurve)
 
+def updateSignalBounds(params, effectors):			## update effector signal bounds
+	identifier = params[1]	
+	effectors[identifier].minSignal = (int(params[2]))
+	effectors[identifier].maxSignal = (int(params[3]))
+	effectors[identifier].maxSignalChangePerSecond = (int(params[4]))
+
 ## Turn command into action, returns a string to send as a response
 def parseCommand (command, effectors):
 
@@ -274,6 +280,12 @@ def parseCommand (command, effectors):
 			print ("<- Register color event")
 		commandParsed = True
 		registerColorEvent(split, effectors)
+
+	if split[0] == "upE":
+		if log:
+			print ("<- Update effector signal bounds")
+		commandParsed = True
+		updateSignalBounds(split, effectors)
 
 	if split[0] == "rMTR":
 		if log:

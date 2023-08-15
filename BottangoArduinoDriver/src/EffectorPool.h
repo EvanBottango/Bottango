@@ -17,6 +17,8 @@ public:
 
     void addCurveToEffector(char *identifier, Curve *curve);
 
+    void updateEffectorSignalBounds(char *identifier, int minSignal, int maxSignal, int signalSpeed);
+
     void syncEffector(char *identifier, int syncValue);
 
     void clearCurvesForEffector(char *identifier);

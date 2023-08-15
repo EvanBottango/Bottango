@@ -74,6 +74,17 @@ void EffectorPool::addCurveToEffector(char *identifier, Curve *curve)
     effector->addCurve(curve);
 }
 
+void EffectorPool::updateEffectorSignalBounds(char *identifier, int minSignal, int maxSignal, int signalSpeed)
+{
+    AbstractEffector *effector = getEffector(identifier);
+    if (effector == NULL)
+    {
+        Error::reportError_NoServoOnPin();
+        return;
+    }
+    effector->updateSignalBounds(minSignal, maxSignal, signalSpeed);
+}
+
 void EffectorPool::syncEffector(char *identifier, int syncValue)
 {
     AbstractEffector *effector = getEffector(identifier);

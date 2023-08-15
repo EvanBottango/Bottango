@@ -12,7 +12,7 @@ class LoopDrivenEffector : public AbstractEffector
 {
 public:
     LoopDrivenEffector(int minSignal, int maxSignal, int maxSignalPerSec, int startingSignal);
-
+    virtual void updateSignalBounds(int minSignal, int maxSignal, int signalSpeed) override;
     virtual void updateOnLoop() override;
     virtual void driveOnLoop() override;
 
