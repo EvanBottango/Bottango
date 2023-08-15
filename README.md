@@ -25,11 +25,11 @@ Both the Bottango Arduino Driver and the Bottango Networked Driver are implement
 
 Documentation for the Bottango Driver API can be found at: [Readme_DriverAPI.pdf](https://s3.us-west-1.amazonaws.com/bottango.com/GithubDocs/Readme_DriverAPI.pdf) or in the download from the Bottango website.
 
-## Bottango Playback API
+## Bottango REST API
 
-The Bottango Desktop app can be controlled with your own scripts using a rest API, accessed via HTTP. An Example implementation of controlling Bottango via the Playback API is provided in Python.
+The Bottango Desktop app can be controlled with your own scripts using a rest API, accessed via HTTP. An Example implementation of controlling Bottango via the REST API is provided in Python.
 
-Documentation for the Bottango Playback API can be found at: [Readme_PlaybackAPI.pdf](https://s3.us-west-1.amazonaws.com/bottango.com/GithubDocs/Readme_PlaybackAPI.pdf) or in the download from the Bottango website.
+Documentation for the Bottango REST API can be found at: [documentationRESTAPI.pdf](https://s3.us-west-1.amazonaws.com/bottango.com/GithubDocs/documentationRESTAPI.pdf) or in the download from the Bottango website.
 
 ## Licence
 

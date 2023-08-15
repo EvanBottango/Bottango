@@ -42,7 +42,7 @@ void I2CServoEffector::driveOnLoop()
 void I2CServoEffector::getIdentifier(char *outArray, short arraySize)
 {
     char addressSegment[4];
-    char pinSegment[2];
+    char pinSegment[4];
 
     sprintf(addressSegment, "%d", (int)i2cAddress);
     sprintf(pinSegment, "%d", pin);

@@ -29,6 +29,7 @@ namespace BottangoCore
 
 #ifdef USE_COMMAND_STREAM
         initialized = true;
+        Callbacks::onThisControllerStarted();
         commandStreamProvider.runSetup();
 #endif
     }
@@ -101,6 +102,10 @@ namespace BottangoCore
         else if (strcmp_P(commandName, BasicCommands::CLEAR_ALL_CURVES) == 0)
         {
             BasicCommands::clearAllCurves(splitCommandBuffer);
+        }
+        else if (strcmp_P(commandName, BasicCommands::UPDATE_EFFECTOR_SIGNAL_BOUNDS) == 0)
+        {
+            BasicCommands::updateEffectorSignalBounds(splitCommandBuffer);
         }
         else if (strcmp_P(commandName, BasicCommands::SET_ONOFFCURVE) == 0)
         {

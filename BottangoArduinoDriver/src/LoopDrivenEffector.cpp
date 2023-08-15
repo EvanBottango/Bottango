@@ -80,6 +80,12 @@ void LoopDrivenEffector::updateOnLoop()
     }
 }
 
+void LoopDrivenEffector::updateSignalBounds(int minSignal, int maxSignal, int signalSpeed)
+{
+    AbstractEffector::updateSignalBounds(minSignal, maxSignal, signalSpeed);
+    this->minMicrosPerSignal = 1000000L / signalSpeed;
+}
+
 int LoopDrivenEffector::speedLimitSingal(int newTarget, unsigned long nowInUS)
 {
 

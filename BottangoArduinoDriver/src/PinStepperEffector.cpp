@@ -46,7 +46,24 @@ void PinStepperEffector::driveOnLoop()
             stepLoop++;
         }
         pulse();
-        currentSignal++;
+        if (sync != 0)
+        {
+            if (sync < -100)
+            {
+                if (Callbacks::isStepperAutoHomeComplete(this))
+                {
+                    endAutoSync();
+                }
+            }
+            else
+            {
+                sync++;
+            }
+        }
+        else
+        {
+            currentSignal++;
+        }
         drive = 0;
     }
     else if (drive < 0)
@@ -60,7 +77,24 @@ void PinStepperEffector::driveOnLoop()
             stepLoop--;
         }
         pulse();
-        currentSignal--;
+        if (sync != 0)
+        {
+            if (sync > 100)
+            {
+                if (Callbacks::isStepperAutoHomeComplete(this))
+                {
+                    endAutoSync();
+                }
+            }
+            else
+            {
+                sync--;
+            }
+        }
+        else
+        {
+            currentSignal--;
+        }
         drive = 0;
     }
     VelocityEffector::driveOnLoop();

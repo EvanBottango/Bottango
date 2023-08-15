@@ -35,6 +35,12 @@ void VelocityEffector::endAutoSync()
     Serial.write("\n");
 }
 
+void VelocityEffector::updateSignalBounds(int minSignal, int maxSignal, int signalSpeed)
+{
+    AbstractEffector::updateSignalBounds(minSignal, maxSignal, signalSpeed);
+    this->minMicrosPerSignal = 1000000L / signalSpeed;
+}
+
 void VelocityEffector::updateOnLoop()
 {
     // overall flow:
