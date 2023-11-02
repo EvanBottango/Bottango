@@ -31,8 +31,11 @@ def threadedRead(s):
 		# check if there's a command that was recieved in the buffer
 		# new line is the terminating character for a command
 		if '\n' in cmdBuffer:
-			cmdQueue.put(cmdBuffer)			
-			cmdBuffer = ""
+			# handle the possibility that multiple commands came through
+			commands = cmdBuffer.split('\n')
+			[cmdQueue.put(command) for command in commands[:-1]]
+			# last element of the split will either be an incomplete command or an empty string
+			cmdBuffer = commands[-1]
 
 def onExit(s):
 	s.close()
