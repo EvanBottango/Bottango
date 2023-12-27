@@ -3,9 +3,14 @@
 #include "OnOffCurve.h"
 #include "Time.h"
 
-OnOffCustomEvent::OnOffCustomEvent(char *identifier, bool startOn) : AbstractEffector(0, 1)
+OnOffCustomEvent::OnOffCustomEvent(char *identifier, bool startOn, byte pin) : AbstractEffector(0, 1), pin(pin)
 {
     strcpy(myIdentifier, identifier);
+
+    if (pin != 255)
+    {
+        pinMode(pin, OUTPUT);
+    }
 
     Callbacks::onEffectorRegistered(this);
 }
@@ -46,6 +51,10 @@ void OnOffCustomEvent::driveOnLoop()
         // callback here
         currentOn = targetOn;
         Callbacks::onOnOffCustomEventOnOffChanged(this, currentOn != 0);
+        if (pin != 255)
+        {
+            digitalWrite(pin, currentOn);
+        }
     }
     Callbacks::effectorSignalOnLoop(this, currentOn);
 }

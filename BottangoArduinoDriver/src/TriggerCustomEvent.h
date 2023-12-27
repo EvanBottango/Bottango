@@ -6,7 +6,7 @@
 class TriggerCustomEvent : public AbstractEffector
 {
 public:
-    TriggerCustomEvent(char *identifier);
+    TriggerCustomEvent(char *identifier, byte pin);
 
     virtual void updateOnLoop() override;
     virtual void driveOnLoop() override;
@@ -18,6 +18,9 @@ protected:
 private:
     char myIdentifier[9];
     bool shouldFire = false;
+    byte pin = 255;
+    bool pinOn = false;
+    unsigned long disablePinTime = 0;
 };
 
 #endif

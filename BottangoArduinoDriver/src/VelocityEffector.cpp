@@ -1,5 +1,6 @@
 #include "VelocityEffector.h"
 #include "Log.h"
+#include "Outgoing.h"
 
 VelocityEffector::VelocityEffector(int minSignal, int maxSignal, int maxSignalPerSec, int startingSignal) : AbstractEffector(minSignal, maxSignal)
 {
@@ -28,7 +29,7 @@ void VelocityEffector::setSync(int syncValue)
 void VelocityEffector::endAutoSync()
 {
     sync = 0;
-    BasicCommands::printOutputString(BasicCommands::SYNC_COMPLETE);
+    Outgoing::outgoing_notifySyncComplete();
     char effectorIdentifier[9];
     getIdentifier(effectorIdentifier, 9);
     Serial.write(effectorIdentifier);

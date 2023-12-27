@@ -124,7 +124,7 @@ namespace BasicCommands
     const char HANDSHAKE[] PROGMEM = "btngoHSK";
 
     /** The version code of this driver */
-    const char DRIVER_VERSION[] PROGMEM = "0.6.3a";
+    const char DRIVER_VERSION[] PROGMEM = "0.6.4a";
 
     /** Arduino is ready for the next command */
     const char READY[] PROGMEM = "\nOK\n";
@@ -132,8 +132,6 @@ namespace BasicCommands
     const char HASH_FAIL[] PROGMEM = "\nHASH_FAIL\n";
 
     const char TIMEOUT[] PROGMEM = "\nTIMEOUT\n";
-
-    const char SYNC_COMPLETE[] PROGMEM = "\nsycMDone,";
 
     void printOutputString(const char *targetOutput);
 
