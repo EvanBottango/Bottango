@@ -6,7 +6,7 @@
 class OnOffCustomEvent : public AbstractEffector
 {
 public:
-    OnOffCustomEvent(char *identifier, bool startOn);
+    OnOffCustomEvent(char *identifier, bool startOn, byte pin);
 
     virtual void updateOnLoop() override;
     virtual void driveOnLoop() override;
@@ -19,6 +19,7 @@ private:
     char myIdentifier[9];
     int currentOn = 0;
     int targetOn = 0;
+    byte pin = 255;
 };
 
 #endif

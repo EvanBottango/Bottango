@@ -3,10 +3,13 @@
 #include "../BottangoArduinoConfig.h"
 
 // Signal is 0 - sig max, and just use that for movement calculations, so that this can act like a bog standard loop driven effector
-CurvedCustomEvent::CurvedCustomEvent(char *identifier, float maxMovementPerSec, float startingMovement) : LoopDrivenEffector(0, COMPRESSED_SIGNAL_MAX_INT, maxMovementPerSec * COMPRESSED_SIGNAL_MAX_INT, startingMovement * COMPRESSED_SIGNAL_MAX_INT)
+CurvedCustomEvent::CurvedCustomEvent(char *identifier, float maxMovementPerSec, float startingMovement, byte pin) : LoopDrivenEffector(0, COMPRESSED_SIGNAL_MAX_INT, maxMovementPerSec * COMPRESSED_SIGNAL_MAX_INT, startingMovement * COMPRESSED_SIGNAL_MAX_INT), pin(pin)
 {
     strcpy(myIdentifier, identifier);
-
+    if (pin != 255)
+    {
+        pinMode(pin, OUTPUT);
+    }
     Callbacks::onEffectorRegistered(this);
 }
 
@@ -16,7 +19,13 @@ void CurvedCustomEvent::driveOnLoop()
     {
         // callback here
         currentSignal = targetSignal;
-        Callbacks::onCurvedCustomEventMovementChanged(this, (float)currentSignal * 0.001f);
+        float movement = currentSignal / COMPRESSED_SIGNAL_MAX;
+        Callbacks::onCurvedCustomEventMovementChanged(this, movement);
+
+        if (pin != 255)
+        {
+            analogWrite(pin, round(movement * 255));
+        }
     }
     LoopDrivenEffector::driveOnLoop();
 }

@@ -222,6 +222,7 @@ namespace BasicCommands
         char *identifier = args[1];
         float maxSpeed = atof(args[2]);
         float startingMovement = atof(args[3]);
+        byte pin = atoi(args[4]);
 
         LOG_MKBUF
         LOG_LN(F("register curved event"))
@@ -229,7 +230,7 @@ namespace BasicCommands
         LOG(identifier)
         LOG_NEWLINE()
 
-        CurvedCustomEvent *newEffector = new CurvedCustomEvent(identifier, maxSpeed, startingMovement);
+        CurvedCustomEvent *newEffector = new CurvedCustomEvent(identifier, maxSpeed, startingMovement, pin);
         BottangoCore::effectorPool.addEffector(newEffector);
     }
 
@@ -237,6 +238,7 @@ namespace BasicCommands
     {
         char *identifier = args[1];
         bool startOn = atoi(args[2]) != 0;
+        byte pin = atoi(args[3]);
 
         LOG_MKBUF
         LOG_LN(F("register on off event"))
@@ -244,13 +246,14 @@ namespace BasicCommands
         LOG(identifier)
         LOG_NEWLINE()
 
-        OnOffCustomEvent *newEffector = new OnOffCustomEvent(identifier, startOn);
+        OnOffCustomEvent *newEffector = new OnOffCustomEvent(identifier, startOn, pin);
         BottangoCore::effectorPool.addEffector(newEffector);
     }
 
     void registerTriggerEvent(char **args)
     {
         char *identifier = args[1];
+        byte pin = atoi(args[2]);
 
         LOG_MKBUF
         LOG_LN(F("register trigger event"))
@@ -258,7 +261,7 @@ namespace BasicCommands
         LOG(identifier)
         LOG_NEWLINE()
 
-        TriggerCustomEvent *newEffector = new TriggerCustomEvent(identifier);
+        TriggerCustomEvent *newEffector = new TriggerCustomEvent(identifier, pin);
         BottangoCore::effectorPool.addEffector(newEffector);
     }
 

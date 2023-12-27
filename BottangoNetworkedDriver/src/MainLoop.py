@@ -7,6 +7,7 @@ import atexit
 
 effectors = {}								# effectors dictionary, key: identifier, value: Effector class instance		
 cmdQueue = Queue()							# thread safe queue of recieved commands
+requestQueue = Queue()						# thread safe queue of outgoing requests
 socketThreadAlive = False
 
 def threadedRead(s):
@@ -74,6 +75,17 @@ def startLoop():
 						except Exception as e:
 							socketThreadAlive = False
 							print("Unable to send data: ")
+							print(e)
+							exit()
+
+				while not requestQueue.empty():
+					request = requestQueue.get()
+					if request:
+						try:
+							s.sendall(request.encode())
+						except Exception as e:
+							socketThreadAlive = False
+							print("Unable to send request: ")
 							print(e)
 							exit()
 
