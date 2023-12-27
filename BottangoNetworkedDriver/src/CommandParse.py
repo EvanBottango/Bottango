@@ -66,7 +66,7 @@ def registerPinStepper(params, effectors):				## register a pin stepper
 	effectors[identifier] = Effector("pinStepper", identifier, minSignal, maxSignal, maxSignalChangePerSecond, startingSignal)	
 
 def registerStepDirStepper(params, effectors):			## register a Step / Direction stepper
-	identifier = int(params[1])
+	identifier = params[1]
 	minSignal = int(params[4])
 	maxSignal = int(params[5])
 	maxSignalChangePerSecond = int(params[6])
@@ -171,10 +171,10 @@ def setColorCurveInstant(params, effectors):
 		effector.curves.append(newCurve)
 
 def updateSignalBounds(params, effectors):			## update effector signal bounds
-	identifier = params[1]	
-	effectors[identifier].minSignal = (int(params[2]))
-	effectors[identifier].maxSignal = (int(params[3]))
-	effectors[identifier].maxSignalChangePerSecond = (int(params[4]))
+	effector = effectors.get(params[1])
+	effector.minSignal = (int(params[2]))
+	effector.maxSignal = (int(params[3]))
+	effector.maxSignalChangePerSecond = (int(params[4]))
 
 ## Turn command into action, returns a string to send as a response
 def parseCommand (command, effectors):
