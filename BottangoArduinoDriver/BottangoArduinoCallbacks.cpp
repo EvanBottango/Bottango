@@ -1,6 +1,7 @@
 #include "BottangoArduinoCallbacks.h"
 #include "src/AbstractEffector.h"
 #include "src/Log.h"
+#include "src/Outgoing.h"
 
 namespace Callbacks
 {
@@ -32,6 +33,18 @@ namespace Callbacks
     // This callback occurs AFTER all effectors process their movement, at the end of the loop.
     void onLateLoop()
     {
+        
+        // EX: Request stop on driver, and disconnect all active connections
+        // Outgoing::outgoing_requestEStop();
+        
+        // EX: Pause Playing in App
+        // Outgoing::outgoing_requestStopPlay();
+        
+        // EX: Start Playing in App (in current animation and time)
+        // Outgoing::outgoing_requestStartPlay();
+        
+        // EX: Start Playing in App (with animation index, and start time in milliseconds)
+        // Outgoing::outgoing_requestStartPlay(1,1000);
     }
 
     // !!!!!!!!!!!!!!! //

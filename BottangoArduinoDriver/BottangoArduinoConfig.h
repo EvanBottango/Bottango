@@ -41,5 +41,6 @@
 #define BAUD_RATE 115200                            // serial speed at which Bottango and Arduino communicate with each other
 #define COMPRESSED_SIGNAL_MAX 8192.0f               // Movement is sent as a value between 0 and this value
 #define COMPRESSED_SIGNAL_MAX_INT (int)COMPRESSED_SIGNAL_MAX // Cast to int shortcut
+#define TRIGGER_EVENT_PIN_TIME 25                   // time in MS to keep a pin high before setting it back low in trigger events
 
 #endif
