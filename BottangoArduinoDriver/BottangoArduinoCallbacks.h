@@ -14,7 +14,7 @@ namespace Callbacks
 
     void onEffectorRegistered(AbstractEffector *effector);
     void onEffectorDeregistered(AbstractEffector *effector);
-    void effectorSignalOnLoop(AbstractEffector *effector, int signal);
+    void effectorSignalOnLoop(AbstractEffector *effector, int signal, bool didChange);
 
     void onCurvedCustomEventMovementChanged(AbstractEffector *effector, float newMovement);
     void onOnOffCustomEventOnOffChanged(AbstractEffector *effector, bool on);

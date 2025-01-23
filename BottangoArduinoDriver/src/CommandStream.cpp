@@ -5,134 +5,80 @@
 #include "Time.h"
 #include "BottangoCore.h"
 
-CommandStream::CommandStream(const char *charStream, unsigned long streamDurationInMS)
+CommandStream::CommandStream(AbstractCommandStreamDataSource *dataSource)
 {
-    this->charStream = charStream;
-    this->streamDurationInMS = streamDurationInMS;
-
-    this->loopCharStream = NULL;
-    this->loopStreamDurationInMS = 0;
-
-    streamLength = strlen_P(this->charStream);
-    loopStreamLength = 0;
-}
-
-CommandStream::CommandStream(const char *charStream, unsigned long streamDurationInMS, const char *loopCharStream, unsigned long loopStreamDurationInMS)
-{
-    this->charStream = charStream;
-    this->streamDurationInMS = streamDurationInMS;
-
-    this->loopCharStream = loopCharStream;
-    this->loopStreamDurationInMS = loopStreamDurationInMS;
-
-    streamLength = strlen_P(this->charStream);
-    loopStreamLength = strlen_P(this->loopCharStream);
+    this->dataSource = dataSource;
 }
 
 void CommandStream::getNextCommand(char *output)
 {
-    int outputIterator = 0;
-
-    while ((!onLoop && travel < streamLength) || (onLoop && travel < loopStreamLength))
+    unsigned long endTime = 0;
+    dataSource->getNextCommand(output, shouldLoop, endTime, timeOfNextCommand);
+    if (endTime > msEndOfLatestCommand)
     {
-        char nextChar;
-        if (onLoop)
-        {
-            nextChar = (char)pgm_read_byte(loopCharStream + travel);
-        }
-        else
-        {
-            nextChar = (char)pgm_read_byte(charStream + travel);
-        }
-
-        travel++;
-
-        if (nextChar == '\n' || outputIterator >= MAX_COMMAND_LENGTH)
-        {
-            output[outputIterator] = '\0';
-
-            if (!onLoop && shouldLoop && travel >= streamLength)
-            {
-                onLoop = true;
-                travel = 0;
-            }
-            return;
-        }
-
-        output[outputIterator] = nextChar;
-        outputIterator++;
+        msEndOfLatestCommand = endTime;
     }
 }
 
 bool CommandStream::readyForNextCommand()
 {
-    if ((!onLoop && travel >= streamLength) || (onLoop && travel >= loopStreamLength))
+#if defined(USE_SD_CARD_COMMAND_STREAM)
+    dataSource->update(shouldLoop);
+#endif
+
+    // at end of loop
+    if (shouldLoop && dataSource->dataComplete && Time::getCurrentTimeInMs() >= msEndOfLatestCommand)
+    {
+        // reset to beginning
+        dataSource->reset();
+        timeOfNextCommand = 0;
+        msEndOfLatestCommand = 0;
+        Time::syncTime(0);
+        return true;
+    }
+    // at end of animation and not looping
+    if (dataSource->dataComplete)
     {
         return false;
     }
-
-    char buffer[MAX_COMMAND_LENGTH];
-    unsigned int bufferIterator = 0;
-    unsigned long checkIterator = travel;
-
-    while ((!onLoop && checkIterator < streamLength) || (onLoop && checkIterator < loopStreamLength))
+#if defined(USE_SD_CARD_COMMAND_STREAM)
+    // otherwise if at time of next command
+    if (timeOfNextCommand > 10)
     {
-        char nextChar;
-        if (onLoop)
-        {
-            nextChar = (char)pgm_read_byte(loopCharStream + checkIterator);
-        }
-        else
-        {
-            nextChar = (char)pgm_read_byte(charStream + checkIterator);
-        }
-
-        checkIterator++;
-        if (nextChar == '\n' || bufferIterator >= MAX_COMMAND_LENGTH)
-        {
-            buffer[bufferIterator] = '\0';
-            unsigned long commandTime = BottangoCore::getMSTimeOfCommand(buffer);
-
-            return commandTime <= Time::getCurrentTimeInMs();
-        }
-
-        buffer[bufferIterator] = nextChar;
-        bufferIterator++;
+        return Time::getCurrentTimeInMs() >= timeOfNextCommand - SD_ANIM_PREREAD_MS;
     }
+    else if (timeOfNextCommand > 0)
+    {
+        return true;
+    }
+    else
+    {
+        return Time::getCurrentTimeInMs() >= timeOfNextCommand;
+    }
+#elif defined(USE_CODE_COMMAND_STREAM)
+    return Time::getCurrentTimeInMs() >= timeOfNextCommand;
+#endif
+
     return false;
 }
 
 bool CommandStream::complete()
 {
+    // looping is never complete, needs to be canceled externally
     if (shouldLoop)
     {
-        if (onLoop)
-        {
-            return (travel >= loopStreamLength && Time::getCurrentTimeInMs() >= streamDurationInMS + loopStreamDurationInMS);
-        }
-        else
-        {
-            return false;
-        }
+        return false;
     }
-    else
-    {
-        return (travel >= streamLength && Time::getCurrentTimeInMs() >= streamDurationInMS);
-    }
-}
 
-void CommandStream::reset()
-{
-    travel = 0;
-    shouldLoop = false;
-    onLoop = false;
+    return dataSource->dataComplete && Time::getCurrentTimeInMs() >= msEndOfLatestCommand;
 }
 
 void CommandStream::setShouldLoop()
 {
-    if (loopStreamLength == 0)
-    {
-        return;
-    }
     shouldLoop = true;
+}
+
+CommandStream::~CommandStream()
+{
+    delete dataSource;
 }

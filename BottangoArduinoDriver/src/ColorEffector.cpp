@@ -57,6 +57,5 @@ void ColorEffector::updateOnLoop()
 
 void ColorEffector::driveOnLoop()
 {
-    // todo, cant work with 16 bit int
-    //Callbacks::effectorSignalOnLoop(this, currentOn);
+    AbstractEffector::driveOnLoop();
 }

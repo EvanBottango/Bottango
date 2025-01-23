@@ -22,8 +22,6 @@ public:
 
     virtual bool isInProgress(unsigned long currentTimeMs);
 
-    virtual void dump();
-
     virtual unsigned long getEndTimeMs();
 
     virtual unsigned long getStartTimeMs();

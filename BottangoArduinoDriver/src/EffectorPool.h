@@ -29,8 +29,6 @@ public:
 
     void clearAllCurves();
 
-    void dump();
-
     bool effectorUsesFloatCurve(char *identifier);
 
 private:

@@ -5,12 +5,20 @@
 #include "../BottangoArduinoConfig.h"
 
 // Signal is 0 - 0, and just use that for movement calculations, so that this can act like a bog standard loop driven effector
-TriggerCustomEvent::TriggerCustomEvent(char *identifier, byte pin) : AbstractEffector(0, 1), pin(pin)
+TriggerCustomEvent::TriggerCustomEvent(char *identifier, byte pin, bool fireIsHigh) : AbstractEffector(0, 1), pin(pin), fireIsHigh(fireIsHigh)
 {
     strcpy(myIdentifier, identifier);
     if (pin != 255)
     {
         pinMode(pin, OUTPUT);
+        if (fireIsHigh)
+        {
+            digitalWrite(pin, false);
+        }
+        else
+        {
+            digitalWrite(pin, true);
+        }
     }
     Callbacks::onEffectorRegistered(this);
 }
@@ -51,33 +59,41 @@ void TriggerCustomEvent::driveOnLoop()
     {
         if (pin != 255)
         {
-            digitalWrite(pin, true);
+            if (fireIsHigh)
+            {
+                digitalWrite(pin, true);
+            }
+            else
+            {
+                digitalWrite(pin, false);
+            }
             pinOn = true;
             disablePinTime = Time::getCurrentTimeInMs() + TRIGGER_EVENT_PIN_TIME;
         }
         shouldFire = false;
+        AbstractEffector::driveOnLoop();
         Callbacks::onTriggerCustomEventTriggered(this);
-        Callbacks::effectorSignalOnLoop(this, 1);
+        AbstractEffector::callbackOnDriveComplete(1, true);
     }
     else
     {
         if (pin != 255 && pinOn && Time::getCurrentTimeInMs() >= disablePinTime)
         {
-            digitalWrite(pin, false);
+            if (fireIsHigh)
+            {
+                digitalWrite(pin, false);
+            }
+            else
+            {
+                digitalWrite(pin, true);
+            }
             pinOn = false;
         }
-        Callbacks::effectorSignalOnLoop(this, 0);
+        AbstractEffector::callbackOnDriveComplete(0, false);
     }
 }
 
 void TriggerCustomEvent::getIdentifier(char *outArray, short arraySize)
 {
     strcpy(outArray, myIdentifier);
-}
-
-void TriggerCustomEvent::dump()
-{
-    LOG_LN(F("= Trigger Event DUMP ="))
-    AbstractEffector::dump();
-    LOG_LN(F("=="))
 }

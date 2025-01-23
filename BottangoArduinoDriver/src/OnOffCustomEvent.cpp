@@ -55,18 +55,17 @@ void OnOffCustomEvent::driveOnLoop()
         {
             digitalWrite(pin, currentOn);
         }
+        AbstractEffector::driveOnLoop();
+        AbstractEffector::callbackOnDriveComplete(currentOn, true);
     }
-    Callbacks::effectorSignalOnLoop(this, currentOn);
+    else
+    {
+        AbstractEffector::driveOnLoop();
+        AbstractEffector::callbackOnDriveComplete(currentOn, false);
+    }
 }
 
 void OnOffCustomEvent::getIdentifier(char *outArray, short arraySize)
 {
     strcpy(outArray, myIdentifier);
-}
-
-void OnOffCustomEvent::dump()
-{
-    LOG_LN(F("= On Off Event DUMP ="))
-    AbstractEffector::dump();
-    LOG_LN(F("=="))
 }

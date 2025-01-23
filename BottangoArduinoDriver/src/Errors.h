@@ -31,6 +31,10 @@ namespace Error
     /** regtister an effector without including the required library */
     void reportError_InvalidPin();
 
+#ifdef RELAY_PARENT
+    void reportWarning_RelayTimeout(const char *ident);
+#endif
+
 } // namespace Error
 
 #endif // BOTTANGO_ERRORS_H

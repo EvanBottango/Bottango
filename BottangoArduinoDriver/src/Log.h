@@ -5,38 +5,31 @@
 // #define BOTTANGO_DEBUG
 
 #include "Arduino.h"
+#include "Outgoing.h"
 
 #define MKBUF char buffer[8];
 
-#define PRINT(msg) Serial.print(msg);
-#define PRINT_LN(msg)  \
-    Serial.print(msg); \
-    Serial.print(F("\n"));
-#define PRINT_NEWLINE() Serial.print(F("\n"));
+#define PRINT(msg) Outgoing::printOutputString(msg);
+#define PRINT_LN(msg)                 \
+    Outgoing::printOutputString(msg); \
+    Outgoing::printLine();
+#define PRINT_NEWLINE() Outgoing::printLine();
 #define PRINT_INT(i)               \
     sprintf(buffer, "%d", (int)i); \
-    Serial.print(buffer);
+    Outgoing::printOutputString(buffer);
 #define PRINT_ULONG(l)         \
     sprintf(buffer, "%lu", l); \
-    Serial.print(buffer);
+    Outgoing::printOutputString(buffer);
 #define PRINT_LONG(l)          \
     sprintf(buffer, "%ld", l); \
-    Serial.print(buffer);
+    Outgoing::printOutputString(buffer);
 
-#define PRINT_FLOAT(flt)                       \
-    {                                          \
-        char str[20];                          \
-                                               \
-        float tmpVal = (flt < 0) ? -flt : flt; \
-                                               \
-        int tmpInt1 = tmpVal;                  \
-        if (flt < 0)                           \
-            PRINT(F("-"))                      \
-        PRINT_INT(tmpInt1)                     \
-        float tmpFrac = tmpVal - tmpInt1;      \
-        int tmpInt2 = trunc(tmpFrac * 10000);  \
-        PRINT(F("."))                          \
-        PRINT_INT(tmpInt2)                     \
+#define PRINT_FLOAT(flt)                  \
+    {                                     \
+        char str[20];                     \
+                                          \
+        sprintf(str, "%.4f", flt);        \
+        Outgoing::printOutputString(str); \
     }
 
 #ifdef BOTTANGO_DEBUG

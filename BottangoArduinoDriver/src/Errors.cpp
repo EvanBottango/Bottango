@@ -1,60 +1,81 @@
 
 #include <Arduino.h>
+#include "Outgoing.h"
+#include "../BottangoArduinoModules.h"
 
 namespace Error
 {
     void reportError_NoServoOnPin()
     {
-        Serial.println();
-        Serial.println(F("errNoServoOnPin"));
+        Outgoing::printLine();
+        Outgoing::printOutputStringFlash(F("errNoServoOnPin"));
+        Outgoing::printLine();
     }
 
     void reportError_ServoCollision()
     {
-        Serial.println();
-        Serial.println(F("errServoCollision"));
+        Outgoing::printLine();
+        Outgoing::printOutputStringFlash(F("errServoCollision"));
+        Outgoing::printLine();
     }
 
     void reportError_NoSpaceAvailable()
     {
-        Serial.println();
-        Serial.println(F("errNoSpaceAvailable"));
+        Outgoing::printLine();
+        Outgoing::printOutputStringFlash(F("errNoSpaceAvailable"));
+        Outgoing::printLine();
     }
 
     void reportError_CmdTooLong()
     {
-        Serial.println();
-        Serial.println(F("errCmdTooLong"));
+        Outgoing::printLine();
+        Outgoing::printOutputStringFlash(F("errCmdTooLong"));
+        Outgoing::printLine();
     }
 
     void reportError_TooManyCommands()
     {
-        Serial.println();
-        Serial.println(F("errTooManyCommands"));
+        Outgoing::printLine();
+        Outgoing::printOutputStringFlash(F("errTooManyCommands"));
+        Outgoing::printLine();
     }
 
     void reportError_TooManyParams()
     {
-        Serial.println();
-        Serial.println(F("errTooManyParams"));
+        Outgoing::printLine();
+        Outgoing::printOutputStringFlash(F("errTooManyParams"));
+        Outgoing::printLine();
     }
 
     void reportError_MissingLibrary()
     {
-        Serial.println();
-        Serial.println(F("errMissingLibrary"));
+        Outgoing::printLine();
+        Outgoing::printOutputStringFlash(F("errMissingLibrary"));
+        Outgoing::printLine();
     }
 
     void reportError_TooManyI2c()
     {
-        Serial.println();
-        Serial.println(F("errI2COverrun"));
+        Outgoing::printLine();
+        Outgoing::printOutputStringFlash(F("errI2COverrun"));
+        Outgoing::printLine();
     }
 
     void reportError_InvalidPin()
     {
-        Serial.println();
-        Serial.println(F("errInvalidPin"));
+        Outgoing::printLine();
+        Outgoing::printOutputStringFlash(F("errInvalidPin"));
+        Outgoing::printLine();
     }
+
+#ifdef RELAY_PARENT
+    void reportWarning_RelayTimeout(const char *ident)
+    {
+        Outgoing::printLine();
+        Outgoing::printOutputStringFlash(F("warnRelayTO,"));
+        Outgoing::printOutputStringMem(ident);
+        Outgoing::printLine();
+    }
+#endif
 
 } // namespace Error

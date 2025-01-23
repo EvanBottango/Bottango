@@ -28,15 +28,18 @@ I2CServoEffector::I2CServoEffector(byte i2cAddress, byte pin, short minPWM, shor
 
 void I2CServoEffector::driveOnLoop()
 {
+    bool didChange = false;
     if (currentSignal != targetSignal)
     {
 #ifdef USE_ADAFRUIT_PWM_LIBRARY
         driver->writeMicroseconds(pin, currentSignal);
 #endif
         currentSignal = targetSignal;
+        didChange = true;
     }
 
     LoopDrivenEffector::driveOnLoop();
+    AbstractEffector::callbackOnDriveComplete(currentSignal, didChange);
 }
 
 void I2CServoEffector::getIdentifier(char *outArray, short arraySize)
@@ -51,15 +54,8 @@ void I2CServoEffector::getIdentifier(char *outArray, short arraySize)
     strcat(outArray, pinSegment);
 }
 
-void I2CServoEffector::destroy()
+void I2CServoEffector::destroy(bool systemShutdown)
 {
     removePWMDriverEffector(i2cAddress);
-    AbstractEffector::destroy();
-}
-
-void I2CServoEffector::dump()
-{
-    LOG_LN(F("= SERVO DUMP ="))
-    AbstractEffector::dump();
-    LOG_LN(F("=="))
+    AbstractEffector::destroy(systemShutdown);
 }

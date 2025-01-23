@@ -113,25 +113,3 @@ float FloatBezierCurve::getEndMovement()
 {
     return endY / COMPRESSED_SIGNAL_MAX;
 }
-
-void FloatBezierCurve::dump()
-{
-    LOG(F("CURVE[t=("))
-    LOG_MKBUF
-    LOG_FLOAT(getStartTimeMs())
-    LOG(F(","))
-    LOG_FLOAT(startY)
-    LOG(F(")/("))
-    LOG_FLOAT(startControlX)
-    LOG(F(","))
-    LOG_FLOAT(startControlY)
-    LOG(F(")-("))
-    LOG_FLOAT(getEndTimeMs())
-    LOG(F(","))
-    LOG_FLOAT(endY)
-    LOG(F(")/("))
-    LOG_FLOAT(endControlX)
-    LOG(F(","))
-    LOG_FLOAT(endControlY)
-    LOG_LN(F(")"))
-}

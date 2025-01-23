@@ -34,7 +34,6 @@ void EffectorPool::addEffector(AbstractEffector *inEffector)
         Error::reportError_ServoCollision();
         return;
     }
-    dump();
 }
 
 void EffectorPool::removeEffector(char *identifier)
@@ -53,14 +52,12 @@ void EffectorPool::removeEffector(char *identifier)
     }
 
     effectors.remove(effector);
-    effector->destroy();
+    effector->destroy(false);
     delete effector;
 
 #ifdef __AVR__
     sei(); // allow interrupts
 #endif
-
-    dump();
 }
 
 void EffectorPool::addCurveToEffector(char *identifier, Curve *curve)
@@ -138,7 +135,7 @@ void EffectorPool::deregisterAll()
     for (int i = 0; i < effectors.size(); i++)
     {
         AbstractEffector *effector = effectors.get(i);
-        effector->destroy();
+        effector->destroy(true);
         delete effectors.get(i);
     }
     effectors.clear();
@@ -146,8 +143,6 @@ void EffectorPool::deregisterAll()
 #ifdef __AVR__
     sei(); // allow interrupts
 #endif
-
-    dump();
 }
 
 void EffectorPool::clearAllCurves()
@@ -168,16 +163,4 @@ AbstractEffector *EffectorPool::getEffector(char *identifier)
         }
     }
     return NULL;
-}
-
-void EffectorPool::dump()
-{
-    printFreeRam();
-
-    LOG_LN(F("= POOL DUMP ="))
-    for (int i = 0; i < effectors.size(); ++i)
-    {
-        effectors.get(i)->dump();
-    }
-    LOG_LN(F("=="))
 }

@@ -88,7 +88,6 @@ void LoopDrivenEffector::updateSignalBounds(int minSignal, int maxSignal, int si
 
 int LoopDrivenEffector::speedLimitSingal(int newTarget, unsigned long nowInUS)
 {
-
     int returnSignal = newTarget;
 
     unsigned int maxSignalInElapsedTime = (nowInUS - lastUpdateTimeInUS) / minMicrosPerSignal;
@@ -105,13 +104,28 @@ int LoopDrivenEffector::speedLimitSingal(int newTarget, unsigned long nowInUS)
         }
     }
 
-    if (returnSignal > maxSignal)
+    // account for inverted min/max signal (IE go from 2000 -> 1000)
+    if (maxSignal > minSignal)
     {
-        returnSignal = maxSignal;
+        if (returnSignal > maxSignal)
+        {
+            returnSignal = maxSignal;
+        }
+        else if (returnSignal < minSignal)
+        {
+            returnSignal = minSignal;
+        }
     }
-    else if (returnSignal < minSignal)
+    else
     {
-        returnSignal = minSignal;
+        if (returnSignal > minSignal)
+        {
+            returnSignal = minSignal;
+        }
+        else if (returnSignal < maxSignal)
+        {
+            returnSignal = maxSignal;
+        }
     }
 
     return returnSignal;
@@ -119,5 +133,5 @@ int LoopDrivenEffector::speedLimitSingal(int newTarget, unsigned long nowInUS)
 
 void LoopDrivenEffector::driveOnLoop()
 {
-    Callbacks::effectorSignalOnLoop(this, currentSignal);
+    AbstractEffector::driveOnLoop();
 }

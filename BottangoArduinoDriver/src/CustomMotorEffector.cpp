@@ -5,26 +5,21 @@ CustomMotorEffector::CustomMotorEffector(char *identifier, short minSignal, shor
 {
     strcpy(myIdentifier, identifier);
     Callbacks::onEffectorRegistered(this);
-    Callbacks::effectorSignalOnLoop(this, startSignal);
 }
 
 void CustomMotorEffector::driveOnLoop()
 {
+    bool didChange = false;
     if (currentSignal != targetSignal)
     {
         currentSignal = targetSignal;
+        didChange = true;
     }
     LoopDrivenEffector::driveOnLoop();
+    AbstractEffector::callbackOnDriveComplete(currentSignal, didChange);
 }
 
 void CustomMotorEffector::getIdentifier(char *outArray, short arraySize)
 {
     strcpy(outArray, myIdentifier);
-}
-
-void CustomMotorEffector::dump()
-{
-    LOG_LN(F("= CUSTOM MOTOR DUMP ="))
-    AbstractEffector::dump();
-    LOG_LN(F("=="))
 }
