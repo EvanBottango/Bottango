@@ -113,6 +113,14 @@ def registerTriggerEvent(params, effectors):			## register a trigger event
 	startingSignal = 0
 	effectors[identifier] = Effector("onOffEvent", identifier, minSignal, maxSignal, maxSignalChangePerSecond, startingSignal)
 
+def registerAudioEvent(params, effectors):			## register a trigger event
+	identifier = params[1]	
+	minSignal = 0
+	maxSignal = 1
+	maxSignalChangePerSecond = 1
+	startingSignal = 0
+	effectors[identifier] = Effector("audioEvent", identifier, minSignal, maxSignal, maxSignalChangePerSecond, startingSignal)
+
 def setCurve(params, effectors):
 	effector = effectors.get(params[1])
 	if effector:
@@ -293,6 +301,12 @@ def parseCommand (command, effectors):
 		commandParsed = True
 		registerCustomMotor(split, effectors)
 
+	if split[0] == "rAud":
+		if log:
+			print ("<- Register audio event")
+		commandParsed = True
+		registerAudioEvent(split, effectors)
+
 	if split[0] == "sycM":
 		if log:
 			print ("<- Sync Motor Currently Unsupported")
@@ -333,6 +347,36 @@ def parseCommand (command, effectors):
 			print ("<- Set Color Curve Instant")
 		commandParsed = True
 		setColorCurveInstant(split, effectors)
+
+	if split[0] == "rCtrl":
+		if log:
+			print ("<- Register child controller")
+		commandParsed = True
+		print ("Register Child controllers not supported in this driver")
+
+	if split[0] == "xCtrl":
+		if log:
+			print ("<- Deregister all child controllers")
+		commandParsed = True
+		print ("Deregister all child controllers not supported in this driver")
+
+	if split[0] == "xUCtrl":
+		if log:
+			print ("<- Deregister child controller")
+		commandParsed = True
+		print ("Deregister Child controller not supported in this driver")
+
+	if split[0] == "sR":
+		if log:
+			print ("<- Pass command to child controller")
+		commandParsed = True
+		print ("Child controller not supported in this driver")
+
+	if split[0] == "sSY":
+		if log:
+			print ("<- Syncronized Command")
+		commandParsed = True
+		print ("Syncronized commands not supported in this driver")
 
 	if commandParsed:
 		# finally return "OK\n" as the response
