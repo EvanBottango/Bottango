@@ -36,7 +36,7 @@ try:
 														# otherwise changing time and or clip stops playing.
 
 	# change the desired recording input state
-	requestParams['isRecording'] = False 				# optional, if you want to change whether recording live controller input into selected animation or not.
+	# requestParams['isRecording'] = False 				# optional, if you want to change whether recording live controller input into selected animation or not.
 														# Also include as True if you want to begin recording after changing time or clip
 														# isPlaying will be ignored if isRecroding is set
 
