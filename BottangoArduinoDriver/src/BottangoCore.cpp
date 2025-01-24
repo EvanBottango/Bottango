@@ -523,7 +523,7 @@ namespace BottangoCore
     void stop()
     {
 		int t;
-		while (t = Serial.available() > 0)
+		while ((t = Serial.available()) > 0)
 		{
 			while (t--) Serial.read();
 		}
