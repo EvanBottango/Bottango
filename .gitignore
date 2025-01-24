@@ -1,3 +1,9 @@
 
 *.DS_Store
 BottangoNetworkedDriver/src/__pycache__/
+.vs/
+*.sln
+*.vcxproj
+*.vcxproj.filters
+BottangoArduinoDriver/__vm/
+*.esp32.bin
