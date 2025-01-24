@@ -401,6 +401,7 @@ namespace BottangoCore
 
     unsigned long getMSEndTimeOfCommand(char *commandString)
     {
+        unsigned long time = Time::getCurrentTimeInMs();
         byte commandCount = 0;
         bool splitSuccess = splitIntoBuffer(commandString, commandCount);
         if (!splitSuccess)
