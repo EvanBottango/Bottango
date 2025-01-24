@@ -17,7 +17,7 @@ protected:
     byte pin2 = 0;
     byte pin3 = 0;
 
-    volatile byte stepLoop = 0;
+    byte stepLoop = 0;
 
 private:
     void pulse();

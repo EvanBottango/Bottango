@@ -319,15 +319,15 @@ namespace BasicCommands
 
     void registerAudioEvent(char **args)
     {
-        char *identifier = args[1];
-        byte index = atoi(args[2]);
-
 #ifdef AUDIO_TRIGGER_EVENT
         // should not be hit
         Outgoing::printLine();
         Outgoing::printOutputStringFlash(F("errInvalidAudioKeyframe"));
         Outgoing::printLine();
 #elif defined(AUDIO_SD_I2S)
+		char* identifier = args[1];
+		byte index = atoi(args[2]);
+
         LOG_MKBUF
         LOG_LN(F("register audio i2s event"))
         LOG(F("    id="))

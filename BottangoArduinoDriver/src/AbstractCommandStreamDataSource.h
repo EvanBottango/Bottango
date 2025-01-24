@@ -4,6 +4,7 @@
 class AbstractCommandStreamDataSource
 {
 public:
+	virtual ~AbstractCommandStreamDataSource() {}
     virtual void getNextCommand(char *output, bool shouldLoop, unsigned long &msEndOfThisCommand, unsigned long &msStartOfNextCommand);
     virtual void reset();
     virtual void update(bool shouldLoop);

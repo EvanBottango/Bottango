@@ -523,10 +523,10 @@ namespace BottangoCore
 
     void stop()
     {
-        while (Serial.available() > 0)
-        {
-            char t = Serial.read();
-        }
+		while (Serial.available() > 0)
+		{
+			Serial.read();
+		}
         initialized = false;
         commandInProgress = false;
         serialCommandIdx = 0;
