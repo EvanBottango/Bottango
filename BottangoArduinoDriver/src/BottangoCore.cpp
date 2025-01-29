@@ -1,15 +1,35 @@
 #include "BottangoCore.h"
 
-#ifdef USE_COMMAND_STREAM
-#include "../GeneratedCommandStreams.h"
+#include "../BottangoArduinoModules.h"
+
+#if defined(RELAY_CHILD) && defined(RELAY_COMS_ESPNOW)
+#include "ESPNOWUtil.h"
+#endif
+
+#ifdef ENABLE_STATUS_LIGHTS
+#include "StatusLights.h"
 #endif
 
 namespace BottangoCore
 {
     EffectorPool effectorPool = EffectorPool();
+#ifdef RELAY_PARENT
+    RelayChildPool relayPool = RelayChildPool();
+#endif
+    char delimiters[] = ",";
+
     bool initialized = false;
-#ifdef USE_COMMAND_STREAM
-    CommandStreamProvider commandStreamProvider = CommandStreamProvider();
+    bool handshake = false;
+#if defined(USE_CODE_COMMAND_STREAM) || defined(USE_SD_CARD_COMMAND_STREAM)
+    CommandStreamProvider *commandStreamProvider = nullptr;
+#endif
+
+#if !defined(RELAY_CHILD) && defined(USE_ESP32_WIFI)
+    WiFiClient client;
+    bool serverConnected = false;
+    unsigned long lastNetworkCheckTime = 0;
+    const unsigned long NETWORK_CHECK_INTERVAL_MS = 15000; // recheck wifi connection every 15 seconds
+    const unsigned long SERVER_CHECK_INTERVAL_MS = 3000;   // recheck server every 3 seconds
 #endif
 
     char serialCommandBuffer[MAX_COMMAND_LENGTH];
@@ -21,40 +41,180 @@ namespace BottangoCore
 
     void bottangoSetup()
     {
+
+        // intiialize comms
+
+#ifdef ENABLE_STATUS_LIGHTS
+        StatusLights::initLights();
+        StatusLights::setDesiredColor(PWR_STATUS_LIGHT, STATUS_COLOR_PWR_ON);
+        StatusLights::setDesiredColor(CONNECTION_STATUS_LIGHT, STATUS_COLOR_NO_CONNECTION);
+        StatusLights::setDesiredColor(SIGNAL_STATUS_LIGHT, CRGB::Black);
+        StatusLights::setDesiredColor(USER_STATUS_LIGHT, CRGB::Black);
+#endif
+
+#ifdef PIN_LOW_LAUNCH
+        for (int i = 0; i < PIN_REMAP_LENGTH; i++)
+        {
+            pinMode(onboardPins[i], OUTPUT);
+            digitalWrite(onboardPins[i], LOW);
+        }
+#endif
+
+#if defined(RELAY_CHILD) && defined(RELAY_COMS_ESPNOW)
+#ifdef ENABLE_SERIAL_LOGGING
         Serial.begin(BAUD_RATE);
+#endif
+        uint8_t parentAddress[] = ESPNOW_PARENT_ADDRESS;
+        ESPNowUtil::initializeESPNow(parentAddress);
+        Outgoing::printLine();
+        Outgoing::printOutputStringPROGMEM(BasicCommands::BOOT);
+        Outgoing::printLine();
+#elif defined(USE_USB_SERIAL)
+        Serial.begin(BAUD_RATE);
+        Outgoing::printOutputStringFlash(F("\n\n"));
+        Outgoing::printOutputStringPROGMEM(BasicCommands::BOOT);
+        Outgoing::printOutputStringFlash(F("\n\n"));
+#elif defined(USE_ESP32_WIFI)
+#ifdef ENABLE_SERIAL_LOGGING
+        Serial.begin(BAUD_RATE);
+#endif
+        // begin async callback to check for connection state
+        WiFi.onEvent([](WiFiEvent_t event, WiFiEventInfo_t info)
+                     {
+            switch (event)
+            {
 
-        Serial.print(F("\n\n"));
-        BasicCommands::printOutputString(BasicCommands::BOOT);
-        Serial.print(F("\n\n"));
+#ifdef ESP_ARDUINO_VERSION_MAJOR
+#if ESP_ARDUINO_VERSION >= ESP_ARDUINO_VERSION_VAL(3, 0, 0)
+            case IP_EVENT_STA_GOT_IP:
+                onWifiConnetionSuccess();
+                break;
+            case WIFI_EVENT_STA_DISCONNECTED:
+                onWifiConnectionClosed();
+                break;
+#else
+            case SYSTEM_EVENT_STA_GOT_IP:
+                onWifiConnetionSuccess();
+                break;
+            case SYSTEM_EVENT_STA_DISCONNECTED:
+                onWifiConnectionClosed();
+                break;
+#endif
+#endif
 
-#ifdef USE_COMMAND_STREAM
-        initialized = true;
-        Callbacks::onThisControllerStarted();
-        commandStreamProvider.runSetup();
+                default:
+                break;
+            } });
+
+#endif
+
+// enter exported animation if required
+#ifdef ENABLE_DYNAMIC_ANIMATION_SOURCE_SWITCH
+        DynamicAnimationSwitch::init();
+        if (DynamicAnimationSwitch::shouldRunCommandStreams)
+#endif
+#if defined(USE_CODE_COMMAND_STREAM) || defined(USE_SD_CARD_COMMAND_STREAM)
+        {
+#ifdef ENABLE_STATUS_LIGHTS
+            StatusLights::setDesiredColor(CONNECTION_STATUS_LIGHT, STATUS_COLOR_CONNECTION_OFFLINE);
+#endif
+            commandStreamProvider = new CommandStreamProvider();
+            initialized = true;
+            Callbacks::onThisControllerStarted();
+            commandStreamProvider->runSetup();
+        }
 #endif
     }
 
-    bool splitIntoBuffer(char *stringToSplit)
+#ifdef USE_ESP32_WIFI
+
+    void onWifiConnetionSuccess()
+    {
+        lastNetworkCheckTime = 0;
+        serverConnected = false;
+    }
+
+    void onWifiConnectionClosed()
+    {
+        BasicCommands::stop(nullptr);
+        // restart the board
+        ESP.restart();
+    }
+
+#endif
+
+    bool splitIntoBuffer(char *stringToSplit, byte &commandCount)
     {
         byte idxResult = 0;
-        char *wordStart;
-        char delimiters[] = ",";
+        char *token = strtok(stringToSplit, delimiters);
 
-        if (idxResult + 1 >= COMMANDS_PARAMS_SIZE)
+#ifdef RELAY_PARENT
+        // Special case if first token is relay pass through
+        // should just be relayCmd, identifier, and then the rest of the string as the third token, and the hash as the last token
+        if (token != NULL && strcmp_P(token, BasicCommands::PASS_TO_RELAY) == 0)
         {
-            Error::reportError_TooManyParams();
-            return false;
+            // 1) Store "sR" token
+            splitCommandBuffer[idxResult++] = token;
+
+            // 2) Store the next token (relay identifier)
+            token = strtok(NULL, delimiters);
+            if (token != NULL)
+            {
+                splitCommandBuffer[idxResult++] = token;
+
+                // Prepare a buffer for concatenating intermediate tokens
+                char passThroughCommand[MAX_COMMAND_LENGTH];
+                passThroughCommand[0] = '\0';
+
+                // Tokenize until the last token
+                token = strtok(NULL, delimiters);
+                while (token != NULL)
+                {
+                    // check if at last token (or get for next)
+                    char *nextToken = strtok(NULL, delimiters);
+                    if (nextToken == NULL)
+                    {
+                        // 3) add the buffer
+                        if (passThroughCommand[0] != '\0')
+                        {
+                            if (passThroughCommand[strlen(passThroughCommand) - 1] == ',')
+                            {
+                                // Remove the trailing comma
+                                passThroughCommand[strlen(passThroughCommand) - 1] = '\0';
+                            }
+                            splitCommandBuffer[idxResult++] = passThroughCommand;
+                        }
+
+                        // 4) Add the final token
+                        splitCommandBuffer[idxResult++] = token;
+                        break;
+                    }
+
+                    // add the token
+                    strcat(passThroughCommand, token);
+                    strcat(passThroughCommand, delimiters);
+
+                    token = nextToken;
+                }
+            }
+            commandCount = idxResult;
+            return true;
+        }
+#endif
+
+        // Regular tokenization
+        while (token != NULL)
+        {
+            if (idxResult >= COMMANDS_PARAMS_SIZE) // Check buffer capacity
+            {
+                Error::reportError_TooManyParams();
+                return false;
+            }
+            splitCommandBuffer[idxResult++] = token;
+            token = strtok(NULL, delimiters);
         }
 
-        wordStart = strtok(stringToSplit, delimiters);
-        while (wordStart != NULL)
-        {
-            splitCommandBuffer[idxResult++] = wordStart;
-            wordStart = strtok(NULL, delimiters);
-        }
-
-        splitCommandBuffer[idxResult] = ((char *)"\0");
-
+        commandCount = idxResult;
         return true;
     }
 
@@ -62,7 +222,21 @@ namespace BottangoCore
     // param commandString: e.g. "rSP,9,1000,3000"
     void executeCommand(char *commandString)
     {
-        bool splitSuccess = splitIntoBuffer(commandString);
+#ifdef ENABLE_STATUS_LIGHTS
+        StatusLights::pulseSignalLight();
+#endif
+#ifdef ALLOW_SYNC_COMMANDS
+        // before split, check if this is a syncronized command
+        // we don't actually want to split a syncronized command, but to parse it's own unique syntax
+        if (strncmp_P(commandString, BasicCommands::SYNC_COMMAND, 3) == 0)
+        {
+            BasicCommands::processSyncronizedCommands(commandString);
+            return;
+        }
+#endif
+
+        byte commandCount = 0;
+        bool splitSuccess = splitIntoBuffer(commandString, commandCount);
         if (!splitSuccess)
         {
             return;
@@ -87,6 +261,12 @@ namespace BottangoCore
         {
             BasicCommands::stop(splitCommandBuffer);
         }
+#ifdef RELAY_PARENT
+        else if (strcmp_P(commandName, BasicCommands::PASS_TO_RELAY) == 0)
+        {
+            BasicCommands::passToRelayController(splitCommandBuffer, commandCount);
+        }
+#endif
         else if (strcmp_P(commandName, BasicCommands::DEREGISTER_ALL_EFFECTORS) == 0)
         {
             BasicCommands::deregisterAllEffectors(splitCommandBuffer);
@@ -159,6 +339,10 @@ namespace BottangoCore
         {
             BasicCommands::registerTriggerEvent(splitCommandBuffer);
         }
+        else if (strcmp_P(commandName, BasicCommands::REGISTER_AUDIO_EVENT) == 0)
+        {
+            BasicCommands::registerAudioEvent(splitCommandBuffer);
+        }
         else if (strcmp_P(commandName, BasicCommands::REGISTER_CUSTOM_MOTOR) == 0)
         {
             BasicCommands::registerCustomMotor(splitCommandBuffer);
@@ -171,57 +355,116 @@ namespace BottangoCore
         {
             BasicCommands::stepperSync(splitCommandBuffer);
         }
+#ifdef RELAY_PARENT
+        else if (strcmp_P(commandName, BasicCommands::REGISTER_RELAY) == 0)
+        {
+            BasicCommands::registerRelayController(splitCommandBuffer);
+        }
+        else if (strcmp_P(commandName, BasicCommands::DEREGISTER_RELAY) == 0)
+        {
+            BasicCommands::deregisterRelayController(splitCommandBuffer);
+        }
+        else if (strcmp_P(commandName, BasicCommands::DEREGISTER_ALL_RELAY) == 0)
+        {
+            BasicCommands::deregisterAllRelayControllers(splitCommandBuffer);
+        }
+#endif
+#ifdef ENABLE_ESP_OTA_UPDATE
+        else if (strcmp_P(commandName, BasicCommands::OTA_UPDATE) == 0)
+        {
+            BasicCommands::processOTA(splitCommandBuffer);
+        }
+#endif
     }
 
-    unsigned long getMSTimeOfCommand(char *commandString)
+    unsigned long getMSStartTimeOfCommand(char *commandString)
     {
-        unsigned long time = Time::getCurrentTimeInMs();
-        bool splitSuccess = splitIntoBuffer(commandString);
+        byte commandCount = 0;
+        bool splitSuccess = splitIntoBuffer(commandString, commandCount);
         if (!splitSuccess)
         {
-            return 0;
+            return Time::getCurrentTimeInMs();
         }
 
+        unsigned long time = Time::getCurrentTimeInMs();
         char *commandName = splitCommandBuffer[0];
 
-        // only curves have time different than now, so parse the string to find the time of each curve type
-        if (strcmp_P(commandName, BasicCommands::SET_CURVE) == 0)
+        if (strcmp_P(commandName, BasicCommands::SET_CURVE) == 0 ||
+            strcmp_P(commandName, BasicCommands::SET_ONOFFCURVE) == 0 ||
+            strcmp_P(commandName, BasicCommands::SET_TRIGGERCURVE) == 0 ||
+            strcmp_P(commandName, BasicCommands::SET_COLOR_CURVE) == 0)
         {
             time = Time::getLastSyncedTimeInMs() + atol(splitCommandBuffer[2]);
         }
-        else if (strcmp_P(commandName, BasicCommands::SET_ONOFFCURVE) == 0)
-        {
-            time = Time::getLastSyncedTimeInMs() + atol(splitCommandBuffer[2]);
-        }
-        else if (strcmp_P(commandName, BasicCommands::SET_TRIGGERCURVE) == 0)
-        {
-            time = Time::getLastSyncedTimeInMs() + atol(splitCommandBuffer[2]);
-        }
-
         return time;
     }
 
-    bool externalCommandIsValid(char *commandString)
+    unsigned long getMSEndTimeOfCommand(char *commandString)
     {
-#ifndef USE_COMMAND_STRING
-        return true;
-#else
-        bool splitSuccess = splitIntoBuffer(commandString);
+        unsigned long time = Time::getCurrentTimeInMs();
+        byte commandCount = 0;
+        bool splitSuccess = splitIntoBuffer(commandString, commandCount);
         if (!splitSuccess)
         {
-            return false;
+            return Time::getCurrentTimeInMs();
         }
+
+        unsigned long startTime = getMSStartTimeOfCommand(commandString);
 
         char *commandName = splitCommandBuffer[0];
-
-        // only handshake request is allowed
-        if (strcmp_P(commandName, BasicCommands::HANDSHAKE_REQUEST) == 0)
+        if (strcmp_P(commandName, BasicCommands::SET_CURVE) == 0 ||
+            strcmp_P(commandName, BasicCommands::SET_COLOR_CURVE) == 0)
         {
-            return true;
+            return startTime + atol(splitCommandBuffer[3]);
         }
 
-        return false;
+        return startTime;
+    }
+
+    bool externalCommandIsAllowed(char *commandString)
+    {
+
+#if defined(USE_CODE_COMMAND_STREAM) || defined(USE_SD_CARD_COMMAND_STREAM)
+        bool offline = false;
+#ifdef ENABLE_DYNAMIC_ANIMATION_SOURCE_SWITCH
+        if (DynamicAnimationSwitch::shouldRunCommandStreams)
+        {
+            offline = true;
+        }
+#else
+        offline = true;
 #endif
+        if (offline)
+        {
+            if (handshake)
+            {
+                // already handshake, nothing else allowed
+                return false;
+            }
+
+            byte commandCount = 0;
+            bool splitSuccess = splitIntoBuffer(commandString, commandCount);
+            if (!splitSuccess)
+            {
+                // ignoring invalid command
+                return false;
+            }
+
+            char *commandName = splitCommandBuffer[0];
+
+            // only handshake request is allowed
+            if (strcmp_P(commandName, BasicCommands::HANDSHAKE_REQUEST) == 0)
+            {
+                // Allowing handshake
+                return true;
+            }
+            //"Non-handshake, ignoring
+
+            return false;
+        }
+#endif
+        // allowed, not offline
+        return true;
     }
 
     bool checkHash(char *cmdString)
@@ -295,75 +538,138 @@ namespace BottangoCore
     {
         Callbacks::onEarlyLoop();
 
+#if defined(RELAY_CHILD) && defined(RELAY_COMS_ESPNOW)
+        while (ESPNowUtil::recvAvailable())
+        {
+            char cmd[MAX_COMMAND_LENGTH];
+            ESPNowUtil::readRecv(cmd);
+            int len = strlen(cmd);
+            for (int i = 0; i < len; i++)
+            {
+                char read = cmd[i];
+
+#elif defined(USE_USB_SERIAL)
         while (Serial.available() > 0)
         {
             char read = Serial.read();
+#elif defined(USE_ESP32_WIFI)
 
-            commandInProgress = true;
-            timeOfLastChar = millis();
-
-            if (read == '\n')
+        // attempt wifi connection?
+        if (WiFi.status() != WL_CONNECTED)
+        {
+            // ready to check?
+            if (lastNetworkCheckTime == 0 || Time::getCurrentTimeInMs() - lastNetworkCheckTime >= NETWORK_CHECK_INTERVAL_MS)
             {
-                LOG_MKBUF
-                LOG(F("EXECUTE! --> "))
-                LOG_LN(serialCommandBuffer)
-
-                bool hashPasses = checkHash(serialCommandBuffer);
-
-                commandInProgress = false;
-                timeOfLastChar = 0;
-
-                if (hashPasses)
+                WiFi.begin(WIFI_SSID, WIFI_PASSWORD);
+                lastNetworkCheckTime = Time::getCurrentTimeInMs();
+            }
+            // not gonna read/write anything this loop...
+            return;
+        }
+        // attempt server connection?
+        else if (!serverConnected)
+        {
+            // ready to check?
+            if (lastNetworkCheckTime == 0 || Time::getCurrentTimeInMs() - lastNetworkCheckTime >= SERVER_CHECK_INTERVAL_MS)
+            {
+                lastNetworkCheckTime = Time::getCurrentTimeInMs();
+                // connect to the server
+                if (client.connect(WIFI_SERVER_IP, WIFI_SERVER_PORT))
                 {
-                    if (externalCommandIsValid(serialCommandBuffer))
-                    {
-                        executeCommand(serialCommandBuffer);
-                    }
-
-                    LOG(F("t="))
-                    LOG_ULONG(Time::getCurrentTimeInMs())
-                    LOG_NEWLINE()
-
-                    BasicCommands::printOutputString(BasicCommands::READY);
-                    serialCommandIdx = 0;
-                    serialCommandBuffer[serialCommandIdx] = '\0';
+                    Outgoing::printOutputStringFlash(F("\n\n"));
+                    Outgoing::printOutputStringPROGMEM(BasicCommands::BOOT);
+                    Outgoing::printOutputStringFlash(F("\n\n"));
+                    serverConnected = true;
                 }
                 else
                 {
-                    BasicCommands::printOutputString(BasicCommands::HASH_FAIL);
-                    serialCommandIdx = 0;
-                    serialCommandBuffer[serialCommandIdx] = '\0';
+                    // couldn't connect, we'll try again
+                    return;
                 }
             }
-            else if (read == '\0')
-            {
-            }
-            else
-            {
-                if (serialCommandIdx <= MAX_COMMAND_LENGTH - 2)
+        }
+        // had then lost server connection
+        else if (!client.connected())
+        {
+            BasicCommands::stop(nullptr);
+            // restart the board
+            ESP.restart();
+            return;
+        }
+
+        while (client.available() > 0)
+        {
+            char read = client.read();
+#endif
+
+                commandInProgress = true;
+                timeOfLastChar = millis();
+
+                if (read == '\n')
                 {
-                    serialCommandBuffer[serialCommandIdx++] = read;
-                    serialCommandBuffer[serialCommandIdx] = '\0';
-                }
-                else
-                {
-                    Error::reportError_CmdTooLong();
-                    serialCommandIdx = 0;
-                    serialCommandBuffer[serialCommandIdx] = '\0';
+                    LOG_MKBUF
+                    LOG(F("EXECUTE! --> "))
+                    LOG_LN(serialCommandBuffer)
+
+                    bool hashPasses = checkHash(serialCommandBuffer);
 
                     commandInProgress = false;
                     timeOfLastChar = 0;
 
-                    char outStringBuffer[25];
-                    BasicCommands::printOutputString(BasicCommands::READY);
-                    Serial.write(outStringBuffer);
+                    if (hashPasses)
+                    {
+                        if (externalCommandIsAllowed(serialCommandBuffer))
+                        {
+                            executeCommand(serialCommandBuffer);
+                        }
+
+                        LOG(F("t="))
+                        LOG_ULONG(Time::getCurrentTimeInMs())
+                        LOG_NEWLINE()
+
+                        Outgoing::printOutputStringPROGMEM(BasicCommands::READY);
+                        serialCommandIdx = 0;
+                        serialCommandBuffer[serialCommandIdx] = '\0';
+                    }
+                    else
+                    {
+                        Outgoing::printOutputStringPROGMEM(BasicCommands::HASH_FAIL);
+                        serialCommandIdx = 0;
+                        serialCommandBuffer[serialCommandIdx] = '\0';
+                    }
+                }
+                else if (read == '\0')
+                {
+                }
+                else
+                {
+                    if (serialCommandIdx <= MAX_COMMAND_LENGTH - 2)
+                    {
+                        serialCommandBuffer[serialCommandIdx++] = read;
+                        serialCommandBuffer[serialCommandIdx] = '\0';
+                    }
+                    else
+                    {
+                        Error::reportError_CmdTooLong();
+                        serialCommandIdx = 0;
+                        serialCommandBuffer[serialCommandIdx] = '\0';
+
+                        commandInProgress = false;
+                        timeOfLastChar = 0;
+
+                        char outStringBuffer[25];
+                        Outgoing::printOutputStringPROGMEM(BasicCommands::READY);
+                        Serial.write(outStringBuffer);
+                    }
                 }
             }
+#if defined(RELAY_CHILD) && defined(RELAY_COMS_ESPNOW)
         }
+#endif
 
         if (commandInProgress && millis() - timeOfLastChar >= READ_TIMEOUT)
         {
-            BasicCommands::printOutputString(BasicCommands::TIMEOUT);
+            Outgoing::printOutputStringPROGMEM(BasicCommands::TIMEOUT);
 
             serialCommandIdx = 0;
             serialCommandBuffer[serialCommandIdx] = '\0';
@@ -374,12 +680,30 @@ namespace BottangoCore
 
         if (initialized)
         {
-#ifdef USE_COMMAND_STREAM
-            commandStreamProvider.updateOnLoop();
+// update command streams
+#ifdef ENABLE_DYNAMIC_ANIMATION_SOURCE_SWITCH
+            if (DynamicAnimationSwitch::shouldRunCommandStreams)
 #endif
+#if defined(USE_CODE_COMMAND_STREAM) || defined(USE_SD_CARD_COMMAND_STREAM)
+            {
+                commandStreamProvider->updateOnLoop();
+            }
+#endif
+
+            // update effector pool
             effectorPool.updateAllDriveTargets();
+
+// update relay pool
+#ifdef RELAY_PARENT
+
+            relayPool.update();
+#endif
         }
 
         Callbacks::onLateLoop();
+
+#ifdef ENABLE_STATUS_LIGHTS
+        StatusLights::updateLights();
+#endif
     }
 } // namespace BottangoCore

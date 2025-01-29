@@ -2,6 +2,7 @@
 #include "src/AbstractEffector.h"
 #include "src/Log.h"
 #include "src/Outgoing.h"
+#include "src/BottangoCore.h"
 
 namespace Callbacks
 {
@@ -27,22 +28,32 @@ namespace Callbacks
     // This callback occurs BEFORE all effectors process their movement, at the end of the loop.
     void onEarlyLoop()
     {
+        // Example for triggering animations in your own logic, while in offline (save to code / SD card) mode
+        // if not playing anything, play animation index 2 (the third exported animation) and set it to looping
+
+        // if (BottangoCore::commandStreamProvider->streamIsInProgress() == false)
+        // {
+        //     BottangoCore::commandStreamProvider->startCommandStream(2, true);
+        // }
+        // 
+        // The following will stop an offline animation from playing if any
+        // BottangoCore::commandStreamProvider->stop();         
     }
 
     // called each loop cycle.
     // This callback occurs AFTER all effectors process their movement, at the end of the loop.
     void onLateLoop()
     {
-        
+
         // EX: Request stop on driver, and disconnect all active connections
         // Outgoing::outgoing_requestEStop();
-        
+
         // EX: Pause Playing in App
         // Outgoing::outgoing_requestStopPlay();
-        
+
         // EX: Start Playing in App (in current animation and time)
         // Outgoing::outgoing_requestStartPlay();
-        
+
         // EX: Start Playing in App (with animation index, and start time in milliseconds)
         // Outgoing::outgoing_requestStartPlay(1,1000);
     }
@@ -89,7 +100,8 @@ namespace Callbacks
     }
 
     // called by effectors each loop with its current signal (example: servo PWM or stepper steps from home )
-    void effectorSignalOnLoop(AbstractEffector *effector, int signal)
+    // didChange is true if different from last update called
+    void effectorSignalOnLoop(AbstractEffector *effector, int signal, bool didChange)
     {
         // example, set built in led for effector with identifier "1" based on if signal is greater than 1500
 

@@ -249,7 +249,6 @@ void VelocityEffector::updateOnLoop()
 
 void VelocityEffector::driveOnLoop()
 {
-    Callbacks::effectorSignalOnLoop(this, currentSignal);
     AbstractEffector::driveOnLoop();
 }
 

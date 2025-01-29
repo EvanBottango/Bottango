@@ -16,8 +16,7 @@ public:
     virtual void driveOnLoop() override;
 
     virtual void getIdentifier(char *outArray, short arraySize) override;
-    virtual void destroy() override;
-    virtual void dump() override;
+    virtual void destroy(bool systemShutdown) override;
 
 protected:
 private:

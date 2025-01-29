@@ -15,6 +15,7 @@ CurvedCustomEvent::CurvedCustomEvent(char *identifier, float maxMovementPerSec, 
 
 void CurvedCustomEvent::driveOnLoop()
 {
+    bool didChange = false;
     if (currentSignal != targetSignal)
     {
         // callback here
@@ -26,18 +27,13 @@ void CurvedCustomEvent::driveOnLoop()
         {
             analogWrite(pin, round(movement * 255));
         }
+        didChange = true;
     }
     LoopDrivenEffector::driveOnLoop();
+    AbstractEffector::callbackOnDriveComplete(currentSignal, didChange);
 }
 
 void CurvedCustomEvent::getIdentifier(char *outArray, short arraySize)
 {
     strcpy(outArray, myIdentifier);
-}
-
-void CurvedCustomEvent::dump()
-{
-    LOG_LN(F("= Curved Event DUMP ="))
-    AbstractEffector::dump();
-    LOG_LN(F("=="))
 }

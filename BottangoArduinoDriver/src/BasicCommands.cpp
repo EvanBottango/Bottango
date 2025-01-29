@@ -12,50 +12,97 @@
 #include "TriggerCurve.h"
 #include "ColorCurve.h"
 #include "CustomMotorEffector.h"
+#include "Outgoing.h"
+#include "../BottangoArduinoModules.h"
+
+#ifdef AUDIO_SD_I2S
+#include "I2SAudioEffector.h"
+#endif
+
+#ifdef RELAY_PARENT
+#include "RelayChild.h"
+#endif
+
+#ifdef ENABLE_STATUS_LIGHTS
+#include "StatusLights.h"
+#endif
+
+#ifdef ENABLE_ESP_OTA_UPDATE
+#include "OTAUpdateUtil.h"
+#endif
 
 namespace BasicCommands
 {
     // [0] command, [1] driver version, [2]  hash code, [3] accepting incoming commands
     void sendHandshakeResponse(char *args[])
     {
+        bool offlinePlayback = false;
+#if defined(USE_CODE_COMMAND_STREAM) || defined(USE_SD_CARD_COMMAND_STREAM)
+#ifdef ENABLE_DYNAMIC_ANIMATION_SOURCE_SWITCH
+        if (DynamicAnimationSwitch::shouldRunCommandStreams)
+        {
+            offlinePlayback = true;
+        }
+#else
+        offlinePlayback = true;
+#endif
+#endif
+
         if (BottangoCore::initialized)
         {
             LOG_LN(F("WARN: already init"))
         }
+        if (BottangoCore::handshake)
+        {
+            LOG_LN(F("WARN: already handshake"))
+        }
         LOG_LN(F("sendHandshakeResponse"))
 
         BottangoCore::initialized = true;
+        BottangoCore::handshake = true;
 
-// not only does this make sense, but it breaks otherwise. I'd figure out why if I wanted it to work
-#ifndef USE_COMMAND_STREAM
-        deregisterAllEffectors(NULL);
-#endif
+        if (!offlinePlayback)
+        {
+            deregisterAllEffectors(NULL);
+        }
 
         char *code = args[1];
 
         // command name
-        BasicCommands::printOutputString(BasicCommands::HANDSHAKE);
-        Serial.print(F(","));
+        Outgoing::printOutputStringPROGMEM(BasicCommands::HANDSHAKE);
+        Outgoing::printOutputStringFlash(F(","));
 
         // driver version
-        BasicCommands::printOutputString(BasicCommands::DRIVER_VERSION);
-        Serial.print(F(","));
+        Outgoing::printOutputStringPROGMEM(BasicCommands::DRIVER_VERSION);
+        Outgoing::printOutputStringFlash(F(","));
 
         // repeat back hash code
-        Serial.write(code);
-        Serial.print(F(","));
+        Outgoing::printOutputStringMem(code);
+        Outgoing::printOutputStringFlash(F(","));
 
-        // true if accepting incoming commands, false if not
-#ifndef USE_COMMAND_STREAM
-        Serial.print(F("1"));
-#else
-        Serial.print(F("0"));
-#endif
-        Serial.print(F("\n"));
+        // true if accepting incoming commands, false if not (IE offline playback)
+        if (offlinePlayback)
+        {
+            Outgoing::printOutputStringFlash(F("0"));
+        }
+        else
+        {
+            Outgoing::printOutputStringFlash(F("1"));
+        }
+
+        Outgoing::printOutputStringFlash(F("\n"));
 
         Serial.flush();
 
-        BottangoCore::effectorPool.dump();
+#ifdef ENABLE_STATUS_LIGHTS
+#if defined(RELAY_CHILD) && defined(RELAY_COMS_ESPNOW)
+        StatusLights::setDesiredColor(CONNECTION_STATUS_LIGHT, STATUS_COLOR_HAS_CONNECTION);
+        StatusLights::setDesiredColor(SIGNAL_STATUS_LIGHT, STATUS_COLOR_SIGNAL_CHILD);
+#elif defined(USE_USB_SERIAL)
+        StatusLights::setDesiredColor(CONNECTION_STATUS_LIGHT, STATUS_COLOR_HAS_CONNECTION);
+        StatusLights::setDesiredColor(SIGNAL_STATUS_LIGHT, STATUS_COLOR_SIGNAL_SERIAL);
+#endif
+#endif
 
         Callbacks::onThisControllerStarted();
     }
@@ -64,6 +111,10 @@ namespace BasicCommands
     {
         BottangoCore::effectorPool.deregisterAll();
         BottangoCore::stop();
+#ifdef ENABLE_STATUS_LIGHTS
+        StatusLights::setDesiredColor(CONNECTION_STATUS_LIGHT, STATUS_COLOR_LOST_CONNECTION);
+        StatusLights::setDesiredColor(SIGNAL_STATUS_LIGHT, CRGB::Black);
+#endif
         Callbacks::onThisControllerStopped();
     }
 
@@ -254,6 +305,7 @@ namespace BasicCommands
     {
         char *identifier = args[1];
         byte pin = atoi(args[2]);
+        bool fireIsHigh = atoi(args[3]) != 0;
 
         LOG_MKBUF
         LOG_LN(F("register trigger event"))
@@ -261,8 +313,30 @@ namespace BasicCommands
         LOG(identifier)
         LOG_NEWLINE()
 
-        TriggerCustomEvent *newEffector = new TriggerCustomEvent(identifier, pin);
+        TriggerCustomEvent *newEffector = new TriggerCustomEvent(identifier, pin, fireIsHigh);
         BottangoCore::effectorPool.addEffector(newEffector);
+    }
+
+    void registerAudioEvent(char **args)
+    {
+        char *identifier = args[1];
+        byte index = atoi(args[2]);
+
+#ifdef AUDIO_TRIGGER_EVENT
+        // should not be hit
+        Outgoing::printLine();
+        Outgoing::printOutputStringFlash(F("errInvalidAudioKeyframe"));
+        Outgoing::printLine();
+#elif defined(AUDIO_SD_I2S)
+        LOG_MKBUF
+        LOG_LN(F("register audio i2s event"))
+        LOG(F("    id="))
+        LOG(identifier)
+        LOG_NEWLINE()
+
+        I2SAudioEffector *newEffector = new I2SAudioEffector(identifier, index);
+        BottangoCore::effectorPool.addEffector(newEffector);
+#endif
     }
 
     void registerColorEvent(char **args)
@@ -475,9 +549,15 @@ namespace BasicCommands
         {
             startTime += startTimeParsed;
         }
+#ifdef AUDIO_SD_I2S
+        unsigned long offset = atol(args[3]);
+        BottangoCore::effectorPool.addCurveToEffector(identifier, new TriggerCurve(startTime, offset));
+#else
+        BottangoCore::effectorPool.addCurveToEffector(identifier, new TriggerCurve(startTime));
+#endif
 
         LOG_MKBUF
-        LOG_LN(F("addOnOffCurve"));
+        LOG_LN(F("addTriggerCurve"));
 
         LOG(F("    last Sync="))
         LOG_ULONG(Time::getLastSyncedTimeInMs())
@@ -491,8 +571,6 @@ namespace BasicCommands
         LOG_ULONG(startTime)
 
         LOG_NEWLINE()
-
-        BottangoCore::effectorPool.addCurveToEffector(identifier, new TriggerCurve(startTime));
     }
 
     void addColorCurve(char **args)
@@ -621,13 +699,152 @@ namespace BasicCommands
 
         BottangoCore::effectorPool.clearCurvesForEffector(identifier);
     }
-
-    void printOutputString(const char *targetOutput)
+#ifdef RELAY_PARENT
+    void registerRelayController(char **args)
     {
-        while (pgm_read_byte(targetOutput) != 0x00)
+        char *identifier = args[1];
+        // ignore type for now, which is token [2]
+        char *macAddress = args[3];
+
+        RelayChild *newRelay = new RelayChild(identifier, macAddress);
+        BottangoCore::relayPool.addRelay(newRelay);
+    }
+
+    void deregisterRelayController(char **args)
+    {
+        char *identifier = args[1];
+        BottangoCore::relayPool.removeRelay(identifier);
+    }
+
+    void deregisterAllRelayControllers(char **args)
+    {
+        BottangoCore::relayPool.deregisterAll();
+    }
+
+    void passToRelayController(char **args, byte commandCount)
+    {
+        char *identifier = args[1];
+        BottangoCore::relayPool.passThroughCommandToRelay(identifier, args, commandCount);
+    }
+#endif
+
+#ifdef ALLOW_SYNC_COMMANDS
+    void processSyncronizedCommands(char *args)
+    {
+        char workingCommand[MAX_COMMAND_LENGTH];
+        int workingCommandCursor = 0;
+        workingCommand[0] = '\0';
+        char cmdID[15];
+        cmdID[0] = '\0';
+
+        int length = strlen(args);
+        int cmdIdLength = 0;
+        bool firstTokenSkipped = false;
+
+        for (int i = 0; i < length; i++)
         {
-            Serial.print((char)pgm_read_byte(targetOutput));
-            targetOutput++;
+
+            char c = args[i];
+
+            // skip the first token which is "sSY,"
+            if (!firstTokenSkipped)
+            {
+                if (c == BottangoCore::delimiters[0])
+                {
+                    firstTokenSkipped = true;
+                }
+                continue;
+            }
+
+            bool skipAddChar = false; // so we don't add the last char of the cmd id twice
+            // find the command ID
+            if (cmdID[0] == '\0')
+            {
+                skipAddChar = true;
+                while (i < length)
+                {
+                    cmdID[cmdIdLength] = c;
+                    cmdIdLength++;
+
+                    i++;
+                    c = args[i];
+                    // break at "," end of command id
+                    // include "," so it's command id and deliniator is appended in each reconstructed command
+                    if (c == BottangoCore::delimiters[0])
+                    {
+                        cmdID[cmdIdLength] = c;
+                        cmdIdLength++;
+                        cmdID[cmdIdLength] = '\0';
+                        break;
+                    }
+                }
+            }
+
+            // add the commandID to the working string
+            // at the beginning of the working string
+            // and advance working cursor
+            if (workingCommandCursor == 0)
+            {
+                for (int j = 0; j < cmdIdLength; j++)
+                {
+                    workingCommand[workingCommandCursor] = cmdID[j];
+                    workingCommandCursor++;
+                }
+                if (skipAddChar)
+                {
+                    continue;
+                }
+            }
+
+            // reached end of command
+            if (c == ';')
+            {
+                // don't include ; but instead
+                workingCommand[workingCommandCursor] = '\n'; // newline
+                workingCommandCursor++;
+                workingCommand[workingCommandCursor] = '\0';  // null terminate
+                BottangoCore::executeCommand(workingCommand); // execute the command
+
+                // reset
+                workingCommand[0] = '\0';
+                workingCommandCursor = 0;
+            }
+            // reached new command type
+            else if (c == '*')
+            {
+                // reset command ID
+                cmdID[0] = '\0';
+                cmdIdLength = 0;
+            }
+            // add data to working string
+            else
+            {
+                workingCommand[workingCommandCursor] = c;
+                workingCommandCursor++;
+                workingCommand[workingCommandCursor] = '\0';
+            }
         }
     }
+#endif
+
+#ifdef ENABLE_ESP_OTA_UPDATE
+    void processOTA(char **args)
+    {
+        char otaMessageType = args[1][0];
+
+        if (otaMessageType == 's')
+        {
+            OTAUpdateUtil::beginOTA();
+        }
+        else if (otaMessageType == 'd')
+        {
+            OTAUpdateUtil::recvOTAData(args[2]);
+        }
+        else if (otaMessageType == 'e')
+        {
+            OTAUpdateUtil::finishOTA(args[2]);
+        }
+    }
+#endif
+
 } // namespace BasicCommands

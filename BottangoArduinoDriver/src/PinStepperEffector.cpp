@@ -35,6 +35,7 @@ PinStepperEffector::PinStepperEffector(byte pin0, byte pin1, byte pin2, byte pin
 
 void PinStepperEffector::driveOnLoop()
 {
+    bool didChange = false;
     if (drive > 0)
     {
         if (stepLoop == 3)
@@ -63,6 +64,7 @@ void PinStepperEffector::driveOnLoop()
         else
         {
             currentSignal++;
+            didChange = true;
         }
         drive = 0;
     }
@@ -94,10 +96,12 @@ void PinStepperEffector::driveOnLoop()
         else
         {
             currentSignal--;
+            didChange = true;
         }
         drive = 0;
     }
     VelocityEffector::driveOnLoop();
+    AbstractEffector::callbackOnDriveComplete(currentSignal, didChange);
 }
 
 void PinStepperEffector::pulse()

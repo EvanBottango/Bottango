@@ -47,6 +47,7 @@ void StepDirStepperEffector::driveOnLoop()
         }
     }
 
+    bool didChange = false;
     if (drive > 0)
     {
         if (!currDirectionIsClockwise)
@@ -74,6 +75,7 @@ void StepDirStepperEffector::driveOnLoop()
         }
         else
         {
+            didChange = true;
             currentSignal++;
         }
     }
@@ -105,10 +107,12 @@ void StepDirStepperEffector::driveOnLoop()
         }
         else
         {
+            didChange = true;
             currentSignal--;
         }
     }
     VelocityEffector::driveOnLoop();
+    AbstractEffector::callbackOnDriveComplete(currentSignal, didChange);
 }
 
 void StepDirStepperEffector::getIdentifier(char *outArray, short arraySize)

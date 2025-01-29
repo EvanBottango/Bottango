@@ -51,14 +51,17 @@ namespace BasicCommands
     /** Register a Stepper type effector with a [0] step Pin, [1] direction Pin, [2] should clockwise on Low, [3]maxCounterClockwiseSteps, [4]maxClockwiseSteps, [5]maxStepsPerSecond, [6] startingStepOffset */
     const char REGISTER_DIR_STEPPER[] PROGMEM = "rSTDir";
 
-    /** Register a Curved Custom Event type effector with a [0] identifier, [1] max movement per second, [2] starting movement */
+    /** Register a Curved Custom Event type effector with a [0] identifier, [1] max movement per second, [2] starting movement, [3] pin */
     const char REGISTER_CURVED_EVENT[] PROGMEM = "rECC";
 
-    /** Register an On Off Custom Event type effector with a [0] identifier, [1] starting on */
+    /** Register an On Off Custom Event type effector with a [0] identifier, [1] starting on, [2] pin */
     const char REGISTER_ONOFF_EVENT[] PROGMEM = "rECOnOff";
 
-    /** Register an On Off Custom Event type effector with a [0] identifier */
+    /** Register a Trigger Custom Event type effector with a [0] identifier, [1] pin, [2] pin high or low */
     const char REGISTER_TRIGGER_EVENT[] PROGMEM = "rECTrig";
+
+    /** Register an audio effector with a [0] identifier, [1] pin or index, [2] pin high or low (only used by trigger) */
+    const char REGISTER_AUDIO_EVENT[] PROGMEM = "rAud";
 
     /** Register an On Off Custom Event type effector with a [0] identifier, [1] starting r, [2] starting g, [3] starting b */
     const char REGISTER_COLOR_EVENT[] PROGMEM = "rECColor";
@@ -111,6 +114,48 @@ namespace BasicCommands
      */
     const char STEPPER_SYNC[] PROGMEM = "sycM";
 
+#ifdef RELAY_PARENT
+    /**
+     * Command to register a relay controller
+     * [0]identifier, [1] relay connection type, additional tokens connection type dependent
+     */
+    const char REGISTER_RELAY[] PROGMEM = "rCtrl";
+
+    /**
+     * Command to deregister a relay controller
+     * [0]identifier
+     */
+    const char DEREGISTER_RELAY[] PROGMEM = "xUCtrl";
+
+    /**
+     * Command to deregister all relay controllers
+     * [0]identifier
+     */
+    const char DEREGISTER_ALL_RELAY[] PROGMEM = "xCtrl";
+
+    /**
+     * Command to identify a relay command
+     * [0]identifier of relay controller, the rest of tokens are the command to be passed.
+     */
+    const char PASS_TO_RELAY[] PROGMEM = "sR";
+#endif
+#ifdef ALLOW_SYNC_COMMANDS
+    /**
+     * Command to identify a syncronized command
+     * rest of tokens are the combined command with sync'd syntax
+     */
+    const char SYNC_COMMAND[] PROGMEM = "sSY";
+#endif
+
+#ifdef ENABLE_ESP_OTA_UPDATE
+    /**
+     * Command to update firmware over OTA with ESP32
+     * [0] ota message type. s == start, d == data, e == end
+     * [1] ota param. s has no param, d is data in 64 byte or less chunk, e is expected checksum of data
+     */
+    const char OTA_UPDATE[] PROGMEM = "ota";
+#endif
+
     /** !!!!!!!!!! */
     /** OUTGOING STRINGS */
     /** !!!!!!!!!! */
@@ -124,7 +169,7 @@ namespace BasicCommands
     const char HANDSHAKE[] PROGMEM = "btngoHSK";
 
     /** The version code of this driver */
-    const char DRIVER_VERSION[] PROGMEM = "0.6.4a";
+    const char DRIVER_VERSION[] PROGMEM = "0.7.0a1";
 
     /** Arduino is ready for the next command */
     const char READY[] PROGMEM = "\nOK\n";
@@ -132,8 +177,6 @@ namespace BasicCommands
     const char HASH_FAIL[] PROGMEM = "\nHASH_FAIL\n";
 
     const char TIMEOUT[] PROGMEM = "\nTIMEOUT\n";
-
-    void printOutputString(const char *targetOutput);
 
     void sendHandshakeResponse(char *args[]);
 
@@ -161,6 +204,8 @@ namespace BasicCommands
 
     void registerTriggerEvent(char **args);
 
+    void registerAudioEvent(char **args);
+
     void registerColorEvent(char **args);
 
     void registerCustomMotor(char **args);
@@ -182,6 +227,22 @@ namespace BasicCommands
     void stepperSync(char **args);
 
     void clearCurvesForEffector(char **args);
+
+#ifdef RELAY_PARENT
+    void registerRelayController(char **args);
+
+    void deregisterRelayController(char **args);
+
+    void deregisterAllRelayControllers(char **args);
+
+    void passToRelayController(char **args, byte commandsCount);
+#endif
+#ifdef ALLOW_SYNC_COMMANDS
+    void processSyncronizedCommands(char *args);
+#endif
+#ifdef ENABLE_ESP_OTA_UPDATE
+    void processOTA(char **args);
+#endif
 
 } // namespace BasicCommands
 

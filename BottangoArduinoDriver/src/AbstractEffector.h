@@ -5,8 +5,7 @@
 #include "Curve.h"
 #include "Time.h"
 #include "../BottangoArduinoCallbacks.h"
-
-#define MAX_NUM_CURVES 3
+#include "../BottangoArduinoConfig.h"
 
 class AbstractEffector
 {
@@ -31,11 +30,11 @@ public:
 
     virtual void driveOnLoop();
 
+    virtual void callbackOnDriveComplete(int currentSignal, bool didChange);
+
     virtual bool useFloatCurve();
 
-    virtual void dump();
-
-    virtual void destroy();
+    virtual void destroy(bool systemShutdown);
 
     virtual ~AbstractEffector();
 

@@ -25,6 +25,11 @@ void AbstractEffector::driveOnLoop()
 {
 }
 
+void AbstractEffector::callbackOnDriveComplete(int currentSignal, bool didChange)
+{
+    Callbacks::effectorSignalOnLoop(this, currentSignal, didChange);
+}
+
 void AbstractEffector::updateSignalBounds(int minSignal, int maxSignal, int signalSpeed)
 {
     this->minSignal = minSignal;
@@ -44,11 +49,7 @@ void AbstractEffector::addCurve(Curve *curve)
     curvesIdx = (curvesIdx + 1) % MAX_NUM_CURVES;
 }
 
-void AbstractEffector::dump()
-{
-}
-
-void AbstractEffector::destroy()
+void AbstractEffector::destroy(bool systemShutdown)
 {
     stop();
     clearCurves();
@@ -61,14 +62,30 @@ int AbstractEffector::lerpSignal(float movement)
     float mapped = ((maxSignal - minSignal) * movement + minSignal);
     int mappedInt = (int)round(mapped);
 
-    if (mappedInt > maxSignal)
+    // account for inverted min/max signal (IE go from 2000 -> 1000)
+    if (maxSignal > minSignal)
     {
-        mappedInt = maxSignal;
+        if (mappedInt > maxSignal)
+        {
+            mappedInt = maxSignal;
+        }
+        if (mappedInt < minSignal)
+        {
+            mappedInt = minSignal;
+        }
     }
-    if (mappedInt < minSignal)
+    else
     {
-        mappedInt = minSignal;
+        if (mappedInt > minSignal)
+        {
+            mappedInt = minSignal;
+        }
+        if (mappedInt < maxSignal)
+        {
+            mappedInt = maxSignal;
+        }
     }
+
     return mappedInt;
 }
 

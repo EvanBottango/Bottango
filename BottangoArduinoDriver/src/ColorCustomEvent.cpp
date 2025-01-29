@@ -18,6 +18,9 @@ void ColorCustomEvent::driveOnLoop()
         currentColor.b = targetColor.b;
 
         Callbacks::onColorCustomEventColorChanged(this, currentColor.r, currentColor.g, currentColor.b);
+
+        // todo, cant work with 16 bit int
+        // AbstractEffector::callbackOnDriveComplete(??, true);
     }
     ColorEffector::driveOnLoop();
 }
@@ -25,11 +28,4 @@ void ColorCustomEvent::driveOnLoop()
 void ColorCustomEvent::getIdentifier(char *outArray, short arraySize)
 {
     strcpy(outArray, myIdentifier);
-}
-
-void ColorCustomEvent::dump()
-{
-    LOG_LN(F("= Color Event DUMP ="))
-    AbstractEffector::dump();
-    LOG_LN(F("=="))
 }

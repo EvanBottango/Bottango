@@ -11,7 +11,6 @@ public:
     virtual void driveOnLoop() override;
 
     virtual void getIdentifier(char *outArray, short arraySize) override;
-    virtual void dump() override;
 
 protected:
 private:

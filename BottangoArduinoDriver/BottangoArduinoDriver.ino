@@ -1,5 +1,5 @@
-// !!! DRIVER VERSION: 0.6.4a !!!
-// !!! Api Version: 7 !!!
+// !!! DRIVER VERSION: 0.7.0a1 !!!
+// !!! Api Version: 8 !!!
 
 #include "src/BottangoCore.h"
 #include "src/BasicCommands.h"
