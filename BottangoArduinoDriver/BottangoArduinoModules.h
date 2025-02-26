@@ -31,11 +31,6 @@
 
 // ---------------------------------- //
 
-// !!I2C!!
-// #define I2C_CUSTOM_PINS                              //uncomment this line to enable custom i2c sda & scl pins, defined in BottangoArduinoConfig.h
-
-// ---------------------------------- //
-
 // !!AUDIO!!
 // (select only 1)
 #define AUDIO_TRIGGER_EVENT                        // uncomment this line to have audio keyframes act as trigger events
