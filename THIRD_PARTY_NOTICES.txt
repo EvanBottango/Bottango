@@ -1,5 +1,5 @@
 ----------------------------------------------------------------
-Library: ESP32Servo
+Component: ESP32Servo
 Version: 3.0.6
 Authors: John K. Bennett, Kevin Harrington
 Source: https://github.com/madhephaestus/ESP32Servo
@@ -12,9 +12,10 @@ This library is distributed in the hope that it will be useful, but WITHOUT ANY 
 
 You should have received a copy of the GNU Lesser General Public License along with this library; if not, write to the Free Software Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301 USA
 
+(See ThirdPartyLicenses/GNU-LESSER_GENERAL_PUBLIC_LICENSE.txt)
 ----------------------------------------------------------------
 
-Library: Adafruit PCA9685 PWM Servo Driver Library
+Component: Adafruit PCA9685 PWM Servo Driver Library
 Version: 3.0.2
 Authors: Limor Fried/Ladyada for Adafruit Industries
 Source: https://github.com/adafruit/Adafruit-PWM-Servo-Driver-Library
@@ -45,5 +46,28 @@ LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND
 ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
 (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
 SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+
+----------------------------------------------------------------
+
+Component: websocket-client (Python)
+Version: (e.g. 1.8.0)
+Author: liris
+Source: https://pypi.org/project/websocket-client
+License: Apache Software License (Apache-2.0) (See ThirdPartyLicenses/APACHE-LICENSE-2.0.txt)
+
+----------------------------------------------------------------
+Component: requests (Python)
+Version: 2.32.3
+Author: Kenneth Reitz
+Source: https://pypi.org/project/requests
+License: Apache Software License (Apache-2.0) (See ThirdPartyLicenses/APACHE-LICENSE-2.0.txt)
+
+----------------------------------------------------------------
+
+Component: Arduino-ESP32 core
+Version: (your installed version, e.g. 2.0.10)
+Source: https://github.com/espressif/arduino-esp32
+License: GNU LESSER GENERAL PUBLIC LICENSE Version 2.1
+(See ThirdPartyLicenses/GNU-LESSER_GENERAL_PUBLIC_LICENSE.txt)
 
 ----------------------------------------------------------------
