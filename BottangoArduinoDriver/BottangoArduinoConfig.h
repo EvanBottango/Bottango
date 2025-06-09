@@ -50,6 +50,16 @@
 #define SELECT_EXPORTED_IS_LOW                     // LOW on pin selects exported. Comment out this line to choose exported on highs.
 #endif
 
+
+// !! I2C Custom SDA,SCL Configuration !!
+// #define I2C_CUSTOM_PINS                              //uncomment this line to enable custom i2c sda & scl pins
+
+// !! i2c Pin Configuration !!
+#ifdef I2C_CUSTOM_PINS
+#define I2C_SDA 21
+#define I2C_SCL 22
+#endif
+
 // !! I2S and Audio Pins !!
 #ifdef AUDIO_SD_I2S
 #define I2S_BCLK 25                                 // bit clock line
