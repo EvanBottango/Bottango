@@ -1,5 +1,6 @@
 #include "TriggerCurve.h"
 
+// ToDo: I see why, but this makes thinks so hard to read...
 #ifdef AUDIO_SD_I2S
 TriggerCurve::TriggerCurve(unsigned long startTimeInMs, unsigned long offset) : Curve()
 {

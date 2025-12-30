@@ -1,10 +1,10 @@
-#include "../BottangoArduinoModules.h"
+#include "../../../BottangoArduinoModules.h"
 
-#ifdef AUDIO_SD_I2S
+#ifdef AUDIO_SD_I2S_OLD
 #ifndef I2SHelper_h
 #define I2SHelper_h
 
-#include "SDCardUtil.h"
+#include "../../SDCardUtil.h"
 
 #ifdef ESP_ARDUINO_VERSION_MAJOR
 #if ESP_ARDUINO_VERSION >= ESP_ARDUINO_VERSION_VAL(3, 0, 0)
@@ -14,7 +14,7 @@
 #endif
 #endif
 
-#include "../BottangoArduinoConfig.h"
+#include "../../../BottangoArduinoConfig.h"
 
 namespace I2SHelper
 {
@@ -45,9 +45,9 @@ namespace I2SHelper
 #endif
 #endif
 
-#ifdef DYNAMIC_VOLUME
+//#ifdef DYNAMIC_VOLUME
     void updateVolume();
-#endif
+//#endif
 
     extern TaskHandle_t i2sTaskHandle;
     extern volatile bool stopTask;

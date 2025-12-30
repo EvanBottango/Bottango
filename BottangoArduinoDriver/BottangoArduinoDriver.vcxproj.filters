@@ -13,6 +13,36 @@
       <UniqueIdentifier>{67DA6AB6-F800-4c08-8B7A-83BB121AAD01}</UniqueIdentifier>
       <Extensions>rc;ico;cur;bmp;dlg;rc2;rct;bin;rgs;gif;jpg;jpeg;jpe;resx;tiff;tif;png;wav;mfcribbon-ms</Extensions>
     </Filter>
+    <Filter Include="Header Files\Interfaces">
+      <UniqueIdentifier>{e7f39977-cc90-46b0-b472-a5151f96d389}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source Files\Interfaces">
+      <UniqueIdentifier>{62af4364-1046-4484-ad67-90831403f58a}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Header Files\Module Handling">
+      <UniqueIdentifier>{143d6d4c-4dff-465e-aedd-de54eb27d28c}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source Files\Module Handling">
+      <UniqueIdentifier>{8148509b-70cb-4139-969b-9909926c95b1}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Header Files\Modules">
+      <UniqueIdentifier>{32a5e383-ee8e-49dd-9328-d08b547adf83}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source Files\Modules">
+      <UniqueIdentifier>{a34e2a7d-2b70-40b8-996c-cd968ac43878}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Header Files\Modules\Audio">
+      <UniqueIdentifier>{0e4c3aae-b2d2-464f-81e5-6bb3f9ff969e}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source Files\Modules\Audio">
+      <UniqueIdentifier>{d09ca4b2-9dad-4cb8-8b09-58e91f525781}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Header Files\System">
+      <UniqueIdentifier>{c76f0790-030d-4827-91d6-93041af3a94d}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source Files\System">
+      <UniqueIdentifier>{a3fcd2e2-b05a-45de-8ca0-061ed211bbd3}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="BottangoArduinoDriver.ino" />
@@ -364,10 +394,64 @@
     <ClCompile Include="src\lib\ESP32Servo\src\ESP32Servo.h">
       <Filter>Header Files</Filter>
     </ClCompile>
+    <ClCompile Include="src\Interfaces\AudioPlayback.cpp">
+      <Filter>Source Files\Interfaces</Filter>
+    </ClCompile>
+    <ClCompile Include="src\Module Handling\ModuleLoop.cpp">
+      <Filter>Source Files\Module Handling</Filter>
+    </ClCompile>
+    <ClCompile Include="src\Module Handling\ModuleMaster.cpp">
+      <Filter>Source Files\Module Handling</Filter>
+    </ClCompile>
+    <ClCompile Include="src\Modules\StopButtonModule.cpp">
+      <Filter>Source Files\Modules</Filter>
+    </ClCompile>
+    <ClCompile Include="src\Modules\StatusLightsModule.cpp">
+      <Filter>Source Files\Modules</Filter>
+    </ClCompile>
+    <ClCompile Include="src\Modules\Audio\I2SHelper.cpp">
+      <Filter>Source Files\Modules\Audio</Filter>
+    </ClCompile>
+    <ClCompile Include="src\Modules\Audio\I2SAudioModule.cpp">
+      <Filter>Source Files\Modules\Audio</Filter>
+    </ClCompile>
+    <ClCompile Include="src\Modules\Audio\I2SAudEventStatusResponder.cpp">
+      <Filter>Source Files\Modules\Audio</Filter>
+    </ClCompile>
+    <ClCompile Include="src\System\SystemStatus.cpp">
+      <Filter>Source Files\System</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="__vm\.BottangoArduinoDriver.vsarduino.h">
       <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="src\Interfaces\AudioPlayback.h">
+      <Filter>Header Files\Interfaces</Filter>
+    </ClInclude>
+    <ClInclude Include="src\Module Handling\ModuleMaster.h">
+      <Filter>Header Files\Module Handling</Filter>
+    </ClInclude>
+    <ClInclude Include="src\Module Handling\ModuleLoop.h">
+      <Filter>Header Files\Module Handling</Filter>
+    </ClInclude>
+    <ClInclude Include="src\Modules\StatusLightsModule.h">
+      <Filter>Header Files\Modules</Filter>
+    </ClInclude>
+    <ClInclude Include="src\Modules\StopButtonModule.h">
+      <Filter>Header Files\Modules</Filter>
+    </ClInclude>
+    <ClInclude Include="src\Modules\Audio\I2SAudEventStatusResponder.h">
+      <Filter>Header Files\Modules\Audio</Filter>
+    </ClInclude>
+    <ClInclude Include="src\Modules\Audio\I2SAudioModule.h">
+      <Filter>Header Files\Modules\Audio</Filter>
+    </ClInclude>
+    <ClInclude Include="src\Modules\Audio\I2SHelper.h">
+      <Filter>Header Files\Modules\Audio</Filter>
+    </ClInclude>
+    <ClInclude Include="src\System\SystemStatus.h">
+      <Filter>Header Files\System</Filter>
     </ClInclude>
   </ItemGroup>
 </Project>

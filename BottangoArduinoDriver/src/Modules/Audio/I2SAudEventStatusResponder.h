@@ -1,10 +1,10 @@
-#include "../BottangoArduinoModules.h"
+#include "../../../BottangoArduinoModules.h"
 #if defined(AUDIO_SD_I2S)
 
 #ifndef I2SAudEventStatusResponder_h
 #define I2SAudEventStatusResponder_h
 
-#include "AbstractMultiMessageOutgoingSource.h"
+#include "../../AbstractMultiMessageOutgoingSource.h"
 
 // good to go
 #define I2S_AUDIO_STATUS_READY 0

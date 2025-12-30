@@ -1,12 +1,13 @@
 #include "../BottangoArduinoModules.h"
 #include "AudioBinaryUtil.h"
 
-#if defined(AUDIO_SD_I2S)
+// ToDo: AudioBinaryUtil currently disabled (unfinished feature)
+//#if defined(AUDIO_SD_I2S)
 #include "Outgoing.h"
 #include "BasicCommands.h"
 #include "HexDataDownloadUtil.h"
 
-namespace AudioBinaryUtil
+/*namespace AudioBinaryUtil
 {
     bool audioBinaryInProgress = false;
     File writeFile;
@@ -88,5 +89,5 @@ namespace AudioBinaryUtil
         }
         HexDataDownloadUtil::finishData();
     }
-}
-#endif
+}*/
+//#endif

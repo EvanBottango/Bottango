@@ -247,10 +247,11 @@ bool ModulesResponder::sendPCAResponse()
 
 bool ModulesResponder::sendI2SResponse()
 {
+	// ToDo: The ModuleResponder would make a really nice virutal class. It would be easy to expand the base classes with this 
 #ifdef AUDIO_SD_I2S
-    Outgoing::printOutputStringPROGMEM(MODULES_RESPONSE_PREFIX);  // MOD
-    Outgoing::printOutputStringPROGMEM(MODULES_PARAM_DELINIATOR); // MOD,
-    Outgoing::printOutputStringPROGMEM(AUDIO_I2S_PREFIX);         // MOD,I2S
+    Outgoing::printOutputStringPROGMEM(MODULES_RESPONSE_PREFIX);	// MOD
+    Outgoing::printOutputStringPROGMEM(MODULES_PARAM_DELINIATOR);	// MOD,
+    Outgoing::printOutputStringPROGMEM(I2S_AudioPrefix());			// MOD,I2S
     Outgoing::printLine();
     return true;
 #else

@@ -180,6 +180,7 @@
     <ClCompile Include="src\I2SHelper.cpp">
       <DeploymentContent>true</DeploymentContent>
     </ClCompile>
+    <ClCompile Include="src\Interfaces\AudioPlayback.cpp" />
     <ClCompile Include="src\lib\ESP32Servo\src\ESP32PWM.cpp">
       <DeploymentContent>true</DeploymentContent>
     </ClCompile>
@@ -192,9 +193,16 @@
     <ClCompile Include="src\MACResponder.cpp">
       <DeploymentContent>true</DeploymentContent>
     </ClCompile>
+    <ClCompile Include="src\Module Handling\ModuleLoop.cpp" />
+    <ClCompile Include="src\Module Handling\ModuleMaster.cpp" />
     <ClCompile Include="src\ModulesResponder.cpp">
       <DeploymentContent>true</DeploymentContent>
     </ClCompile>
+    <ClCompile Include="src\Modules\Audio\I2SAudEventStatusResponder.cpp" />
+    <ClCompile Include="src\Modules\Audio\I2SAudioModule.cpp" />
+    <ClCompile Include="src\Modules\Audio\I2SHelper.cpp" />
+    <ClCompile Include="src\Modules\StatusLightsModule.cpp" />
+    <ClCompile Include="src\Modules\StopButtonModule.cpp" />
     <ClCompile Include="src\OnOffCurve.cpp">
       <DeploymentContent>true</DeploymentContent>
     </ClCompile>
@@ -234,6 +242,7 @@
     <ClCompile Include="src\StepDirStepperEffector.cpp">
       <DeploymentContent>true</DeploymentContent>
     </ClCompile>
+    <ClCompile Include="src\System\SystemStatus.cpp" />
     <ClCompile Include="src\Time.cpp">
       <DeploymentContent>true</DeploymentContent>
     </ClCompile>
@@ -488,6 +497,15 @@
       <FileType>CppCode</FileType>
       <DeploymentContent>true</DeploymentContent>
     </ClCompile>
+    <ClInclude Include="src\Interfaces\AudioPlayback.h" />
+    <ClInclude Include="src\Module Handling\ModuleLoop.h" />
+    <ClInclude Include="src\Module Handling\ModuleMaster.h" />
+    <ClInclude Include="src\Modules\Audio\I2SAudEventStatusResponder.h" />
+    <ClInclude Include="src\Modules\Audio\I2SAudioModule.h" />
+    <ClInclude Include="src\Modules\Audio\I2SHelper.h" />
+    <ClInclude Include="src\Modules\StatusLightsModule.h" />
+    <ClInclude Include="src\Modules\StopButtonModule.h" />
+    <ClInclude Include="src\System\SystemStatus.h" />
     <ClInclude Include="__vm\.BottangoArduinoDriver.vsarduino.h" />
   </ItemGroup>
   <PropertyGroup>

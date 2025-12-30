@@ -1,8 +1,8 @@
-#include "../BottangoArduinoModules.h"
+#include "../../../BottangoArduinoModules.h"
 
-#ifdef AUDIO_SD_I2S
+#ifdef AUDIO_SD_I2S_OLD
 #include "I2SHelper.h"
-#include "Outgoing.h"
+#include "../../Outgoing.h"
 
 namespace I2SHelper
 {
@@ -35,10 +35,10 @@ namespace I2SHelper
 #endif
 #endif
 
-#ifdef DYNAMIC_VOLUME
+//#ifdef DYNAMIC_VOLUME
     uint16_t lastVolumeRead = 0;
     unsigned long lastVolumeTime = 0;
-#endif
+//#endif
 
     TaskHandle_t i2sTaskHandle = nullptr; // Task handle for i2S task
     volatile bool stopTask = false;
@@ -206,7 +206,7 @@ namespace I2SHelper
         stopPlaybackRequested = true;
     }
 
-#ifdef DYNAMIC_VOLUME
+//#ifdef DYNAMIC_VOLUME
     void updateVolume()
     {
         if (millis() - lastVolumeTime > VOLUME_READ_INTERVAL)
@@ -215,7 +215,7 @@ namespace I2SHelper
             lastVolumeRead = analogRead(VOLUME_PIN);
         }
     }
-#endif
+//#endif
 
     void i2sTask(void *param)
     {

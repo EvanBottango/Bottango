@@ -14,11 +14,14 @@
 #include "CustomMotorEffector.h"
 #include "Outgoing.h"
 #include "../BottangoArduinoModules.h"
+#include "System/SystemStatus.h"
+#include "Module Handling/ModuleMaster.h"
 
-#ifdef AUDIO_SD_I2S
+//#ifdef AUDIO_SD_I2S
+// ToDo: No need to dobule guard
 #include "I2SAudioEffector.h"
-#include "AudioBinaryUtil.h"
-#endif
+//#include "AudioBinaryUtil.h"
+//#endif
 
 #ifdef RELAY_SUPPORTED
 #include "RelayChild.h"
@@ -96,13 +99,15 @@ namespace BasicCommands
 #if defined(RELAY_SUPPORTED)
             if (!offlinePlayback)
             {
-                StatusLights::setDesiredColor(CONNECTION_STATUS_LIGHT, STATUS_COLOR_HAS_CONNECTION);
-                StatusLights::setLightMode(CONNECTION_STATUS_LIGHT, StatusLights::LightMode::MODE_PULSE);
+                //StatusLights::setDesiredColor(CONNECTION_STATUS_LIGHT, STATUS_COLOR_HAS_CONNECTION);
+                //StatusLights::setLightMode(CONNECTION_STATUS_LIGHT, StatusLights::LightMode::MODE_PULSE);
+				SystemStatus::systemStatus.ConnectionStatus = SystemStatus::eConnectionStatus::Has_Connection;
             }
 
 #elif defined(USE_USB_SERIAL)
-            StatusLights::setDesiredColor(CONNECTION_STATUS_LIGHT, STATUS_COLOR_HAS_CONNECTION);
-            StatusLights::setLightMode(CONNECTION_STATUS_LIGHT, StatusLights::LightMode::MODE_PULSE);
+			//StatusLights::setDesiredColor(CONNECTION_STATUS_LIGHT, STATUS_COLOR_HAS_CONNECTION);
+			SystemStatus::systemStatus.ConnectionStatus = SystemStatus::eConnectionStatus::Has_Connection;
+            //StatusLights::setLightMode(CONNECTION_STATUS_LIGHT, StatusLights::LightMode::MODE_PULSE);
 #endif
 #endif
 
@@ -280,13 +285,15 @@ namespace BasicCommands
         BottangoCore::effectorPool.addEffector(newEffector);
     }
 
+	// ToDo: Do we want to leave this kind of functions within the BasicCommands, or move it to the module code?
+	// My opinnion is to move it out of here to reduce the #ifdef clutter and have everything contained within the module code.
 #ifdef AUDIO_SD_I2S
     void registerAudioEvent(char **args)
     {
         char *identifier = args[1];
         char *hash = args[2];
 
-        I2SAudioEffector *newEffector = new I2SAudioEffector(identifier, hash);
+        I2SAudioEffector *newEffector = new I2SAudioEffector(identifier, hash, static_cast<IAudioPlayback*>(InterfaceRegistry::get(Modules::AudioI2S)));
         BottangoCore::effectorPool.addEffector(newEffector);
     }
 #endif
@@ -446,6 +453,8 @@ namespace BasicCommands
         {
             startTime += startTimeParsed;
         }
+		// ToDo: We need to do something about this special case with the offset. This adds #ifdef clutter we want (and need) to avoid.
+		// But since this is a bit deeper down in the general workings of everything, I'm not sure how to best refactor this right now.
 #ifdef AUDIO_SD_I2S
         unsigned long offset = atol(args[3]);
         BottangoCore::effectorPool.addCurveToEffector(identifier, new TriggerCurve(startTime, offset));
@@ -798,10 +807,11 @@ namespace BasicCommands
     }
 #endif
 
-#ifdef AUDIO_SD_I2S
-    void processAudioBinary(char **args)
-    {
-        char binaryMessageType = args[1][0];
+//#ifdef AUDIO_SD_I2S
+// ToDo: AudioBinaryUtil currently disabled (unfinished feature)
+    //void processAudioBinary(char **args)
+    //{
+        /*char binaryMessageType = args[1][0];
 
         if (binaryMessageType == BINARY_FLAG_START)
         {
@@ -816,9 +826,9 @@ namespace BasicCommands
         else if (binaryMessageType == BINARY_FLAG_END)
         {
             AudioBinaryUtil::finishAudioBinary(args[2]);
-        }
-    }
-#endif
+        }*/
+    //}
+//#endif
 
 #if defined(ENABLE_DYNAMIC_ANIMATION_SOURCE_SWITCH) || defined(RELAY_SUPPORTED)
     void setConfiguration(char **args)

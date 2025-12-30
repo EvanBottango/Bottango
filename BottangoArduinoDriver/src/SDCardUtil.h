@@ -31,8 +31,8 @@ namespace SDCardUtil
     bool safeAvailable(File &file);
 
     void getAnimationFilePath(byte index, char *output, bool loop, bool config);
-    void getAudioFilePath(char *identifier, char *output);
-    void getAudioHashFilePath(char *identifier, char *output);
+    void getAudioFilePath(const char *identifier, char *output);
+    void getAudioHashFilePath(const char *identifier, char *output);
     void getSetupFilePath(char *output);
 
     extern unsigned long lastMountAttemptTime;

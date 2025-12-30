@@ -51,9 +51,13 @@ const char PCA_PREFIX[] PROGMEM = "9685";
 #endif
 
 // module 6, I2S Audio
-#ifdef AUDIO_SD_I2S
-const char AUDIO_I2S_PREFIX[] PROGMEM = "I2S";
-#endif
+//#ifdef AUDIO_SD_I2S
+//const char AUDIO_I2S_PREFIX[] PROGMEM = "I2S";
+inline constexpr const char* I2S_AudioPrefix()
+{
+	return "I2S";
+}
+//#endif
 
 // module 7, Stop Button
 // param, Stop behavior (0 == pause only, 1 == shut down)

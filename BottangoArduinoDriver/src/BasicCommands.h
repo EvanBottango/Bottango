@@ -182,18 +182,22 @@ namespace BasicCommands
     const char OTA_UPDATE[] PROGMEM = "ota";
 #endif
 
-#ifdef AUDIO_SD_I2S
+//#ifdef AUDIO_SD_I2S
 
     /** Register an audio effector with a [0] identifier, [1] audio file hash */
-    const char REGISTER_AUDIO_EVENT[] PROGMEM = "rAud";
+    //const char REGISTER_AUDIO_EVENT[] PROGMEM = "rAud";
+	inline constexpr const char* I2S_RegisterAudioEvent()
+	{
+		return "rAud";
+	}
 
     /**
      * Command to transfer in an audio file
      * [0] audio bin message type. s == start, d == data, e == end
      * [1] audio bin param. s is audio file name, d is data in 64 byte or less chunk, e is expected checksum of data
      */
-    const char AUDIO_BIN[] PROGMEM = "binA";
-#endif
+    //const char AUDIO_BIN[] PROGMEM = "binA";
+//#endif
 
 #if defined(ENABLE_DYNAMIC_ANIMATION_SOURCE_SWITCH) || defined(RELAY_SUPPORTED)
     /**
@@ -332,16 +336,19 @@ namespace BasicCommands
     void processOTA(char **args);
 #endif
 
+	// ToDo: Do we want to leave this kind of functions within the BasicCommands, or move it to the module code?
+	// My opinnion is to move it out of here to reduce the #ifdef clutter and have everything contained within the module code.
 #ifdef AUDIO_SD_I2S
-    void processAudioBinary(char **args);
+    //void processAudioBinary(char **args);
     void registerAudioEvent(char **args);
 #endif
 
-#if defined(AUDIO_SD_I2S) || defined(ENABLE_ESP_OTA_UPDATE)
-#define BINARY_FLAG_START 's'
-#define BINARY_FLAG_DATA 'd'
-#define BINARY_FLAG_END 'e'
-#endif
+	// ToDo: AudioBinaryUtil currently disabled (unfinished feature)
+//#if defined(AUDIO_SD_I2S) || defined(ENABLE_ESP_OTA_UPDATE)
+//#define BINARY_FLAG_START 's'
+//#define BINARY_FLAG_DATA 'd'
+//#define BINARY_FLAG_END 'e'
+//#endif
 
 #if defined(ENABLE_DYNAMIC_ANIMATION_SOURCE_SWITCH) || defined(RELAY_SUPPORTED)
     void setConfiguration(char **args);

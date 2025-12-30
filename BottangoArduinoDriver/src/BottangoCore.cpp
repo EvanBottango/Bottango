@@ -1,23 +1,23 @@
 #include "BottangoCore.h"
 
 #include "../BottangoArduinoModules.h"
+#include "Module Handling/ModuleMaster.h"
+#include "System/SystemStatus.h"
 
 #if defined(RELAY_SUPPORTED) && defined(RELAY_COMS_ESPNOW)
 #include "ESPNOWUtil.h"
 #endif
 
-#ifdef ENABLE_STATUS_LIGHTS
-#include "StatusLights.h"
-#endif
-
-#if defined(AUDIO_SD_I2S) && defined(DYNAMIC_VOLUME)
-#include "I2SHelper.h"
-#endif
+//#if defined(AUDIO_SD_I2S) && defined(DYNAMIC_VOLUME)
+//#include "Modules/Audio/I2SHelper.h"
+//#endif
 
 namespace BottangoCore
 {
     EffectorPool effectorPool = EffectorPool();
     AbstractMultiMessageOutgoingSource *activeOutgoingMultimessage = nullptr;
+
+	ModuleMaster mMaster = ModuleMaster();
 
 #ifdef RELAY_SUPPORTED
     RelayChildPool *relayPool = nullptr;
@@ -56,21 +56,14 @@ namespace BottangoCore
     bool commandInProgress = false;
     char *splitCommandBuffer[COMMANDS_PARAMS_SIZE];
 
-#ifdef STOP_BUTTON_SUPPORTED
-    unsigned long lastStopButtonPressTime = 0;
-#endif
-
-    void
-    bottangoSetup()
+    void bottangoSetup()
     {
+		mMaster.setupModules();
+		mMaster.initModules();
 
-#ifdef ENABLE_STATUS_LIGHTS
-        StatusLights::initLights();
-        StatusLights::setDesiredColor(PWR_STATUS_LIGHT, STATUS_COLOR_PWR_ON);
-        StatusLights::setDesiredColor(CONNECTION_STATUS_LIGHT, STATUS_COLOR_RED);
-        StatusLights::setDesiredColor(SIGNAL_STATUS_LIGHT, STATUS_COLOR_RED);
-        StatusLights::updateLights();
-#endif
+		SystemStatus::systemStatus.PowerStatus = SystemStatus::ePowerStatus::Ok;
+		SystemStatus::systemStatus.ConnectionStatus = SystemStatus::eConnectionStatus::Red;
+		SystemStatus::systemStatus.Signal = SystemStatus::eSignal::SDError;
 
 #ifdef NAMED_BOARD_STARTUP
         NamedBoardStartup::runNamedBoardStartup();
@@ -98,25 +91,25 @@ namespace BottangoCore
 #ifdef RELAY_SUPPORTED
         if (isRelayPeer)
         {
-            StatusLights::setDesiredColor(CONNECTION_STATUS_LIGHT, STATUS_COLOR_NO_CONNECTION_PEER);
-            StatusLights::setLightMode(CONNECTION_STATUS_LIGHT, StatusLights::LightMode::MODE_BLINK);
+			SystemStatus::systemStatus.ConnectionStatus = SystemStatus::eConnectionStatus::No_Connection_Peer;
+            //StatusLights::setDesiredColor(CONNECTION_STATUS_LIGHT, STATUS_COLOR_NO_CONNECTION_PEER);
+            //StatusLights::setLightMode(CONNECTION_STATUS_LIGHT, StatusLights::LightMode::MODE_BLINK);
         }
         else
         {
-            StatusLights::setDesiredColor(CONNECTION_STATUS_LIGHT, STATUS_COLOR_NO_CONNECTION_SERIAL);
-            StatusLights::setLightMode(CONNECTION_STATUS_LIGHT, StatusLights::LightMode::MODE_BLINK);
+			SystemStatus::systemStatus.ConnectionStatus = SystemStatus::eConnectionStatus::No_Connection_Serial;
+            //StatusLights::setDesiredColor(CONNECTION_STATUS_LIGHT, STATUS_COLOR_NO_CONNECTION_SERIAL);
+            //StatusLights::setLightMode(CONNECTION_STATUS_LIGHT, StatusLights::LightMode::MODE_BLINK);
         }
 #else
-        StatusLights::setDesiredColor(CONNECTION_STATUS_LIGHT, STATUS_COLOR_NO_CONNECTION_SERIAL);
-        StatusLights::setLightMode(CONNECTION_STATUS_LIGHT, StatusLights::LightMode::MODE_BLINK);
+		SystemStatus::systemStatus.ConnectionStatus = SystemStatus::eConnectionStatus::No_Connection_Serial;
+        //StatusLights::setDesiredColor(CONNECTION_STATUS_LIGHT, STATUS_COLOR_NO_CONNECTION_SERIAL);
+        //StatusLights::setLightMode(CONNECTION_STATUS_LIGHT, StatusLights::LightMode::MODE_BLINK);
 #endif
-        StatusLights::setDesiredColor(SIGNAL_STATUS_LIGHT, CRGB::Black);
-        StatusLights::setDesiredColor(USER_STATUS_LIGHT, CRGB::Black);
-#endif
-
-// init i2s audio
-#ifdef AUDIO_SD_I2S
-        I2SHelper::init();
+		SystemStatus::systemStatus.Signal = SystemStatus::eSignal::Off;
+		SystemStatus::systemStatus.UserLED = SystemStatus::eUserLED::Off;
+        //StatusLights::setDesiredColor(SIGNAL_STATUS_LIGHT, CRGB::Black);
+        //StatusLights::setDesiredColor(USER_STATUS_LIGHT, CRGB::Black);
 #endif
 
 // enter exported animation if required
@@ -126,8 +119,9 @@ namespace BottangoCore
 #if defined(USE_CODE_COMMAND_STREAM) || defined(USE_SD_CARD_COMMAND_STREAM)
         {
 #ifdef ENABLE_STATUS_LIGHTS
-            StatusLights::setDesiredColor(CONNECTION_STATUS_LIGHT, STATUS_COLOR_CONNECTION_EXPORT_PLAYBACK);
-            StatusLights::setLightMode(CONNECTION_STATUS_LIGHT, StatusLights::LightMode::MODE_PULSE);
+			SystemStatus::systemStatus.ConnectionStatus = SystemStatus::eConnectionStatus::Export_Playback;
+            //StatusLights::setDesiredColor(CONNECTION_STATUS_LIGHT, STATUS_COLOR_CONNECTION_EXPORT_PLAYBACK);
+            //StatusLights::setLightMode(CONNECTION_STATUS_LIGHT, StatusLights::LightMode::MODE_PULSE);
 #endif
             commandStreamProvider = new CommandStreamProvider();
             initialized = true;
@@ -369,17 +363,20 @@ namespace BottangoCore
 #ifdef RELAY_SUPPORTED
             if (BottangoCore::isRelayPeer)
             {
-                StatusLights::setDesiredColor(CONNECTION_STATUS_LIGHT, STATUS_COLOR_NO_CONNECTION_PEER);
-                StatusLights::setLightMode(CONNECTION_STATUS_LIGHT, StatusLights::LightMode::MODE_BLINK);
+				SystemStatus::systemStatus.ConnectionStatus = SystemStatus::eConnectionStatus::No_Connection_Peer;
+                //StatusLights::setDesiredColor(CONNECTION_STATUS_LIGHT, STATUS_COLOR_NO_CONNECTION_PEER);
+                //StatusLights::setLightMode(CONNECTION_STATUS_LIGHT, StatusLights::LightMode::MODE_BLINK);
             }
             else
             {
-                StatusLights::setDesiredColor(CONNECTION_STATUS_LIGHT, STATUS_COLOR_NO_CONNECTION_SERIAL);
-                StatusLights::setLightMode(CONNECTION_STATUS_LIGHT, StatusLights::LightMode::MODE_BLINK);
+				SystemStatus::systemStatus.ConnectionStatus = SystemStatus::eConnectionStatus::No_Connection_Serial;
+                //StatusLights::setDesiredColor(CONNECTION_STATUS_LIGHT, STATUS_COLOR_NO_CONNECTION_SERIAL);
+                //StatusLights::setLightMode(CONNECTION_STATUS_LIGHT, StatusLights::LightMode::MODE_BLINK);
             }
 #else
-            StatusLights::setDesiredColor(CONNECTION_STATUS_LIGHT, STATUS_COLOR_NO_CONNECTION_SERIAL);
-            StatusLights::setLightMode(CONNECTION_STATUS_LIGHT, StatusLights::LightMode::MODE_BLINK);
+			SystemStatus::systemStatus.ConnectionStatus = SystemStatus::eConnectionStatus::No_Connection_Serial;
+            //StatusLights::setDesiredColor(CONNECTION_STATUS_LIGHT, STATUS_COLOR_NO_CONNECTION_SERIAL);
+            //StatusLights::setLightMode(CONNECTION_STATUS_LIGHT, StatusLights::LightMode::MODE_BLINK);
 #endif
 #endif
         }
@@ -490,9 +487,8 @@ namespace BottangoCore
     {
         bool sendReady = true;
 
-#ifdef ENABLE_STATUS_LIGHTS
-        StatusLights::pulseSignalLight();
-#endif
+		SystemStatus::systemStatus.CommandStatus = SystemStatus::eCommandStatus::NewCommand;
+
 #ifdef ALLOW_SYNC_COMMANDS
         // before split, check if this is a syncronized command
         // we don't actually want to split a syncronized command, but to parse it's own unique syntax
@@ -628,14 +624,17 @@ namespace BottangoCore
             BasicCommands::stepperSync(splitCommandBuffer);
         }
 #ifdef AUDIO_SD_I2S
-        else if (strcmp_P(commandName, BasicCommands::REGISTER_AUDIO_EVENT) == 0)
+		// ToDo: (24.12.2025) Move the registering of optional modules into the ModuleMaster, to have them at their own place
+		// This is to reduce complexity for adding new modules. This way "Module" code stays within the ModuleMaster part.
+		// (25.12.2025) Or mabye not? I'm not sure yet.
+        else if (strcmp_P(commandName, BasicCommands::I2S_RegisterAudioEvent()) == 0)
         {
             BasicCommands::registerAudioEvent(splitCommandBuffer);
         }
-        else if (strcmp_P(commandName, BasicCommands::AUDIO_BIN) == 0)
+        /*else if (strcmp_P(commandName, BasicCommands::AUDIO_BIN) == 0)
         {
             BasicCommands::processAudioBinary(splitCommandBuffer);
-        }
+        }*/
 #endif
 #ifdef RELAY_SUPPORTED
         else if (strcmp_P(commandName, BasicCommands::REGISTER_RELAY) == 0)
@@ -966,10 +965,6 @@ namespace BottangoCore
 
         Callbacks::onLateLoop();
 
-#ifdef ENABLE_STATUS_LIGHTS
-        StatusLights::updateLights();
-#endif
-
 #if defined(RELAY_SUPPORTED) && defined(RELAY_LOGGING)
 #ifdef TOGGLE_DEBUG
         if (PersistentConfigUtil::debugEnabled())
@@ -985,63 +980,8 @@ namespace BottangoCore
         }
 #endif
 
-#if defined(AUDIO_SD_I2S) && defined(DYNAMIC_VOLUME)
-        if (I2SHelper::isPlaying())
-        {
-            I2SHelper::updateVolume();
-        }
-#endif
-
-#ifdef STOP_BUTTON_SUPPORTED
-        if (millis() - lastStopButtonPressTime > BUTTON_DEBOUNCE_TIME)
-        {
-#ifdef STOP_READ_TYPE_DIGITAL
-            if (digitalRead(STOP_BUTTON_PIN) == STOP_READ_ACTIVE)
-            {
-#elif defined(STOP_READ_TYPE_ANALOG)
-            int analogVal = analogRead(STOP_BUTTON_PIN);
-            if (analogVal >= STOP_READ_ACTIVE_MIN && analogVal <= STOP_READ_ACTIVE_MAX)
-            {
-#endif
-
-#ifndef DYNAMIC_STOP_BUTTON_BEHAVIOR
-                bool stopIsShutdown = STOP_BUTTON_SHOULD_DISCONNECT;
-#else
-                bool stopIsShutdown = PersistentConfigUtil::stopIsShutdown();
-#endif
-
-                if (isOffline())
-                {
-#if defined(USE_CODE_COMMAND_STREAM) || defined(USE_SD_CARD_COMMAND_STREAM)
-                    if (stopIsShutdown)
-                    {
-                        stop(true);
-                    }
-                    else
-                    {
-                        if (commandStreamProvider != nullptr)
-                        {
-                            commandStreamProvider->stop();
-                        }
-                    }
-#endif
-                }
-                else
-                {
-                    if (stopIsShutdown)
-                    {
-                        Outgoing::outgoing_requestEStop();
-                    }
-                    else
-                    {
-                        Outgoing::outgoing_requestStopPlay();
-                    }
-                }
-
-                lastStopButtonPressTime = millis();
-            }
-        }
-#endif
+		mMaster.executePhase(Phase::Input);
+		mMaster.executePhase(Phase::Output);
     }
 
     bool isOffline()

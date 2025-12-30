@@ -3,10 +3,11 @@
 #include "SDCardUtil.h"
 #include "../BottangoArduinoConfig.h"
 #include "Outgoing.h"
+#include "System/SystemStatus.h"
 
-#ifdef ENABLE_STATUS_LIGHTS
-#include "StatusLights.h"
-#endif
+//#ifdef ENABLE_STATUS_LIGHTS
+//#include "StatusLights.h"
+//#endif
 
 namespace SDCardUtil
 {
@@ -34,9 +35,11 @@ namespace SDCardUtil
                     internalSDMounted = false;
                     cardLost = true;
                     lastMountAttemptTime = millis();
-#ifdef ENABLE_STATUS_LIGHTS
-                    StatusLights::setDesiredColor(SIGNAL_STATUS_LIGHT, STATUS_COLOR_SIGNAL_EXPORT_SD_ERROR);
-#endif
+
+					SystemStatus::systemStatus.Signal = SystemStatus::eSignal::SDError;
+/*#ifdef ENABLE_STATUS_LIGHTS
+                    //StatusLights::setDesiredColor(SIGNAL_STATUS_LIGHT, STATUS_COLOR_SIGNAL_EXPORT_SD_ERROR);
+#endif*/
                     Outgoing::printOutputStringFlash(F("SD Removed"));
                     Outgoing::printLine();
 
@@ -72,9 +75,10 @@ namespace SDCardUtil
             // try and mount
             if (!SD.begin(SDPIN_CS, spi, 25000000))
             {
-#ifdef ENABLE_STATUS_LIGHTS
-                StatusLights::setDesiredColor(SIGNAL_STATUS_LIGHT, STATUS_COLOR_SIGNAL_EXPORT_SD_ERROR);
-#endif
+				SystemStatus::systemStatus.Signal = SystemStatus::eSignal::SDError;
+/*#ifdef ENABLE_STATUS_LIGHTS
+                //StatusLights::setDesiredColor(SIGNAL_STATUS_LIGHT, STATUS_COLOR_SIGNAL_EXPORT_SD_ERROR);
+#endif*/
                 Outgoing::printOutputStringFlash(F("Can't Mount SD"));
                 Outgoing::printLine();
                 return SDFileError::ERR_NO_CARD;
@@ -82,9 +86,10 @@ namespace SDCardUtil
 #else
             if (!SD.begin(SDPIN_CS))
             {
-#ifdef ENABLE_STATUS_LIGHTS
-                StatusLights::setDesiredColor(SIGNAL_STATUS_LIGHT, STATUS_COLOR_SIGNAL_NOSD);
-#endif
+				SystemStatus::systemStatus.Signal = SystemStatus::eSignal::SDError;
+/*#ifdef ENABLE_STATUS_LIGHTS
+                //StatusLights::setDesiredColor(SIGNAL_STATUS_LIGHT, STATUS_COLOR_SIGNAL_NOSD);
+#endif*/
                 Outgoing::printOutputStringFlash(F("Can't Mount SD"));
                 Outgoing::printLine();
                 return SDFileError::ERR_NO_CARD;
@@ -110,9 +115,10 @@ namespace SDCardUtil
         File file = SD.open(filePath);
         if (!file)
         {
-#ifdef ENABLE_STATUS_LIGHTS
+			SystemStatus::systemStatus.Signal = SystemStatus::eSignal::SDError;
+/*#ifdef ENABLE_STATUS_LIGHTS
             StatusLights::setDesiredColor(SIGNAL_STATUS_LIGHT, STATUS_COLOR_SIGNAL_EXPORT_SD_ERROR);
-#endif
+#endif*/
 
             fileError = SD.exists(filePath) ? SDFileError::ERR_IO : SDFileError::ERR_FILE_NOT_FOUND;
             if (fileError == SDFileError::ERR_IO)
@@ -282,7 +288,7 @@ namespace SDCardUtil
         strcat_P(output, SD_DATA_ANIMDATA);  // "/anims/setup/data.txt"
     }
 
-    void getAudioFilePath(char *identifier, char *output)
+    void getAudioFilePath(const char *identifier, char *output)
     {
 
         // add audio path
@@ -299,7 +305,7 @@ namespace SDCardUtil
         strcat(output, workingString); // "/audio/FFFFFFFF.wav"
     }
 
-    void getAudioHashFilePath(char *identifier, char *output)
+    void getAudioHashFilePath(const char *identifier, char *output)
     {
 
         // add audio path
