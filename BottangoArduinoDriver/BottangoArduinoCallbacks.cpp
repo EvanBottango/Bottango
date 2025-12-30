@@ -1,5 +1,6 @@
 #include "BottangoArduinoCallbacks.h"
 #include "src/AbstractEffector.h"
+#include "src/Log.h"
 #include "src/Outgoing.h"
 #include "src/BottangoCore.h"
 
@@ -8,6 +9,8 @@ namespace Callbacks
     // !!!!!!!!!!!!!!! //
     // !! CONTROLLER LIFECYCLE CALLBACKS !! //
     // !!!!!!!!!!!!!!! //
+	
+	// !!!!!!!!!!!!!!! Comment
 
     // called AFTER a successful handshake with the Bottango application, signifying that this controller has started.
     // use for general case startup process
@@ -34,9 +37,9 @@ namespace Callbacks
         // {
         //     BottangoCore::commandStreamProvider->startCommandStream(2, true);
         // }
-        //
+        // 
         // The following will stop an offline animation from playing if any
-        // BottangoCore::commandStreamProvider->stop();
+        // BottangoCore::commandStreamProvider->stop();         
     }
 
     // called each loop cycle.
@@ -197,20 +200,12 @@ namespace Callbacks
         // in the meanwhile, get support in the Bottango discord channel for "how to" info
     }
 
-    bool isEffectorAutoHomeComplete(AbstractEffector *effector, int &postAutoSyncMove, int autoSyncDirection)
+    bool isStepperAutoHomeComplete(AbstractEffector *effector)
     {
         // return true if the given stepper is at home position
         // else return false
 
         // example, end homing on stepper with step on pin 6, when pin 10 is read high
-
-        // int autoSyncDirection is the direction (+1 or -1) of the auto sync movement
-
-        // postAutoSyncMove is additional steps you'd like to take after auto home is complete
-        // as an example, if you want to hit a limit switch, then move 200 steps clockwise
-        // set postAutoSyncMove = 200 and return true when the limit switch is hit
-        // set postAutoSyncMove to a negative number to step counter clockwise
-
         // char effectorIdentifier[9];
         // effector->getIdentifier(effectorIdentifier, 9);
 
@@ -224,27 +219,5 @@ namespace Callbacks
         // }
 
         return false;
-    }
-
-    void onEffectorPostAutoHomeSecondarySyncComplete(AbstractEffector *effector)
-    {
-        // if moving a stepper after homing via the postAutoSyncMove int in isStepperAutoHomeComplete callback
-        // this callback is called after that additional move is complete
-
-        // in this example, after doing the additional post limit switch steps
-        // if the effector has an identifer of "6", set pin 12 high
-
-        // char effectorIdentifier[9];
-        // effector->getIdentifier(effectorIdentifier, 9);
-
-        // if (strcmp(effectorIdentifier, "6") == 0)
-        // {
-        //      digitalWrite(12, HIGH);
-        // }
-    }
-
-    void onEffectorHomeReset(AbstractEffector *effector)
-    {
-        // callback when an effector is no longer considered homed, use for you own internal state tracking if needed.
     }
 } // namespace Callbacks
