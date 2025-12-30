@@ -2,10 +2,11 @@
 #include "../BottangoArduinoConfig.h"
 #include "BottangoCore.h"
 #include "Outgoing.h"
+#include "System/SystemStatus.h"
 
-#ifdef ENABLE_STATUS_LIGHTS
+/*#ifdef ENABLE_STATUS_LIGHTS
 #include "StatusLights.h"
-#endif
+#endif*/
 
 CommandStreamProvider::CommandStreamProvider()
 {
@@ -76,9 +77,13 @@ void CommandStreamProvider::startCommandStream(byte streamID, bool loop)
         }
 #endif
 
-#ifdef ENABLE_STATUS_LIGHTS
-        StatusLights::setDesiredColor(SIGNAL_STATUS_LIGHT, STATUS_COLOR_SIGNAL_EXPORT_SD_ERROR);
-#endif
+		// ToDo: Why is this in the CommandStreamProvider and not within the SD-Card code?
+		// Looking at Line 104: Maybe its just a naming thing and this is a general status indicator LED
+		SystemStatus::systemStatus.Signal = SystemStatus::eSignal::SDError;
+
+/*#ifdef ENABLE_STATUS_LIGHTS
+        //StatusLights::setDesiredColor(SIGNAL_STATUS_LIGHT, STATUS_COLOR_SIGNAL_EXPORT_SD_ERROR);
+#endif*/
         return;
     }
 
@@ -95,9 +100,11 @@ void CommandStreamProvider::startCommandStream(byte streamID, bool loop)
 
     stop();
 
-#ifdef ENABLE_STATUS_LIGHTS
-    StatusLights::setDesiredColor(SIGNAL_STATUS_LIGHT, STATUS_COLOR_SIGNAL_OFFLINEPLAY);
-#endif
+
+	SystemStatus::systemStatus.Signal = SystemStatus::eSignal::OfflinePlayback;
+/*#ifdef ENABLE_STATUS_LIGHTS
+    //StatusLights::setDesiredColor(SIGNAL_STATUS_LIGHT, STATUS_COLOR_SIGNAL_OFFLINEPLAY);
+#endif*/
 
 #ifdef USE_CODE_COMMAND_STREAM
     commandStream = GeneratedCodeAnimations::GenerateCommandStreamByIndex(streamID);
@@ -302,9 +309,10 @@ void CommandStreamProvider::stop()
     }
 #endif
 
-#ifdef ENABLE_STATUS_LIGHTS
-    StatusLights::setDesiredColor(SIGNAL_STATUS_LIGHT, STATUS_COLOR_SIGNAL_OFFLINEREADY);
-#endif
+	SystemStatus::systemStatus.Signal = SystemStatus::eSignal::OfflineReady;
+/*#ifdef ENABLE_STATUS_LIGHTS
+    //StatusLights::setDesiredColor(SIGNAL_STATUS_LIGHT, STATUS_COLOR_SIGNAL_OFFLINEREADY);
+#endif*/
 }
 
 bool CommandStreamProvider::streamIsInProgress()
@@ -319,7 +327,8 @@ bool CommandStreamProvider::streamIsInProgress()
 void CommandStreamProvider::setInvalidState()
 {
     invalidState = true;
-#ifdef ENABLE_STATUS_LIGHTS
-    StatusLights::setDesiredColor(SIGNAL_STATUS_LIGHT, STATUS_COLOR_SIGNAL_EXPORT_SD_ERROR);
-#endif
+	SystemStatus::systemStatus.Signal = SystemStatus::eSignal::SDError;
+/*#ifdef ENABLE_STATUS_LIGHTS
+    //StatusLights::setDesiredColor(SIGNAL_STATUS_LIGHT, STATUS_COLOR_SIGNAL_EXPORT_SD_ERROR);
+#endif*/
 }

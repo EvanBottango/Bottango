@@ -238,22 +238,10 @@
     <ClCompile Include="src\I2CServoEffector.h">
       <Filter>Header Files</Filter>
     </ClCompile>
-    <ClCompile Include="src\I2SAudEventStatusResponder.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="src\I2SAudEventStatusResponder.h">
-      <Filter>Header Files</Filter>
-    </ClCompile>
     <ClCompile Include="src\I2SAudioEffector.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="src\I2SAudioEffector.h">
-      <Filter>Header Files</Filter>
-    </ClCompile>
-    <ClCompile Include="src\I2SHelper.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="src\I2SHelper.h">
       <Filter>Header Files</Filter>
     </ClCompile>
     <ClCompile Include="src\LoopDrivenEffector.cpp">

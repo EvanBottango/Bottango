@@ -2,6 +2,7 @@
 #include "Outgoing.h"
 #include "../BottangoArduinoConfig.h"
 #include "BoardDefs.h"
+#include "System/SystemStatus.h"
 
 #if defined(RELAY_SUPPORTED) && defined(RELAY_COMS_ESPNOW)
 #include "ESPNOWUtil.h"
@@ -172,7 +173,11 @@ namespace PersistentConfigUtil
                 SaveToEeprom(config);
 #endif
                 end();
-#if defined(ENABLE_STATUS_LIGHTS)
+
+				SystemStatus::systemStatus.resetPreferences = true;
+
+				// ToDo: Trigger a event to display the blinking lights
+/*#if defined(ENABLE_STATUS_LIGHTS)
                 for (int i = 0; i < 3; i++)
                 {
                     StatusLights::setDesiredColor(CONNECTION_STATUS_LIGHT, CRGB::White * 0.33f);
@@ -186,8 +191,7 @@ namespace PersistentConfigUtil
                     StatusLights::updateLights();
                     delay(100);
                 }
-
-#endif
+#endif*/
                 utilityPressCount = 0;
                 BasicCommands::reboot(false);
                 return;

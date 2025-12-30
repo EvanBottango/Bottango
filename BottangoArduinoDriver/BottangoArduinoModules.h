@@ -45,22 +45,22 @@
 
 // !! AUDIO !!
 // (select only 1)
-#define AUDIO_TRIGGER_EVENT                                 // uncomment this line to have audio keyframes act as trigger events
-// #define AUDIO_SD_I2S                                     // uncomment this line to have audio keyframes play audio over i2s, reading audio file from SD card
+//#define AUDIO_TRIGGER_EVENT                                 // uncomment this line to have audio keyframes act as trigger events
+#define AUDIO_SD_I2S                                     // uncomment this line to have audio keyframes play audio over i2s, reading audio file from SD card
 
 // extra features
-// #define DYNAMIC_VOLUME                                   // uncomment this line to adjust volume of i2s signal based on analog pin read
+#define DYNAMIC_VOLUME                                   // uncomment this line to adjust volume of i2s signal based on analog pin read
 // #define PIN_ON_AUDIO_PLAY                                // uncomment this line to take a pin high when playing audio (to enable an amp, etc.)
 
 // ---------------------------------- //
 
 // !! STATUS LIGHTS !!
-// #define ENABLE_STATUS_LIGHTS                             // uncomment this line to drive status lights based on driver status
+#define ENABLE_STATUS_LIGHTS                             // uncomment this line to drive status lights based on driver status
 
 // ---------------------------------- //
 
 // !! STOP BUTTON !!
-// #define STOP_BUTTON_SUPPORTED                            // uncomment this line to monitor a button or pin for stop action
+#define STOP_BUTTON_SUPPORTED                            // uncomment this line to monitor a button or pin for stop action
 // #define DYNAMIC_STOP_BUTTON_BEHAVIOR                     // uncomment this line to allow for dynamic change to what the stop button does
 
 // ---------------------------------- //

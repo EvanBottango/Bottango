@@ -60,25 +60,26 @@
 // ---------------------------------- //
 
 // !! I2S and Audio Pins !!
-#ifdef AUDIO_SD_I2S
+// ToDo: There should be no need to #ifdef guard these defines. The linker will ignore them when unused - no performance gains could be made here.
+//#ifdef AUDIO_SD_I2S
 #define I2S_BCLK 25                                 // bit clock line
 #define I2S_LRC 17                                  // left right clock
 #define I2S_DOUT 16                                 // data
 #define I2S_BUFFER_SIZE 2048
 #define I2S_WRITE_TIMEOUT (25 / portTICK_PERIOD_MS) // Short timeout for non-blocking operation
-#define I2S_DMA_BUFF_COUNT 6;
-#define I2S_DMA_BUFF_LEN 240;
-#define I2S_INIT_SAMPLE_RATE 48000;
-#ifdef DYNAMIC_VOLUME
+#define I2S_DMA_BUFF_COUNT 6
+#define I2S_DMA_BUFF_LEN 240
+#define I2S_INIT_SAMPLE_RATE 48000
+//#ifdef DYNAMIC_VOLUME
 #define VOLUME_PIN 35
-#define VOLUME_MIN 1.0;
-#define VOLUME_MAX 0.01;
+#define VOLUME_MIN 1.0f
+#define VOLUME_MAX 0.01f
 #define VOLUME_READ_INTERVAL 50
-#endif
+//#endif
 #ifdef PIN_ON_AUDIO_PLAY
 #define AUDIO_ENABLE_PIN 2
 #endif
-#endif
+//#endif
 
 // ---------------------------------- //
 

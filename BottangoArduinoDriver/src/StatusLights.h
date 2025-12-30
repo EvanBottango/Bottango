@@ -3,7 +3,7 @@
 
 #include "../BottangoArduinoModules.h"
 
-#ifdef ENABLE_STATUS_LIGHTS
+#ifdef ENABLE_STATUS_LIGHTS_OLD
 
 #include "Arduino.h"
 #include <FastLED.h>

@@ -1,5 +1,5 @@
 #include "../BottangoArduinoModules.h"
-#ifdef ENABLE_STATUS_LIGHTS
+#ifdef ENABLE_STATUS_LIGHTS_OLD
 #include "StatusLights.h"
 
 #define COLOR_MAX 55
