@@ -1,7 +1,7 @@
 #include "OnOffCustomEvent.h"
-#include "Log.h"
 #include "OnOffCurve.h"
 #include "Time.h"
+#include "Errors.h"
 
 OnOffCustomEvent::OnOffCustomEvent(char *identifier, bool startOn, byte pin) : AbstractEffector(0, 1), pin(pin)
 {
@@ -9,6 +9,27 @@ OnOffCustomEvent::OnOffCustomEvent(char *identifier, bool startOn, byte pin) : A
 
     if (pin != 255)
     {
+
+#ifdef NAMED_BOARD
+        if (pin == 0)
+        {
+            Error::reportError_InvalidPin();
+            return;
+        }
+#endif
+
+#ifdef PIN_REMAPPING
+        for (int i = 0; i < PIN_REMAP_LENGTH; i++)
+        {
+            if (inputPins[i] == pin)
+            {
+                pin = onboardPins[i];
+                this->pin = pin;
+                break;
+            }
+        }
+#endif
+
         pinMode(pin, OUTPUT);
     }
 

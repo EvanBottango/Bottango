@@ -30,7 +30,7 @@ void registerPWMDriverEffector(byte i2cAddress)
     {
         if (pwmDriverContainers.size() >= MAX_I2C_DRIVERS)
         {
-            Error::reportError_TooManyI2c();
+            Error::reportError_NoSpaceAvailable();
             return;
         }
         driver = new Adafruit_PwmServoDriverContainer(i2cAddress);
@@ -48,7 +48,9 @@ void removePWMDriverEffector(byte i2cAddress)
 
     if (driver == NULL)
     {
-        Error::reportError_NoServoOnPin();
+        char decAddr[4];
+        itoa(i2cAddress, decAddr, 10);
+        Error::reportError_NoEffectorOnPin(decAddr);
         return;
     }
 

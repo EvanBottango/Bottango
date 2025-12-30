@@ -6,28 +6,44 @@
 
 #include "Arduino.h"
 #include <esp_now.h>
-#include <WiFi.h>
+#include "esp_wifi.h"
 #include "BottangoCore.h"
 #include "TxtBuffer.h"
 
 namespace ESPNowUtil
 {
-#ifdef RELAY_PARENT
-    void initializeESPNow();
+    // Bridge
+    void initializeESPNowAsBridge();
     void registerPeer(const uint8_t *mac_addr);
     void deregisterPeer(const uint8_t *mac_addr);
-    void sendCommand(const uint8_t *mac_addr, char *command);
-#elif defined(RELAY_CHILD)
-    void initializeESPNow(const uint8_t *parent_mac_addr);
-    void print(const char *str);
-    void print(const __FlashStringHelper *str);
-    void println();
-    void flush();
-    bool recvAvailable();
-    void readRecv(char *output);
+
+    // Peer
+    void initializeESPNowAsPeer();
+    void peerPrint(const char *str);
+    void peerPrint(const __FlashStringHelper *str);
+    void peerPrintln();
+    void peerFlush();
+    bool peerRecvAvailable();
+    char peerReadNextChar();
+
+    void initESPNowConnection();
+    void getThisDeviceMACAddress(uint8_t mac[6]);
+    void convertCStrToMac(const char *str, uint8_t mac[6]);
+    void convertMacToCStr(const uint8_t mac[6], char *str);
+
+#ifdef ESP_ARDUINO_VERSION_MAJOR
+#if ESP_ARDUINO_VERSION >= ESP_ARDUINO_VERSION_VAL(3, 0, 0)
+    // Arduino-ESP32 3.x (IDF 5.x): first param is wifi_tx_info_t*
+    void OnDataSent(const wifi_tx_info_t *tx_info, esp_now_send_status_t status);
+#else
+    // Arduino-ESP32 2.x and earlier
+    void OnDataSent(const uint8_t *mac_addr, esp_now_send_status_t status);
+#endif
+#else
+    // Fallback for environments without version macros
+    void OnDataSent(const uint8_t *mac_addr, esp_now_send_status_t status);
 #endif
 
-    void OnDataSent(const uint8_t *mac_addr, esp_now_send_status_t status);
 #ifdef ESP_ARDUINO_VERSION_MAJOR
 #if ESP_ARDUINO_VERSION >= ESP_ARDUINO_VERSION_VAL(3, 0, 0)
     void OnDataRecv(const esp_now_recv_info_t *recv_info, const uint8_t *data, int data_len);
@@ -36,13 +52,14 @@ namespace ESPNowUtil
 #endif
 #endif
 
-#if defined(RELAY_CHILD)
-    extern TxtBuffer<TXT_BUFFER_SIZE_ESPNOW> recvBuffer;
-    extern TxtBuffer<TXT_BUFFER_SIZE_ESPNOW> txBuffer;
-#endif
+    extern TxtBuffer<TXT_BUFFER_SIZE_PEER_FROM_BRIDGE> *peerRecvBuffer;
+    extern TxtBuffer<TXT_BUFFER_SIZE_PEER_TO_BRIDGE> *peerTxBuffer;
 
-    extern bool espNowInitialized;
+    extern bool wifiInitialized;
+    extern bool peerOrBridgeInitialized;
+    extern bool isBridge;
     extern esp_now_peer_info_t peerInfo;
+
 } // namespace ESPNOW
 #endif
 #endif

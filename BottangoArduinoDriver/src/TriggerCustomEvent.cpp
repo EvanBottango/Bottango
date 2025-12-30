@@ -1,8 +1,8 @@
 #include "TriggerCustomEvent.h"
-#include "Log.h"
 #include "TriggerCurve.h"
 #include "Time.h"
 #include "../BottangoArduinoConfig.h"
+#include "Errors.h"
 
 // Signal is 0 - 0, and just use that for movement calculations, so that this can act like a bog standard loop driven effector
 TriggerCustomEvent::TriggerCustomEvent(char *identifier, byte pin, bool fireIsHigh) : AbstractEffector(0, 1), pin(pin), fireIsHigh(fireIsHigh)
@@ -10,14 +10,34 @@ TriggerCustomEvent::TriggerCustomEvent(char *identifier, byte pin, bool fireIsHi
     strcpy(myIdentifier, identifier);
     if (pin != 255)
     {
+
+#ifdef NAMED_BOARD
+        if (pin == 0)
+        {
+            Error::reportError_InvalidPin();
+            return;
+        }
+#endif
+
+#ifdef PIN_REMAPPING
+        for (int i = 0; i < PIN_REMAP_LENGTH; i++)
+        {
+            if (inputPins[i] == pin)
+            {
+                pin = onboardPins[i];
+                this->pin = pin;
+                break;
+            }
+        }
+#endif
         pinMode(pin, OUTPUT);
         if (fireIsHigh)
         {
-            digitalWrite(pin, false);
+            digitalWrite(pin, LOW);
         }
         else
         {
-            digitalWrite(pin, true);
+            digitalWrite(pin, HIGH);
         }
     }
     Callbacks::onEffectorRegistered(this);
@@ -25,22 +45,30 @@ TriggerCustomEvent::TriggerCustomEvent(char *identifier, byte pin, bool fireIsHi
 
 void TriggerCustomEvent::updateOnLoop()
 {
+
     unsigned long currentTime = Time::getCurrentTimeInMs();
+
+    // Pointer to hold whichever TriggerCurve should fire next
     TriggerCurve *targetCurve = NULL;
 
+    // Iterate over all possible curves stored in this effector
     for (int i = 0; i < MAX_NUM_CURVES; ++i)
     {
-        TriggerCurve *curve = (TriggerCurve *)curves[i];
-        if (curve == NULL)
+        TriggerCurve *iteratorCurve = (TriggerCurve *)curves[i];
+
+        if (iteratorCurve == NULL)
         {
             continue;
         }
 
-        if (curve->startTimeInMs <= currentTime)
+        // If the iterator curve's start time has already passed or is exactly now
+        if (iteratorCurve->startTimeInMs <= currentTime)
         {
-            if (targetCurve == NULL || curve->startTimeInMs > targetCurve->startTimeInMs)
+            // Choose the most recently scheduled curve (the one that started latest,
+            // but not in the future) as the active target
+            if (targetCurve == NULL || iteratorCurve->startTimeInMs > targetCurve->startTimeInMs)
             {
-                targetCurve = curve;
+                targetCurve = iteratorCurve;
             }
         }
     }
@@ -61,16 +89,17 @@ void TriggerCustomEvent::driveOnLoop()
         {
             if (fireIsHigh)
             {
-                digitalWrite(pin, true);
+                digitalWrite(pin, HIGH);
             }
             else
             {
-                digitalWrite(pin, false);
+                digitalWrite(pin, LOW);
             }
             pinOn = true;
             disablePinTime = Time::getCurrentTimeInMs() + TRIGGER_EVENT_PIN_TIME;
         }
         shouldFire = false;
+
         AbstractEffector::driveOnLoop();
         Callbacks::onTriggerCustomEventTriggered(this);
         AbstractEffector::callbackOnDriveComplete(1, true);
@@ -81,11 +110,11 @@ void TriggerCustomEvent::driveOnLoop()
         {
             if (fireIsHigh)
             {
-                digitalWrite(pin, false);
+                digitalWrite(pin, LOW);
             }
             else
             {
-                digitalWrite(pin, true);
+                digitalWrite(pin, HIGH);
             }
             pinOn = false;
         }

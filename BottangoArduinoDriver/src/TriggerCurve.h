@@ -17,6 +17,7 @@ public:
 
     unsigned long startTimeInMs = 0;
     bool consumed = false;
+    virtual unsigned long getStartTimeMs();
 };
 
 #endif // BOTTANGOARDUINO_TRIGGERCURVE_H

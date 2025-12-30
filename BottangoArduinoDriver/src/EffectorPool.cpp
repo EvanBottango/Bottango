@@ -1,6 +1,5 @@
 
 #include "EffectorPool.h"
-#include "Log.h"
 #include "Errors.h"
 #include "FreeRam.h"
 
@@ -23,23 +22,17 @@ void EffectorPool::addEffector(AbstractEffector *inEffector)
 
     if (existingEffector == NULL)
     {
-        LOG_MKBUF;
-        LOG(F("Add effector "))
-        LOG_LN(inEffectorIdentifier);
-
         effectors.pushBack(inEffector);
     }
     else
     {
-        Error::reportError_ServoCollision();
+        Error::reportError_EffectorCollision(inEffectorIdentifier);
         return;
     }
 }
 
 void EffectorPool::removeEffector(char *identifier)
 {
-    LOG_LN(F("remove Effector"))
-
 #ifdef __AVR__
     cli(); // stop interrupts
 #endif
@@ -47,7 +40,7 @@ void EffectorPool::removeEffector(char *identifier)
     AbstractEffector *effector = getEffector(identifier);
     if (effector == NULL)
     {
-        Error::reportError_NoServoOnPin();
+        Error::reportError_NoEffectorOnPin(identifier);
         return;
     }
 
@@ -65,7 +58,7 @@ void EffectorPool::addCurveToEffector(char *identifier, Curve *curve)
     AbstractEffector *effector = getEffector(identifier);
     if (effector == NULL)
     {
-        Error::reportError_NoServoOnPin();
+        Error::reportError_NoEffectorOnPin(identifier);
         return;
     }
     effector->addCurve(curve);
@@ -76,20 +69,57 @@ void EffectorPool::updateEffectorSignalBounds(char *identifier, int minSignal, i
     AbstractEffector *effector = getEffector(identifier);
     if (effector == NULL)
     {
-        Error::reportError_NoServoOnPin();
+        Error::reportError_NoEffectorOnPin(identifier);
         return;
     }
     effector->updateSignalBounds(minSignal, maxSignal, signalSpeed);
 }
+
+void EffectorPool::homeEffector(char *identifier)
+{
+    AbstractEffector *effector = getEffector(identifier);
+    if (effector == NULL)
+    {
+        Error::reportError_NoEffectorOnPin(identifier);
+        return;
+    }
+    effector->setHome();
+}
+
+void EffectorPool::resetHomeEffector(char *identifier)
+{
+    AbstractEffector *effector = getEffector(identifier);
+    if (effector == NULL)
+    {
+        Error::reportError_NoEffectorOnPin(identifier);
+        return;
+    }
+    effector->resetHome();
+}
+
+void EffectorPool::autoSyncEffector(char *identifier, int direction)
+{
+    AbstractEffector *effector = getEffector(identifier);
+    if (effector == NULL)
+    {
+        Error::reportError_NoEffectorOnPin(identifier);
+        return;
+    }
+    effector->setAutoSync(direction);
+}
+
+// this routine is called by the GUI buttons to synch (home) a stepper.  Intercept the values and modify to reflect
+// what we specifically want for each stepper motor.
 
 void EffectorPool::syncEffector(char *identifier, int syncValue)
 {
     AbstractEffector *effector = getEffector(identifier);
     if (effector == NULL)
     {
-        Error::reportError_NoServoOnPin();
+        Error::reportError_NoEffectorOnPin(identifier);
         return;
     }
+
     effector->setSync(syncValue);
 }
 
@@ -98,7 +128,7 @@ void EffectorPool::clearCurvesForEffector(char *identifier)
     AbstractEffector *effector = getEffector(identifier);
     if (effector == NULL)
     {
-        Error::reportError_NoServoOnPin();
+        Error::reportError_NoEffectorOnPin(identifier);
         return;
     }
     effector->clearCurves();
@@ -109,7 +139,7 @@ bool EffectorPool::effectorUsesFloatCurve(char *identifier)
     AbstractEffector *effector = getEffector(identifier);
     if (effector == NULL)
     {
-        Error::reportError_NoServoOnPin();
+        Error::reportError_NoEffectorOnPin(identifier);
         return true;
     }
     return effector->useFloatCurve();
@@ -126,8 +156,6 @@ void EffectorPool::updateAllDriveTargets()
 
 void EffectorPool::deregisterAll()
 {
-    LOG_LN(F("deregister All"))
-
 #ifdef __AVR__
     cli(); // stop interrupts
 #endif

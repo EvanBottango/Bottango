@@ -16,7 +16,7 @@ public:
 
     unsigned long getEndTimeMs();
 
-    unsigned long getStartTimeMs();
+    virtual unsigned long getStartTimeMs();
 
     Color getStartColor();
 
@@ -30,4 +30,4 @@ private:
     Color endColor;
 };
 
-#endif //BOTTANGOARDUINO_COLORCURVE_H
+#endif // BOTTANGOARDUINO_COLORCURVE_H

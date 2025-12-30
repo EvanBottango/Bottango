@@ -17,6 +17,10 @@ protected:
     byte pin2 = 0;
     byte pin3 = 0;
 
+#ifdef PIN_REMAPPING
+    byte originalPin0 = 0;
+#endif
+
     volatile byte stepLoop = 0;
 
 private:

@@ -1,3 +1,4 @@
+// I2SAudioEffector.h
 #include "../BottangoArduinoModules.h"
 
 #ifdef AUDIO_SD_I2S
@@ -12,7 +13,7 @@
 class I2SAudioEffector : public AbstractEffector
 {
 public:
-    I2SAudioEffector(char *identifier, byte audioID);
+    I2SAudioEffector(char *identifier, char *hash);
 
     virtual void updateOnLoop() override;
     virtual void driveOnLoop() override;
@@ -25,9 +26,9 @@ private:
     char myIdentifier[9];
     bool shouldFire = false;
     unsigned long offsetMS = 0;
-    byte audioID = 0;
-    uint32_t sampleRate;
-    uint16_t bitsPerSample;
+    uint32_t sampleRate = 0;
+    uint16_t bitsPerSample = 0;
+    bool headerParsed = false;
 #ifdef ESP_ARDUINO_VERSION_MAJOR
 #if ESP_ARDUINO_VERSION >= ESP_ARDUINO_VERSION_VAL(3, 0, 0)
     i2s_data_bit_width_t i2s_bits_per_sample;

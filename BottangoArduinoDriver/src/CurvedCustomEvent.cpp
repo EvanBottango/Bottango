@@ -1,6 +1,6 @@
 #include "CurvedCustomEvent.h"
-#include "Log.h"
 #include "../BottangoArduinoConfig.h"
+#include "Errors.h"
 
 // Signal is 0 - sig max, and just use that for movement calculations, so that this can act like a bog standard loop driven effector
 CurvedCustomEvent::CurvedCustomEvent(char *identifier, float maxMovementPerSec, float startingMovement, byte pin) : LoopDrivenEffector(0, COMPRESSED_SIGNAL_MAX_INT, maxMovementPerSec * COMPRESSED_SIGNAL_MAX_INT, startingMovement * COMPRESSED_SIGNAL_MAX_INT), pin(pin)
@@ -8,6 +8,26 @@ CurvedCustomEvent::CurvedCustomEvent(char *identifier, float maxMovementPerSec, 
     strcpy(myIdentifier, identifier);
     if (pin != 255)
     {
+
+#ifdef NAMED_BOARD
+        if (pin == 0)
+        {
+            Error::reportError_InvalidPin();
+            return;
+        }
+#endif
+
+#ifdef PIN_REMAPPING
+        for (int i = 0; i < PIN_REMAP_LENGTH; i++)
+        {
+            if (inputPins[i] == pin)
+            {
+                pin = onboardPins[i];
+                this->pin = pin;
+                break;
+            }
+        }
+#endif
         pinMode(pin, OUTPUT);
     }
     Callbacks::onEffectorRegistered(this);

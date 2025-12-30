@@ -20,7 +20,9 @@ namespace Callbacks
     void onOnOffCustomEventOnOffChanged(AbstractEffector *effector, bool on);
     void onTriggerCustomEventTriggered(AbstractEffector *effector);
     void onColorCustomEventColorChanged(AbstractEffector *effector, byte newRed, byte newGreen, byte newBlue);
-    bool isStepperAutoHomeComplete(AbstractEffector *effector);
+    bool isEffectorAutoHomeComplete(AbstractEffector *effector, int &postAutoSyncMove, int autoSyncDirection);
+    void onEffectorPostAutoHomeSecondarySyncComplete(AbstractEffector *effector);
+    void onEffectorHomeReset(AbstractEffector *effector);
 } // namespace Callbacks
 
 #endif

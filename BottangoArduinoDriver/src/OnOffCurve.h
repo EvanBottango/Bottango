@@ -9,7 +9,8 @@ class OnOffCurve : public Curve
 public:
     OnOffCurve(unsigned long startTimeInMs, bool on);
     unsigned long startTimeInMs = 0;
-    bool on;
+    bool on = false;
+    virtual unsigned long getStartTimeMs();
 };
 
-#endif //BOTTANGOARDUINO_ONOFFCURVE_H
+#endif // BOTTANGOARDUINO_ONOFFCURVE_H

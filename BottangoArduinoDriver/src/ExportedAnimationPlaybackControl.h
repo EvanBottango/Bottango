@@ -33,9 +33,9 @@ namespace ExportedAnimationPlaybackControl
 
     void initialize();
     void updatePlaybackStatus();
-    int getIndexOfAnimationToTrigger(bool interruptingAnimationsOnly);
+    int getIndexOfAnimationToTrigger();
     extern int currentPlayingIndex;
-    extern int defaultIndex;
+    extern int idleAnimIndex;
 
 #ifdef USE_SD_CARD_COMMAND_STREAM
     AnimationConfiguration *parseConfiguration(File configFile);

@@ -1,5 +1,4 @@
 #include "VelocityEffector.h"
-#include "Log.h"
 #include "Outgoing.h"
 
 VelocityEffector::VelocityEffector(int minSignal, int maxSignal, int maxSignalPerSec, int startingSignal) : AbstractEffector(minSignal, maxSignal)
@@ -17,23 +16,82 @@ VelocityEffector::VelocityEffector(int minSignal, int maxSignal, int maxSignalPe
     this->lastSignalChangeTimeUs = 0;
     this->signalChangePeriodUs = 0;
     this->inProgressCurveIdx = 0;
+    this->homed = false;
 }
 
 void VelocityEffector::setSync(int syncValue)
 {
+    if (autoSync != 0)
+    {
+        return;
+    }
+
     sync = syncValue;
     signalChangePeriodUs = minMicrosPerSignal * STEPPER_SYNC_SPEED; // move at half max speed
     lastSignalChangeTimeUs = micros();
 }
 
-void VelocityEffector::endAutoSync()
+void VelocityEffector::setAutoSync(int syncValue)
 {
-    sync = 0;
+    if (autoSync != 0)
+    {
+        return;
+    }
+
+    autoSync = syncValue;
+    signalChangePeriodUs = minMicrosPerSignal * STEPPER_SYNC_SPEED; // move at half max speed
+    lastSignalChangeTimeUs = micros();
+}
+
+void VelocityEffector::updateSync(int delta)
+{
+    if (autoSync != 0)
+    {
+        int postAutoSync = 0;
+        if (Callbacks::isEffectorAutoHomeComplete(this, postAutoSync, autoSync))
+        {
+            autoSync = 0;
+            if (postAutoSync == 0)
+            {
+                homed = true;
+                notifyEndAutoSync();
+            }
+            else
+            {
+                sync = postAutoSync;
+                postAutoSyncInProgress = true;
+            }
+        }
+    }
+    else if (sync < 0)
+    {
+        sync++;
+    }
+    else if (sync > 0)
+    {
+        sync--;
+    }
+}
+
+void VelocityEffector::notifyEndAutoSync()
+{
     Outgoing::outgoing_notifySyncComplete();
     char effectorIdentifier[9];
     getIdentifier(effectorIdentifier, 9);
-    Serial.write(effectorIdentifier);
-    Serial.write("\n");
+    Outgoing::printOutputStringMem(effectorIdentifier);
+    Outgoing::printLine();
+}
+
+void VelocityEffector::resetHome()
+{
+    homed = false;
+
+    Callbacks::onEffectorHomeReset(this);
+}
+
+void VelocityEffector::setHome()
+{
+    homed = true;
 }
 
 void VelocityEffector::updateSignalBounds(int minSignal, int maxSignal, int signalSpeed)
@@ -81,13 +139,26 @@ void VelocityEffector::updateOnLoop()
     // an outstanding signal change, so just sleep
 
     // deal with sync
-    if (sync != 0)
+    if (sync != 0 || autoSync != 0)
     {
         if (nowUS - lastSignalChangeTimeUs >= signalChangePeriodUs)
         {
-            drive = sync > 0 ? -1 : 1;
+            if (autoSync != 0)
+            {
+                drive = autoSync > 0 ? 1 : -1;
+            }
+            else
+            {
+                drive = sync > 0 ? 1 : -1;
+            }
             lastSignalChangeTimeUs = nowUS;
         }
+        return;
+    }
+
+    // do not execute curves unless homed
+    if (!homed)
+    {
         return;
     }
 
@@ -250,6 +321,16 @@ void VelocityEffector::updateOnLoop()
 void VelocityEffector::driveOnLoop()
 {
     AbstractEffector::driveOnLoop();
+
+    // movement after auto sync is now donw
+    if (postAutoSyncInProgress && sync == 0)
+    {
+        postAutoSyncInProgress = false;
+        notifyEndAutoSync();
+        homed = true;
+
+        Callbacks::onEffectorPostAutoHomeSecondarySyncComplete(this);
+    }
 }
 
 bool VelocityEffector::useFloatCurve()

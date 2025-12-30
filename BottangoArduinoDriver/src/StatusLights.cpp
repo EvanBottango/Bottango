@@ -2,24 +2,55 @@
 #ifdef ENABLE_STATUS_LIGHTS
 #include "StatusLights.h"
 
-#define FADE_TIME 3000
-#define PULSE_TIME 150
 #define COLOR_MAX 55
 #define COLOR_MIN 5
+#define PULSE_TIME B_ON_SHORT // use the short blink duration for the one-off pulse
 
 namespace StatusLights
 {
+
+    static const unsigned long CYCLE_TIME = 3000UL;
+    static const unsigned long PULSE_UP = 1500UL;
+    static const unsigned long PULSE_DOWN = 1500UL;
+    static const unsigned long SIGNAL_QUICK_PULSE = 150UL;
+    // blink segments: (short) rise/fall rise/fall rise (long) fall
+    static const unsigned long blinkSegs[6] = {
+        300UL, // rise 1
+        300UL, // fall 1
+        300UL, // rise 2
+        300UL, // fall 2
+        300UL, // rise 3
+        1500UL // fall 3
+    };
+
     CRGB leds[NUM_STATUS_LED];
-    int brightness = COLOR_MAX;
-    unsigned long lastTime = 0;
+    unsigned long patternStartTime = 0;
+    LightMode lightModes[NUM_STATUS_LED];
 
     CRGB desiredColor_Connection = CRGB::Black;
     CRGB desiredColor_Signal = CRGB::Black;
     CRGB desiredColor_User = CRGB::Black;
     CRGB desiredColor_Pwr = CRGB::Black;
 
-    unsigned long signalpulseStartTime = 0;
-    bool signalisPulsing = false;
+    // one-off pulse state for SIGNAL_STATUS_LIGHT
+    unsigned long signalPulseStartTime = 0;
+    bool isSignalPulsing = false;
+
+    void initLights()
+    {
+        FastLED.addLeds<WS2812B, STATUS_LED_PIN, GRB>(leds, NUM_STATUS_LED);
+        FastLED.clear();
+        FastLED.show();
+
+        setDesiredColor(PWR_STATUS_LIGHT, STATUS_COLOR_PWR_ON);
+        for (int i = 0; i < NUM_STATUS_LED; i++)
+        {
+            lightModes[i] = MODE_PULSE;
+        }
+
+        patternStartTime = millis();
+        FastLED.show();
+    }
 
     void setDesiredColor(int light, CRGB color)
     {
@@ -37,62 +68,117 @@ namespace StatusLights
         case PWR_STATUS_LIGHT:
             desiredColor_Pwr = color;
             break;
-        };
+        }
     }
 
-    void initLights()
+    void setLightMode(int light, LightMode mode)
     {
-        FastLED.addLeds<WS2812B, STATUS_LED_PIN, GRB>(leds, NUM_STATUS_LED);
-        FastLED.clear();
-        FastLED.show();
-
-        setDesiredColor(PWR_STATUS_LIGHT, STATUS_COLOR_PWR_ON);
-
-        FastLED.show();
+        if (light >= 0 && light < NUM_STATUS_LED)
+            lightModes[light] = mode;
     }
 
     void updateLights()
     {
         unsigned long currentMillis = millis();
-        unsigned long elapsedTime = currentMillis % FADE_TIME;
+        unsigned long elapsedPatternTime = (currentMillis - patternStartTime) % CYCLE_TIME;
 
-        int fadeBrightness;
-        if (elapsedTime < FADE_TIME / 2)
+        for (int ledIndex = 0; ledIndex < NUM_STATUS_LED; ++ledIndex)
         {
-            fadeBrightness = map(elapsedTime, 0, FADE_TIME / 2, COLOR_MIN, COLOR_MAX);
-        }
-        else
-        {
-            fadeBrightness = map(elapsedTime, FADE_TIME / 2, FADE_TIME, COLOR_MAX, COLOR_MIN);
-        }
+            // 1) Determine the base color for this LED
+            CRGB baseColor;
+            switch (ledIndex)
+            {
+            case CONNECTION_STATUS_LIGHT:
+                baseColor = desiredColor_Connection;
+                break;
+            case SIGNAL_STATUS_LIGHT:
+                baseColor = desiredColor_Signal;
+                break;
+            case USER_STATUS_LIGHT:
+                baseColor = desiredColor_User;
+                break;
+            case PWR_STATUS_LIGHT:
+                baseColor = desiredColor_Pwr;
+                break;
+            default:
+                baseColor = CRGB::Black;
+                break;
+            }
 
-        leds[CONNECTION_STATUS_LIGHT] = desiredColor_Connection;
-        leds[CONNECTION_STATUS_LIGHT].nscale8(fadeBrightness);
+            // 2) If signal‐LED quick pulse is active, override everything
+            if (ledIndex == SIGNAL_STATUS_LIGHT && isSignalPulsing)
+            {
+                unsigned long elapsedSinceSignalPulse = currentMillis - signalPulseStartTime;
+                if (elapsedSinceSignalPulse < SIGNAL_QUICK_PULSE)
+                {
+                    int lerpFactor = map(elapsedSinceSignalPulse, 0, SIGNAL_QUICK_PULSE, 255, 0);
 
-        leds[PWR_STATUS_LIGHT] = desiredColor_Pwr;
-        leds[PWR_STATUS_LIGHT].nscale8(fadeBrightness);
+                    CRGB halfWhite = CRGB::White;
+                    halfWhite.nscale8(55);
 
-        leds[USER_STATUS_LIGHT] = desiredColor_User;
+                    CRGB targetColor = baseColor;
+                    targetColor.nscale8(COLOR_MAX);
 
-        // Handle pulsing for SIGNAL_STATUS_LIGHT
-        if (signalisPulsing && (currentMillis - signalpulseStartTime < PULSE_TIME))
-        {
-            // Calculate pulse progress from 0 to 255
-            int pulseProgress = map(currentMillis - signalpulseStartTime, 0, PULSE_TIME, 255, 0);
+                    leds[ledIndex] = halfWhite.lerp8(targetColor, lerpFactor);
+                    continue;
+                }
+                else
+                {
+                    isSignalPulsing = false;
+                }
+            }
 
-            // Blend from 1/2 white to the current fade color based on pulse progress
-            leds[SIGNAL_STATUS_LIGHT] = CRGB::White;
-            leds[SIGNAL_STATUS_LIGHT].nscale8(55);
+            // 3) Compute brightness level for pulse or blink
+            int brightnessLevel = COLOR_MIN;
 
-            CRGB fadeColor = desiredColor_Signal;
-            fadeColor.nscale8(fadeBrightness);
-            leds[SIGNAL_STATUS_LIGHT] = leds[SIGNAL_STATUS_LIGHT].lerp8(fadeColor, pulseProgress);
-        }
-        else
-        {
-            signalisPulsing = false;
-            leds[SIGNAL_STATUS_LIGHT] = desiredColor_Signal;
-            leds[SIGNAL_STATUS_LIGHT].nscale8(fadeBrightness); // Resume fade effect
+            if (lightModes[ledIndex] == MODE_PULSE)
+            {
+                // Smooth pulse up/down over CYCLE_TIME
+                if (elapsedPatternTime < PULSE_UP)
+                {
+                    brightnessLevel = map(elapsedPatternTime, 0, PULSE_UP, COLOR_MIN, COLOR_MAX);
+                }
+                else
+                {
+                    unsigned long elapsedSincePeak = elapsedPatternTime - PULSE_UP;
+                    brightnessLevel = map(elapsedSincePeak, 0, PULSE_DOWN, COLOR_MAX, COLOR_MIN);
+                }
+            }
+            else // MODE_BLINK
+            {
+                // Find which blink segment we're in
+                int blinkSegmentIndex = 0;
+                unsigned long cumulativeDuration = 0;
+
+                for (int i = 0; i < 6; i++)
+                {
+                    cumulativeDuration += blinkSegs[i];
+                    if (elapsedPatternTime < cumulativeDuration)
+                    {
+                        blinkSegmentIndex = i;
+                        break;
+                    }
+                }
+
+                unsigned long segmentStartTime = cumulativeDuration - blinkSegs[blinkSegmentIndex];
+                unsigned long elapsedInSegment = elapsedPatternTime - segmentStartTime;
+                unsigned long currentSegmentLength = blinkSegs[blinkSegmentIndex];
+
+                bool isRisingSegment = (blinkSegmentIndex % 2 == 0);
+                if (isRisingSegment)
+                {
+                    brightnessLevel = map(elapsedInSegment, 0, currentSegmentLength, COLOR_MIN, COLOR_MAX);
+                }
+                else
+                {
+                    brightnessLevel = map(elapsedInSegment, 0, currentSegmentLength, COLOR_MAX, COLOR_MIN);
+                }
+            }
+
+            // 4) Scale the base color and assign to the LED
+            CRGB scaledColor = baseColor;
+            scaledColor.nscale8(brightnessLevel);
+            leds[ledIndex] = scaledColor;
         }
 
         FastLED.show();
@@ -100,9 +186,10 @@ namespace StatusLights
 
     void pulseSignalLight()
     {
-        signalpulseStartTime = millis();
-        signalisPulsing = true;
+        signalPulseStartTime = millis();
+        isSignalPulsing = true;
     }
 
 } // namespace StatusLights
-#endif
+
+#endif // ENABLE_STATUS_LIGHTS

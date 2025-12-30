@@ -10,75 +10,234 @@
 
 namespace SDCardUtil
 {
-    bool sdCardInitialized = false;
-    bool sdCardAvailable = false;
+    bool internalSDMounted = false;
+    bool cardLost = false;
+    unsigned long lastMountAttemptTime = 0;
+
 #ifdef ESP32
+    SemaphoreHandle_t sdMutex = nullptr;
     SPIClass spi = SPIClass(VSPI);
 #endif
 
-    void initialize()
+    namespace
     {
-        if (sdCardInitialized)
+        SDFileError ensureSDMounted()
         {
-            return;
-        }
-
-        sdCardInitialized = true;
-#ifdef ESP32
-        spi.begin(SDPIN_CLK, SDPIN_MISO, SDPIN_MOSI, SDPIN_CS);
-        if (!SD.begin(SDPIN_CS, spi, 25000000))
-#else
-        if (!SD.begin(SDPIN_CS))
-#endif
-        {
-            Outgoing::printOutputStringFlash(F("SD Card Mount Failed"));
-            Outgoing::printLine();
+            // if has previously mounted, verify it
+            if (internalSDMounted)
+            {
+                File root = SD.open("/");
+                if (!root || !root.isDirectory())
+                {
+                    // can't open, therefore SD is gone
+                    root.close();
+                    internalSDMounted = false;
+                    cardLost = true;
+                    lastMountAttemptTime = millis();
 #ifdef ENABLE_STATUS_LIGHTS
-            StatusLights::setDesiredColor(SIGNAL_STATUS_LIGHT, STATUS_COLOR_SIGNAL_NOSD);
+                    StatusLights::setDesiredColor(SIGNAL_STATUS_LIGHT, STATUS_COLOR_SIGNAL_EXPORT_SD_ERROR);
 #endif
-        }
-        else
-        {
-            sdCardAvailable = true;
+                    Outgoing::printOutputStringFlash(F("SD Removed"));
+                    Outgoing::printLine();
+
+                    return SDFileError::ERR_NO_CARD;
+                }
+                root.close();
+                return SDFileError::ERR_NONE;
+            }
+
+            // not previously mounted, so throttle how fast we can retry
+            if (lastMountAttemptTime > 0 && millis() - lastMountAttemptTime < SD_CARD_REMOUNT_TIME)
+            {
+                Outgoing::printOutputStringFlash(F("No SD"));
+                Outgoing::printLine();
+                return SDFileError::ERR_NO_CARD;
+            }
+
+#ifdef SD_PIN_HIGH
+            // power-on sequence if needed
+            pinMode(SD_EN_PIN, OUTPUT);
+            digitalWrite(SD_EN_PIN, HIGH);
+#endif
+
+            lastMountAttemptTime = millis();
+#ifdef ESP32
+            spi.begin(SDPIN_CLK, SDPIN_MISO, SDPIN_MOSI, SDPIN_CS);
+            // reset if we lost card before restarting
+            if (cardLost)
+            {
+                SD.end();
+                cardLost = false;
+            }
+            // try and mount
+            if (!SD.begin(SDPIN_CS, spi, 25000000))
+            {
+#ifdef ENABLE_STATUS_LIGHTS
+                StatusLights::setDesiredColor(SIGNAL_STATUS_LIGHT, STATUS_COLOR_SIGNAL_EXPORT_SD_ERROR);
+#endif
+                Outgoing::printOutputStringFlash(F("Can't Mount SD"));
+                Outgoing::printLine();
+                return SDFileError::ERR_NO_CARD;
+            }
+#else
+            if (!SD.begin(SDPIN_CS))
+            {
+#ifdef ENABLE_STATUS_LIGHTS
+                StatusLights::setDesiredColor(SIGNAL_STATUS_LIGHT, STATUS_COLOR_SIGNAL_NOSD);
+#endif
+                Outgoing::printOutputStringFlash(F("Can't Mount SD"));
+                Outgoing::printLine();
+                return SDFileError::ERR_NO_CARD;
+            }
+#endif
+
+            internalSDMounted = true;
+            return SDFileError::ERR_NONE;
         }
     }
 
-    bool fileExists(const char *filePath)
+    File openFile(const char *filePath, SDFileError &fileError)
     {
-        return SD.exists(filePath);
-    }
-
-    File openFile(const char *filePath)
-    {
-        if (!sdCardInitialized)
+        lockCard();
+        fileError = ensureSDMounted();
+        if (fileError != SDFileError::ERR_NONE)
         {
-            initialize();
-        }
-        if (!sdCardAvailable)
-        {
+            // error case
+            unlockCard();
             return File();
         }
 
         File file = SD.open(filePath);
         if (!file)
         {
-            Outgoing::printOutputStringMem(filePath);
-            Outgoing::printOutputStringFlash(F(" : SD Card file not found"));
-            Outgoing::printLine();
 #ifdef ENABLE_STATUS_LIGHTS
-            StatusLights::setDesiredColor(SIGNAL_STATUS_LIGHT, STATUS_COLOR_SIGNAL_NOANIM);
+            StatusLights::setDesiredColor(SIGNAL_STATUS_LIGHT, STATUS_COLOR_SIGNAL_EXPORT_SD_ERROR);
 #endif
-            return file;
+
+            fileError = SD.exists(filePath) ? SDFileError::ERR_IO : SDFileError::ERR_FILE_NOT_FOUND;
+            if (fileError == SDFileError::ERR_IO)
+            {
+                Outgoing::printOutputStringFlash(F("IO SD fail"));
+                Outgoing::printLine();
+            }
+            else if (fileError == SDFileError::ERR_FILE_NOT_FOUND)
+            {
+                Outgoing::printOutputStringFlash(F("No File"));
+                Outgoing::printLine();
+            }
+
+            unlockCard();
+            return File();
         }
+
+        fileError = SDFileError::ERR_NONE;
+        unlockCard();
         return file;
     }
 
-    void closeFile(File file)
+    File openFileForWrite(const char *filePath, SDFileError &fileError)
     {
+        lockCard();
+        fileError = ensureSDMounted();
+        if (fileError != SDFileError::ERR_NONE)
+        {
+            // error case
+            unlockCard();
+            return File();
+        }
+
+#ifdef ESP32
+        // On ESP32 SD implementation FILE_WRITE == "w" means create or truncate
+        File file = SD.open(filePath, FILE_WRITE);
+#else
+        // other platforms FILE_WRITE usually appends, so remove first
+        if (SD.exists(filePath) && !SD.remove(filePath))
+        {
+            fileError = SDFileError::ERR_IO;
+            unlockCard();
+            return File();
+        }
+        File file = SD.open(filePath, FILE_WRITE);
+#endif
+
+        if (!file)
+        {
+            fileError = SD.exists(filePath) ? SDFileError::ERR_IO : SDFileError::ERR_FILE_NOT_FOUND;
+        }
+        else
+        {
+            fileError = SDFileError::ERR_NONE;
+        }
+        unlockCard();
+        return file;
+    }
+
+    bool fileExists(const char *filePath, SDFileError &fileError)
+    {
+        lockCard();
+        fileError = ensureSDMounted();
+        if (fileError == SDFileError::ERR_NO_CARD)
+        {
+            unlockCard();
+            return false;
+        }
+        bool exists = SD.exists(filePath);
+        if (!exists)
+        {
+            fileError = SDFileError::ERR_FILE_NOT_FOUND;
+        }
+        else
+        {
+            fileError = SDFileError::ERR_NONE;
+        }
+        unlockCard();
+        return exists;
+    }
+
+    // Write a chunk to an already-open file.
+    // Returns bytes written or -1 on error.
+    ssize_t writeChunk(File &file, const uint8_t *data, size_t len, SDFileError &fileError)
+    {
+        lockCard();
+        if (!file)
+        {
+            fileError = SDFileError::ERR_NO_CARD;
+            unlockCard();
+            return -1;
+        }
+        ssize_t bytesWritten = file.write(data, len);
+        fileError = (bytesWritten < 0) ? SDFileError::ERR_IO : SDFileError::ERR_NONE;
+        unlockCard();
+        return bytesWritten;
+    }
+
+    // Overload for C-strings
+    inline ssize_t writeChunk(File &file, const char *str, SDFileError &fileError)
+    {
+        return writeChunk(file, reinterpret_cast<const uint8_t *>(str), strlen(str), fileError);
+    }
+
+    void closeFile(File &file)
+    {
+        lockCard();
         if (file)
         {
+            file.flush();
             file.close();
         }
+        unlockCard();
+    }
+
+    bool safeAvailable(File &file)
+    {
+        lockCard();
+        bool result = false;
+        if (file)
+        {
+            result = file.available();
+        }
+        unlockCard();
+        return result;
     }
 
     void getAnimationFilePath(byte index, char *output, bool loop, bool config)
@@ -123,23 +282,38 @@ namespace SDCardUtil
         strcat_P(output, SD_DATA_ANIMDATA);  // "/anims/setup/data.txt"
     }
 
-    void getAudioFilePath(byte index, char *output)
+    void getAudioFilePath(char *identifier, char *output)
     {
-        char workingString[20];
 
         // add audio path
         strcpy_P(output, SD_AUDIO_PATH); // "/audio/"
 
-        // add index directory
-        workingString[0] = '\0';
-        itoa(index, workingString, 10);
-        strcat(output, workingString); // "/audio/10"
+        // add identifier string (8 char hex)
+        strcat(output, identifier); // "/audio/FFFFFFFF"
 
         // add loop or data suffix
+        char workingString[20];
         workingString[0] = '\0';
+        strcpy_P(workingString, SD_AUDIO_FORMAT); // .wav
 
-        strcpy_P(workingString, SD_AUDIO_FORMAT);
-        strcat(output, workingString);
+        strcat(output, workingString); // "/audio/FFFFFFFF.wav"
+    }
+
+    void getAudioHashFilePath(char *identifier, char *output)
+    {
+
+        // add audio path
+        strcpy_P(output, SD_AUDIO_PATH); // "/audio/"
+
+        // add identifier string (8 char hex)
+        strcat(output, identifier); // "/audio/FFFFFFFF"
+
+        // add loop or data suffix
+        char workingString[20];
+        workingString[0] = '\0';
+        strcpy_P(workingString, SD_HASH_FORMAT); // hash.txt
+
+        strcat(output, workingString); // "/audio/FFFFFFFFhash.txt"
     }
 }
 #endif

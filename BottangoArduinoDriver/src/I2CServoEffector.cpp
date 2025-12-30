@@ -11,13 +11,6 @@ I2CServoEffector::I2CServoEffector(byte i2cAddress, byte pin, short minPWM, shor
     registerPWMDriverEffector(i2cAddress);
     this->driver = getPWMDriverContainer(i2cAddress)->driver;
 
-    LOG_MKBUF
-    LOG(F("Attach i2c Servo address "))
-    LOG_INT(i2cAddress);
-    LOG(F(" pin"))
-    LOG_INT(pin)
-    LOG_NEWLINE()
-
     this->driver->writeMicroseconds(pin, startSignal);
     currentSignal = startSignal;
 

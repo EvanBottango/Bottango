@@ -4,6 +4,7 @@
 #include "CommandStream.h"
 #include "Arduino.h"
 #include "../BottangoArduinoModules.h"
+#include "../BottangoArduinoConfig.h"
 
 #if defined(USE_CODE_COMMAND_STREAM) || defined(USE_SD_CARD_COMMAND_STREAM)
 #include "ExportedAnimationPlaybackControl.h"
@@ -29,9 +30,18 @@ public:
     bool streamIsInProgress();
 
     void stop();
+    void setInvalidState();
+
+    bool commandStreamIsSetup = false;
 
 protected:
     CommandStream *commandStream = nullptr;
     void runInProgressCommand();
+    bool invalidState = false;
+
+#ifdef RELAY_SUPPORTED
+    bool startingPeerCommandsSent = false;
+    char cachedPostControlRegisterCommand[MAX_COMMAND_LENGTH] = {0};
+#endif
 };
 #endif

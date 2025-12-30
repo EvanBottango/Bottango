@@ -2,24 +2,12 @@
 #include "BottangoCore.h"
 
 #include "../BottangoArduinoModules.h"
-#if defined(RELAY_CHILD) && defined(RELAY_COMS_ESPNOW)
+#if defined(RELAY_SUPPORTED) && defined(RELAY_COMS_ESPNOW)
 #include "ESPNOWUtil.h"
 #endif
 
 namespace Outgoing
 {
-    /** Request E Stop */
-    const char ESTOP[] PROGMEM = "\nreqStop\n";
-
-    /** Request pause anim */
-    const char STOP_PLAY[] PROGMEM = "\nreqPause\n";
-
-    /** Request start anim */
-    const char START_PLAY[] PROGMEM = "\nreqPlay,";
-
-    /** Stepper/Custom Motor Auto Sync is Complete */
-    const char SYNC_COMPLETE[] PROGMEM = "\nsycMDone,";
-
     void printOutputStringPROGMEM(const char *targetOutput)
     {
         char outputString[MAX_COMMAND_LENGTH];
@@ -36,9 +24,22 @@ namespace Outgoing
 
     void printOutputStringFlash(const __FlashStringHelper *str)
     {
-
-#if defined(RELAY_CHILD) && defined(RELAY_COMS_ESPNOW)
-        ESPNowUtil::print(str);
+#if defined(RELAY_SUPPORTED) && defined(RELAY_COMS_ESPNOW)
+        if (BottangoCore::isRelayPeer)
+        {
+            if (secondaryPeerOutgoing)
+            {
+                Serial.print(str);
+            }
+            else
+            {
+                ESPNowUtil::peerPrint(str);
+            }
+        }
+        else
+        {
+            Serial.print(str);
+        }
 #elif defined(USE_USB_SERIAL)
         Serial.print(str);
 #elif defined(USE_ESP32_WIFI)
@@ -48,8 +49,22 @@ namespace Outgoing
 
     void printOutputStringMem(const char *str)
     {
-#if defined(RELAY_CHILD) && defined(RELAY_COMS_ESPNOW)
-        ESPNowUtil::print(str);
+#if defined(RELAY_SUPPORTED) && defined(RELAY_COMS_ESPNOW)
+        if (BottangoCore::isRelayPeer)
+        {
+            if (secondaryPeerOutgoing)
+            {
+                Serial.print(str);
+            }
+            else
+            {
+                ESPNowUtil::peerPrint(str);
+            }
+        }
+        else
+        {
+            Serial.print(str);
+        }
 #elif defined(USE_USB_SERIAL)
         Serial.print(str);
 #elif defined(USE_ESP32_WIFI)
@@ -71,6 +86,14 @@ namespace Outgoing
         printOutputStringMem(buffer);
     }
 
+    void printOutputStringMem(char value)
+    {
+        char buffer[2];
+        buffer[0] = value;
+        buffer[1] = '\0';
+        printOutputStringMem(buffer);
+    }
+
     void printOutputStringMem(uint16_t value)
     {
         printOutputStringMem(static_cast<int>(value));
@@ -87,8 +110,22 @@ namespace Outgoing
 
     void printLine()
     {
-#if defined(RELAY_CHILD) && defined(RELAY_COMS_ESPNOW)
-        ESPNowUtil::println();
+#if defined(RELAY_SUPPORTED) && defined(RELAY_COMS_ESPNOW)
+        if (BottangoCore::isRelayPeer)
+        {
+            if (secondaryPeerOutgoing)
+            {
+                Serial.print('\n');
+            }
+            else
+            {
+                ESPNowUtil::peerPrintln();
+            }
+        }
+        else
+        {
+            Serial.print('\n');
+        }
 #elif defined(USE_USB_SERIAL)
         Serial.println();
 #elif defined(USE_ESP32_WIFI)
@@ -112,18 +149,71 @@ namespace Outgoing
         printOutputStringMem(String(index).c_str());
         printOutputStringFlash(F(","));
         printOutputStringMem(String(time).c_str());
-        printOutputStringFlash(F("\n"));
+        printLine();
     }
+
+#ifdef ONLINE_BUTTON_ACTIONS
+    void outgoing_requestStartPlayViaButton(int btnIdex)
+    {
+        printOutputStringPROGMEM(START_PLAY_BUTTON);
+        printOutputStringMem(String(btnIdex).c_str());
+        printLine();
+    }
+#endif
 
     void outgoing_requestStartPlay()
     {
         printOutputStringPROGMEM(START_PLAY);
-        printOutputStringFlash(F("-1,-1\n"));
+        printOutputStringFlash(F("-1,-1"));
+        printLine();
     }
 
     void outgoing_notifySyncComplete()
     {
         printOutputStringPROGMEM(SYNC_COMPLETE);
     }
+
+    void flush()
+    {
+#if defined(RELAY_SUPPORTED) && defined(RELAY_COMS_ESPNOW)
+        if (secondaryPeerOutgoing)
+        {
+            Serial.flush();
+        }
+        else
+        {
+            ESPNowUtil::peerFlush();
+        }
+#elif defined(USE_USB_SERIAL)
+        Serial.flush();
+#elif defined(USE_ESP32_WIFI)
+        // BottangoCore::client.print(str);
+#endif
+    }
+
+#ifdef RELAY_SUPPORTED
+    void setSecondaryPeerOutgoing(bool enabled)
+    {
+        secondaryPeerOutgoing = enabled;
+    }
+    void toggleOnSecondaryOutgoing()
+    {
+        if (secondaryPeerOutgoing)
+        {
+            ignoreToggleOff = true;
+        }
+        secondaryPeerOutgoing = true;
+    }
+    void endToggleOnSecondaryOutgoing()
+    {
+        if (ignoreToggleOff)
+        {
+            return;
+        }
+        secondaryPeerOutgoing = false;
+    }
+    bool ignoreToggleOff = false;
+    bool secondaryPeerOutgoing = false;
+#endif
 
 } // namespace Outgoing

@@ -1,5 +1,5 @@
 #include "../BottangoArduinoModules.h"
-#if defined(RELAY_PARENT)
+#if defined(RELAY_SUPPORTED)
 
 #ifndef RelayChild_h
 #define RelayChild_h
@@ -11,23 +11,25 @@
 
 class RelayChild
 {
+
 public:
-    RelayChild(char *identifier, char *macAddress);
-    void getIdentifier(char *outArray, short arraySize);
+    RelayChild(char *macAddress);
     void passDownCommands(char *commands);
     void passUpCommands(char *commands);
     void destroy();
     void update();
+    void requestBoot();
     uint8_t mac_addr[6];
+    bool connected;
 
 private:
-    char identifier[9];
+    void onConnectionComplete();
+    void onReboot();
 
-    TxtBuffer<TXT_BUFFER_SIZE_ESPNOW> toChildBuffer;
-    TxtBuffer<TXT_BUFFER_SIZE_ESPNOW> toParentBuffer;
-
-    bool passUpNextOK = false;
-    bool block = false;
+    TxtBuffer<TXT_BUFFER_SIZE_RX_FROM_PEER> incomingFromPeerBuffer;
+    char disconnectedMessageHoldingBuffer[MAX_COMMAND_LENGTH] = {0};
+    unsigned long lastMsgTime = 0;
+    bool heartbeatOutstanding = false;
 };
 
 #endif

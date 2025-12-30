@@ -11,10 +11,10 @@ namespace OTAUpdateUtil
 {
     void beginOTA();
     void recvOTAData(const char *hexData);
+    void processHexData(uint8_t *buffer, size_t dataLength);
     void finishOTA(const char *expectedChecksumStr);
 
     extern bool otaInProgress;
-    extern uint32_t checksum;
 }
 
 #endif

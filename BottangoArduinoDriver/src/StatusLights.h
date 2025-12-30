@@ -11,30 +11,40 @@
 
 namespace StatusLights
 {
+    enum LightMode
+    {
+        MODE_PULSE,
+        MODE_BLINK
+    };
 
-#define STATUS_COLOR_PWR_ON CRGB(8, 136, 255)
+#define STATUS_COLOR_GREEN CRGB(7, 83, 0)
+#define STATUS_COLOR_YELLOW CRGB(137, 93, 0)
+#define STATUS_COLOR_BLUE CRGB(0, 95, 108)
+#define STATUS_COLOR_PURPLE CRGB(76, 2, 113)
+#define STATUS_COLOR_RED CRGB(150, 0, 0)
+#define STATUS_COLOR_BLACK CRGB(0, 0, 0)
 
-#define STATUS_COLOR_NO_CONNECTION CRGB(220, 192, 0)
-#define STATUS_COLOR_HAS_CONNECTION CRGB(8, 136, 255)
-#define STATUS_COLOR_LOST_CONNECTION CRGB(225, 12, 0)
-#define STATUS_COLOR_CONNECTION_OFFLINE CRGB(193, 3, 255)
+#define STATUS_COLOR_PWR_ON STATUS_COLOR_GREEN
 
-#define STATUS_COLOR_SIGNAL_SERIAL CRGB(0, 250, 18)
-#define STATUS_COLOR_SIGNAL_CHILD CRGB(3, 228, 255)
+#define STATUS_COLOR_NO_CONNECTION_SERIAL STATUS_COLOR_YELLOW
+#define STATUS_COLOR_NO_CONNECTION_PEER STATUS_COLOR_BLUE
+#define STATUS_COLOR_HAS_CONNECTION STATUS_COLOR_GREEN
 
-#define STATUS_COLOR_SIGNAL_NOSD CRGB(225, 12, 0)
-#define STATUS_COLOR_SIGNAL_NOANIM CRGB(220, 192, 0)
-#define STATUS_COLOR_SIGNAL_OFFLINEREADY CRGB(8, 136, 255)
-#define STATUS_COLOR_SIGNAL_OFFLINEPLAY CRGB(0, 250, 18)
+#define STATUS_COLOR_CONNECTION_EXPORT_PLAYBACK STATUS_COLOR_PURPLE
+
+#define STATUS_COLOR_SIGNAL_EXPORT_SD_ERROR STATUS_COLOR_RED
+#define STATUS_COLOR_SIGNAL_OFFLINEREADY STATUS_COLOR_BLACK
+#define STATUS_COLOR_SIGNAL_OFFLINEPLAY STATUS_COLOR_PURPLE
 
     void initLights();
     void updateLights();
     void setDesiredColor(int light, CRGB color);
+    void setLightMode(int light, LightMode mode);
     void pulseSignalLight();
 
     extern CRGB leds[NUM_STATUS_LED];
-    extern int brightness;
-    extern unsigned long lastTime;
+    extern unsigned long patternStartTime;
+    extern LightMode lightModes[NUM_STATUS_LED];
 
     extern CRGB desiredColor_Connection;
     extern CRGB desiredColor_Signal;

@@ -1,5 +1,4 @@
 #include "LoopDrivenEffector.h"
-#include "Log.h"
 
 LoopDrivenEffector::LoopDrivenEffector(int minSignal, int maxSignal, int maxSignalPerSec, int startingSignal) : AbstractEffector(minSignal, maxSignal)
 {

@@ -10,9 +10,9 @@ class Color
 public:
     Color();
     Color(byte r, byte g, byte b);
-    byte r;
-    byte g;
-    byte b;
+    byte r = 0;
+    byte g = 0;
+    byte b = 0;
 };
 
-#endif //BOTTANGOARDUINO_COLOR_H
+#endif // BOTTANGOARDUINO_COLOR_H

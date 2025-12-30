@@ -5,5 +5,6 @@ class Curve
 {
 public:
     Curve();
+    virtual unsigned long getStartTimeMs() = 0;
 };
 #endif
