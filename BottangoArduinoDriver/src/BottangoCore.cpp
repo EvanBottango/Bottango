@@ -890,9 +890,50 @@ namespace BottangoCore
 
     void bottangoLoop()
     {
+		// Overview:
+		// onEarlyLoop() callback
+		// updateReadBuffer()
+		//	-> Receive data
+		//  -> Parse commands
+		// drive all effectors
+		// update multimessage sender
+		// OnLateLoop() callback
+
+		// ToDo: Remove parse commands from updateReadBuffer() and make it a separate function. Receiving data and parsing commands are two different things.
+		// This will make it possible to switch command sources more easily.
+
+		// My proposed structure:
+		// onEarlyLoop() callback
+		// dataSource->updateReadBuffer()
+		// parseCommands()
+		// drive all effectors
+		// update multimessage sender
+		// OnLateLoop() callback
+
+		// Module approach:
+		// mMaster.executePhase(Phase::Early)
+		//    -> onEarlyLoop() callback
+		// mMaster.executePhase(Phase::Input)
+		//    -> read Pins / Analog Inputs
+		// mMaster.executePhase(Phase::Communication)
+		//    -> dataSource->updateReadBuffer()
+		//    -> update multimessage sender
+		// mMaster.executePhase(Phase::Logic)
+		//    -> parseCommands()
+		// mMaster.executePhase(Phase::Output)
+		//    -> drive all effectors
+		//    -> LEDs and stuff
+		// mMaster.executePhase(Phase::Late)
+		//	  -> OnLateLoop() callback
+
+		// Special-Case RELAY_SUPPORTED:
+
+
+
         Callbacks::onEarlyLoop();
 
         updateReadBuffer(false); // standard read
+
 
 #ifdef RELAY_SUPPORTED
         if (isRelayPeer)

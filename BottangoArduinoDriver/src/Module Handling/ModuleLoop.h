@@ -15,6 +15,11 @@ enum class Phase
 	Late
 };
 
+/**
+ * @brief Base class for modules that can respond to different phases of the main loop.
+ * 
+ * Derive from this class to create modules that can hook into various phases of the main loop.
+ */
 class LoopModule
 {
 public:
