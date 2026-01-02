@@ -6,6 +6,12 @@
 #include "../BottangoCore.h"
 #include "../Outgoing.h"
 
+void StopButtonModule::init()
+{
+	pinMode(STOP_BUTTON_PIN, STOP_INPUT_TYPE);
+	lastPressTime = 0;
+}
+
 void StopButtonModule::onPhase(Phase p)
 {
 	if (p != Phase::Input) return;

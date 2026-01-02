@@ -11,6 +11,7 @@
 class StopButtonModule : public LoopModule
 {
 public:
+	void init() override;
 	void onPhase(Phase p) override;
 
 private:

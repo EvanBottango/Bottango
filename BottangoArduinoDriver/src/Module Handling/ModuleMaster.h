@@ -3,8 +3,6 @@
 #ifndef _ModuleMaster_h
 #define _ModuleMaster_h
 
-//#define MAX_MODULES	10
-
 #include <Arduino.h>
 #include "ModuleLoop.h"
 
@@ -23,12 +21,23 @@ enum class Modules : uint8_t
 	Max
 };
 
+/**
+ * @brief The ModuleMaster class is responsible for managing and executing the lifecycle of various modules in the system.
+ * @details It handles the setup, initialization, and execution of different phases for each registered module.
+ */
 class ModuleMaster
 {
 public:
 
+	/**
+	 * @brief Default constructor for the ModuleMaster class.
+	 */
+	ModuleMaster() {};
 
-	ModuleMaster();
+	/**
+	 * @brief Default destructor for the ModuleMaster class.
+	 */
+	~ModuleMaster() = default;
 
 	/**
 	 * @brief Initializes and configures modules used by the application.
@@ -53,6 +62,9 @@ private:
 	LoopModule* modules[(int)Modules::Max];
 };
 
+/**
+ * @brief The InterfaceRegistry class provides a mechanism to register and retrieve interfaces for different modules.
+ */
 class InterfaceRegistry
 {
 public:
@@ -78,7 +90,7 @@ public:
 
 private:
 	/**
-	 * @brief A static inline array of void* pointers named interfaces, sized to (int)Modules::Max and initialized with nullptr.
+	 * @brief A array of void* pointers, sized to (int)Modules::Max, initialized with nullptr.
 	 */
 	static inline void* interfaces[(int)Modules::Max] = { nullptr };
 };

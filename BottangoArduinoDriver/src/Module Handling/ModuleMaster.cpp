@@ -1,6 +1,7 @@
-// 
-// 
-// 
+/**
+ * @defgroup ModuleSystem Module master system
+ * @{
+ */
 
 #include "ModuleMaster.h"
 #include "../../BottangoArduinoModules.h"
@@ -8,11 +9,6 @@
 #include "../Modules/StatusLightsModule.h"
 #include "../Modules/Audio/I2SAudioModule.h"
 #include "../Outgoing.h"
-
-ModuleMaster::ModuleMaster()
-{
-
-}
 
 void ModuleMaster::setupModules()
 {
@@ -48,3 +44,5 @@ void ModuleMaster::executePhase(Phase p)
 		modules[i]->onPhase(p);
 	}
 }
+
+/** @} */

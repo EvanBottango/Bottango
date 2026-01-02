@@ -8,10 +8,6 @@
 #include "ESPNOWUtil.h"
 #endif
 
-//#if defined(AUDIO_SD_I2S) && defined(DYNAMIC_VOLUME)
-//#include "Modules/Audio/I2SHelper.h"
-//#endif
-
 namespace BottangoCore
 {
     EffectorPool effectorPool = EffectorPool();
@@ -130,9 +126,6 @@ namespace BottangoCore
         }
 #endif
 
-#ifdef STOP_BUTTON_SUPPORTED
-        pinMode(STOP_BUTTON_PIN, STOP_INPUT_TYPE);
-#endif
     }
 
     void initUSBSerialComms()
