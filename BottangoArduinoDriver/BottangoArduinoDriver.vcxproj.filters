@@ -43,344 +43,194 @@
     <Filter Include="Source Files\System">
       <UniqueIdentifier>{a3fcd2e2-b05a-45de-8ca0-061ed211bbd3}</UniqueIdentifier>
     </Filter>
+    <Filter Include="Header Files\Effector">
+      <UniqueIdentifier>{6f1c4fda-27a2-44f9-b8dc-0c024d683beb}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Header Files\Effector\Color">
+      <UniqueIdentifier>{6eecda78-c354-4587-b4e8-f675ca16fcd0}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Header Files\lib">
+      <UniqueIdentifier>{35ea22a4-369b-43cb-8c49-f01dbb10b246}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Header Files\lib\ESP32Servo">
+      <UniqueIdentifier>{c1c233dd-67c6-4549-9dad-850974c04cf8}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Header Files\Data">
+      <UniqueIdentifier>{8c3ae968-afbd-45c4-9c72-707a3f224650}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Header Files\Effector\Audio">
+      <UniqueIdentifier>{debdf1a6-a285-4233-80b5-b83d5df5ad85}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Header Files\System\Util">
+      <UniqueIdentifier>{a3c3e549-0517-4bd2-83a8-c80f72c411c2}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Header Files\OTA">
+      <UniqueIdentifier>{77f64c0a-dfc4-439e-a2b7-f78c3024ec77}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Header Files\Relay Coms">
+      <UniqueIdentifier>{ab8cb5c0-bafe-426c-9fb1-f02b6ab0794b}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="BottangoArduinoDriver.ino" />
     <ClCompile Include="BottangoArduinoCallbacks.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="BottangoArduinoCallbacks.h">
-      <Filter>Header Files</Filter>
-    </ClCompile>
-    <ClCompile Include="BottangoArduinoConfig.h">
-      <Filter>Header Files</Filter>
-    </ClCompile>
-    <ClCompile Include="BottangoArduinoModules.h">
-      <Filter>Header Files</Filter>
-    </ClCompile>
     <ClCompile Include="src\AbstractCommandStreamDataSource.cpp">
       <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="src\AbstractCommandStreamDataSource.h">
-      <Filter>Header Files</Filter>
     </ClCompile>
     <ClCompile Include="src\AbstractEffector.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="src\AbstractEffector.h">
-      <Filter>Header Files</Filter>
-    </ClCompile>
     <ClCompile Include="src\AbstractMultiMessageOutgoingSource.cpp">
       <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="src\AbstractMultiMessageOutgoingSource.h">
-      <Filter>Header Files</Filter>
     </ClCompile>
     <ClCompile Include="src\Adafruit_PWMServoDriverContainer.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="src\Adafruit_PWMServoDriverContainer.h">
-      <Filter>Header Files</Filter>
-    </ClCompile>
     <ClCompile Include="src\AudioBinaryUtil.cpp">
       <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="src\AudioBinaryUtil.h">
-      <Filter>Header Files</Filter>
     </ClCompile>
     <ClCompile Include="src\BasicCommands.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="src\BasicCommands.h">
-      <Filter>Header Files</Filter>
-    </ClCompile>
     <ClCompile Include="src\BezierCurve.cpp">
       <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="src\BezierCurve.h">
-      <Filter>Header Files</Filter>
     </ClCompile>
     <ClCompile Include="src\BoardDefs.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="src\BoardDefs.h">
-      <Filter>Header Files</Filter>
-    </ClCompile>
     <ClCompile Include="src\BottangoCore.cpp">
       <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="src\BottangoCore.h">
-      <Filter>Header Files</Filter>
     </ClCompile>
     <ClCompile Include="src\CircularArray.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="src\CircularArray.h">
-      <Filter>Header Files</Filter>
-    </ClCompile>
     <ClCompile Include="src\CodeCommandStreamDataSource.cpp">
       <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="src\CodeCommandStreamDataSource.h">
-      <Filter>Header Files</Filter>
     </ClCompile>
     <ClCompile Include="src\Color.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="src\Color.h">
-      <Filter>Header Files</Filter>
-    </ClCompile>
     <ClCompile Include="src\ColorCurve.cpp">
       <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="src\ColorCurve.h">
-      <Filter>Header Files</Filter>
     </ClCompile>
     <ClCompile Include="src\ColorCustomEvent.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="src\ColorCustomEvent.h">
-      <Filter>Header Files</Filter>
-    </ClCompile>
     <ClCompile Include="src\ColorEffector.cpp">
       <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="src\ColorEffector.h">
-      <Filter>Header Files</Filter>
     </ClCompile>
     <ClCompile Include="src\CommandStream.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="src\CommandStream.h">
-      <Filter>Header Files</Filter>
-    </ClCompile>
     <ClCompile Include="src\CommandStreamProvider.cpp">
       <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="src\CommandStreamProvider.h">
-      <Filter>Header Files</Filter>
     </ClCompile>
     <ClCompile Include="src\Curve.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="src\Curve.h">
-      <Filter>Header Files</Filter>
-    </ClCompile>
     <ClCompile Include="src\CurvedCustomEvent.cpp">
       <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="src\CurvedCustomEvent.h">
-      <Filter>Header Files</Filter>
     </ClCompile>
     <ClCompile Include="src\CustomMotorEffector.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="src\CustomMotorEffector.h">
-      <Filter>Header Files</Filter>
-    </ClCompile>
     <ClCompile Include="src\EffectorPool.cpp">
       <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="src\EffectorPool.h">
-      <Filter>Header Files</Filter>
     </ClCompile>
     <ClCompile Include="src\Errors.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="src\Errors.h">
-      <Filter>Header Files</Filter>
-    </ClCompile>
     <ClCompile Include="src\ESPNOWUtil.cpp">
       <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="src\ESPNOWUtil.h">
-      <Filter>Header Files</Filter>
     </ClCompile>
     <ClCompile Include="src\ExportedAnimationPlaybackControl.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="src\ExportedAnimationPlaybackControl.h">
-      <Filter>Header Files</Filter>
-    </ClCompile>
     <ClCompile Include="src\FixedBezierCurve.cpp">
       <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="src\FixedBezierCurve.h">
-      <Filter>Header Files</Filter>
     </ClCompile>
     <ClCompile Include="src\FloatBezierCurve.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="src\FloatBezierCurve.h">
-      <Filter>Header Files</Filter>
-    </ClCompile>
     <ClCompile Include="src\FreeRam.cpp">
       <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="src\FreeRam.h">
-      <Filter>Header Files</Filter>
     </ClCompile>
     <ClCompile Include="src\HexDataDownloadUtil.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="src\HexDataDownloadUtil.h">
-      <Filter>Header Files</Filter>
-    </ClCompile>
     <ClCompile Include="src\I2CPool.cpp">
       <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="src\I2CPool.h">
-      <Filter>Header Files</Filter>
     </ClCompile>
     <ClCompile Include="src\I2CServoEffector.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="src\I2CServoEffector.h">
-      <Filter>Header Files</Filter>
-    </ClCompile>
     <ClCompile Include="src\I2SAudioEffector.cpp">
       <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="src\I2SAudioEffector.h">
-      <Filter>Header Files</Filter>
     </ClCompile>
     <ClCompile Include="src\LoopDrivenEffector.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="src\LoopDrivenEffector.h">
-      <Filter>Header Files</Filter>
-    </ClCompile>
     <ClCompile Include="src\MACResponder.cpp">
       <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="src\MACResponder.h">
-      <Filter>Header Files</Filter>
     </ClCompile>
     <ClCompile Include="src\ModulesResponder.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="src\ModulesResponder.h">
-      <Filter>Header Files</Filter>
-    </ClCompile>
     <ClCompile Include="src\OnOffCurve.cpp">
       <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="src\OnOffCurve.h">
-      <Filter>Header Files</Filter>
     </ClCompile>
     <ClCompile Include="src\OnOffCustomEvent.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="src\OnOffCustomEvent.h">
-      <Filter>Header Files</Filter>
-    </ClCompile>
     <ClCompile Include="src\OTAUpdateUtil.cpp">
       <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="src\OTAUpdateUtil.h">
-      <Filter>Header Files</Filter>
     </ClCompile>
     <ClCompile Include="src\Outgoing.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="src\Outgoing.h">
-      <Filter>Header Files</Filter>
-    </ClCompile>
     <ClCompile Include="src\PersistentConfigUtil.cpp">
       <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="src\PersistentConfigUtil.h">
-      <Filter>Header Files</Filter>
     </ClCompile>
     <ClCompile Include="src\PinServoEffector.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="src\PinServoEffector.h">
-      <Filter>Header Files</Filter>
-    </ClCompile>
     <ClCompile Include="src\PinStepperEffector.cpp">
       <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="src\PinStepperEffector.h">
-      <Filter>Header Files</Filter>
     </ClCompile>
     <ClCompile Include="src\RelayChild.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="src\RelayChild.h">
-      <Filter>Header Files</Filter>
-    </ClCompile>
-    <ClCompile Include="src\RelayChildMessageQueue.h">
-      <Filter>Header Files</Filter>
-    </ClCompile>
     <ClCompile Include="src\RelayChildPool.cpp">
       <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="src\RelayChildPool.h">
-      <Filter>Header Files</Filter>
     </ClCompile>
     <ClCompile Include="src\SDCardCommandStreamDataSource.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="src\SDCardCommandStreamDataSource.h">
-      <Filter>Header Files</Filter>
-    </ClCompile>
     <ClCompile Include="src\SDCardUtil.cpp">
       <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="src\SDCardUtil.h">
-      <Filter>Header Files</Filter>
-    </ClCompile>
-    <ClCompile Include="src\StatusLights.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="src\StatusLights.h">
-      <Filter>Header Files</Filter>
     </ClCompile>
     <ClCompile Include="src\StepDirStepperEffector.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="src\StepDirStepperEffector.h">
-      <Filter>Header Files</Filter>
-    </ClCompile>
     <ClCompile Include="src\Time.cpp">
       <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="src\Time.h">
-      <Filter>Header Files</Filter>
     </ClCompile>
     <ClCompile Include="src\TriggerCurve.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="src\TriggerCurve.h">
-      <Filter>Header Files</Filter>
-    </ClCompile>
     <ClCompile Include="src\TriggerCustomEvent.cpp">
       <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="src\TriggerCustomEvent.h">
-      <Filter>Header Files</Filter>
-    </ClCompile>
-    <ClCompile Include="src\TxtBuffer.h">
-      <Filter>Header Files</Filter>
     </ClCompile>
     <ClCompile Include="src\VelocityEffector.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="src\VelocityEffector.h">
-      <Filter>Header Files</Filter>
-    </ClCompile>
     <ClCompile Include="src\lib\ESP32Servo\src\ESP32PWM.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="src\lib\ESP32Servo\src\ESP32PWM.h">
-      <Filter>Header Files</Filter>
-    </ClCompile>
     <ClCompile Include="src\lib\ESP32Servo\src\ESP32Servo.cpp">
       <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="src\lib\ESP32Servo\src\ESP32Servo.h">
-      <Filter>Header Files</Filter>
     </ClCompile>
     <ClCompile Include="src\Interfaces\AudioPlayback.cpp">
       <Filter>Source Files\Interfaces</Filter>
@@ -397,9 +247,6 @@
     <ClCompile Include="src\Modules\StatusLightsModule.cpp">
       <Filter>Source Files\Modules</Filter>
     </ClCompile>
-    <ClCompile Include="src\Modules\Audio\I2SHelper.cpp">
-      <Filter>Source Files\Modules\Audio</Filter>
-    </ClCompile>
     <ClCompile Include="src\Modules\Audio\I2SAudioModule.cpp">
       <Filter>Source Files\Modules\Audio</Filter>
     </ClCompile>
@@ -408,6 +255,177 @@
     </ClCompile>
     <ClCompile Include="src\System\SystemStatus.cpp">
       <Filter>Source Files\System</Filter>
+    </ClCompile>
+    <ClCompile Include="src\AbstractEffector.h">
+      <Filter>Header Files\Effector</Filter>
+    </ClCompile>
+    <ClCompile Include="src\BottangoCore.h">
+      <Filter>Header Files\System</Filter>
+    </ClCompile>
+    <ClCompile Include="src\BasicCommands.h">
+      <Filter>Header Files\System</Filter>
+    </ClCompile>
+    <ClCompile Include="src\BoardDefs.h">
+      <Filter>Header Files\System</Filter>
+    </ClCompile>
+    <ClCompile Include="BottangoArduinoModules.h">
+      <Filter>Header Files\System</Filter>
+    </ClCompile>
+    <ClCompile Include="BottangoArduinoConfig.h">
+      <Filter>Header Files\System</Filter>
+    </ClCompile>
+    <ClCompile Include="src\ColorEffector.h">
+      <Filter>Header Files\Effector\Color</Filter>
+    </ClCompile>
+    <ClCompile Include="src\Color.h">
+      <Filter>Header Files\Effector\Color</Filter>
+    </ClCompile>
+    <ClCompile Include="src\ColorCurve.h">
+      <Filter>Header Files\Effector\Color</Filter>
+    </ClCompile>
+    <ClCompile Include="src\Curve.h">
+      <Filter>Header Files\Effector</Filter>
+    </ClCompile>
+    <ClCompile Include="src\ColorCustomEvent.h">
+      <Filter>Header Files\Effector\Color</Filter>
+    </ClCompile>
+    <ClCompile Include="src\EffectorPool.h">
+      <Filter>Header Files\Effector</Filter>
+    </ClCompile>
+    <ClCompile Include="src\CurvedCustomEvent.h">
+      <Filter>Header Files\Effector</Filter>
+    </ClCompile>
+    <ClCompile Include="src\BezierCurve.h">
+      <Filter>Header Files\Effector</Filter>
+    </ClCompile>
+    <ClCompile Include="src\CustomMotorEffector.h">
+      <Filter>Header Files\Effector</Filter>
+    </ClCompile>
+    <ClCompile Include="src\lib\ESP32Servo\src\ESP32Servo.h">
+      <Filter>Header Files\lib\ESP32Servo</Filter>
+    </ClCompile>
+    <ClCompile Include="src\lib\ESP32Servo\src\ESP32PWM.h">
+      <Filter>Header Files\lib\ESP32Servo</Filter>
+    </ClCompile>
+    <ClCompile Include="src\FixedBezierCurve.h">
+      <Filter>Header Files\Effector</Filter>
+    </ClCompile>
+    <ClCompile Include="src\FloatBezierCurve.h">
+      <Filter>Header Files\Effector</Filter>
+    </ClCompile>
+    <ClCompile Include="src\OnOffCurve.h">
+      <Filter>Header Files\Effector</Filter>
+    </ClCompile>
+    <ClCompile Include="src\OnOffCustomEvent.h">
+      <Filter>Header Files\Effector</Filter>
+    </ClCompile>
+    <ClCompile Include="src\LoopDrivenEffector.h">
+      <Filter>Header Files\Effector</Filter>
+    </ClCompile>
+    <ClCompile Include="src\I2CServoEffector.h">
+      <Filter>Header Files\Effector</Filter>
+    </ClCompile>
+    <ClCompile Include="src\I2CPool.h">
+      <Filter>Header Files\Effector</Filter>
+    </ClCompile>
+    <ClCompile Include="src\PinServoEffector.h">
+      <Filter>Header Files\Effector</Filter>
+    </ClCompile>
+    <ClCompile Include="src\PinStepperEffector.h">
+      <Filter>Header Files\Effector</Filter>
+    </ClCompile>
+    <ClCompile Include="src\StepDirStepperEffector.h">
+      <Filter>Header Files\Effector</Filter>
+    </ClCompile>
+    <ClCompile Include="src\TriggerCurve.h">
+      <Filter>Header Files\Effector</Filter>
+    </ClCompile>
+    <ClCompile Include="src\TriggerCustomEvent.h">
+      <Filter>Header Files\Effector</Filter>
+    </ClCompile>
+    <ClCompile Include="src\VelocityEffector.h">
+      <Filter>Header Files\Effector</Filter>
+    </ClCompile>
+    <ClCompile Include="src\CommandStream.h">
+      <Filter>Header Files\Data</Filter>
+    </ClCompile>
+    <ClCompile Include="src\CommandStreamProvider.h">
+      <Filter>Header Files\Data</Filter>
+    </ClCompile>
+    <ClCompile Include="src\ExportedAnimationPlaybackControl.h">
+      <Filter>Header Files\Data</Filter>
+    </ClCompile>
+    <ClCompile Include="src\SDCardCommandStreamDataSource.h">
+      <Filter>Header Files\Data</Filter>
+    </ClCompile>
+    <ClCompile Include="src\SDCardUtil.h">
+      <Filter>Header Files\Data</Filter>
+    </ClCompile>
+    <ClCompile Include="src\Time.h">
+      <Filter>Header Files\System</Filter>
+    </ClCompile>
+    <ClCompile Include="src\AbstractCommandStreamDataSource.h">
+      <Filter>Header Files\Data</Filter>
+    </ClCompile>
+    <ClCompile Include="src\Adafruit_PWMServoDriverContainer.h">
+      <Filter>Header Files\Effector</Filter>
+    </ClCompile>
+    <ClCompile Include="src\I2SAudioEffector.h">
+      <Filter>Header Files\Effector\Audio</Filter>
+    </ClCompile>
+    <ClCompile Include="src\ESPNOWUtil.h">
+      <Filter>Header Files\System\Util</Filter>
+    </ClCompile>
+    <ClCompile Include="src\Errors.h">
+      <Filter>Header Files\System\Util</Filter>
+    </ClCompile>
+    <ClCompile Include="src\FreeRam.h">
+      <Filter>Header Files\System\Util</Filter>
+    </ClCompile>
+    <ClCompile Include="src\TxtBuffer.h">
+      <Filter>Header Files\Data</Filter>
+    </ClCompile>
+    <ClCompile Include="src\PersistentConfigUtil.h">
+      <Filter>Header Files\System\Util</Filter>
+    </ClCompile>
+    <ClCompile Include="src\AudioBinaryUtil.h">
+      <Filter>Header Files\OTA</Filter>
+    </ClCompile>
+    <ClCompile Include="src\OTAUpdateUtil.h">
+      <Filter>Header Files\OTA</Filter>
+    </ClCompile>
+    <ClCompile Include="src\HexDataDownloadUtil.h">
+      <Filter>Header Files\OTA</Filter>
+    </ClCompile>
+    <ClCompile Include="src\MACResponder.h">
+      <Filter>Header Files\Relay Coms</Filter>
+    </ClCompile>
+    <ClCompile Include="src\RelayChildPool.h">
+      <Filter>Header Files\Relay Coms</Filter>
+    </ClCompile>
+    <ClCompile Include="src\RelayChildMessageQueue.h">
+      <Filter>Header Files\Relay Coms</Filter>
+    </ClCompile>
+    <ClCompile Include="src\RelayChild.h">
+      <Filter>Header Files\Relay Coms</Filter>
+    </ClCompile>
+    <ClCompile Include="src\ModulesResponder.h">
+      <Filter>Header Files\Module Handling</Filter>
+    </ClCompile>
+    <ClCompile Include="BottangoArduinoCallbacks.h">
+      <Filter>Header Files\System</Filter>
+    </ClCompile>
+    <ClCompile Include="src\CircularArray.h">
+      <Filter>Header Files\System\Util</Filter>
+    </ClCompile>
+    <ClCompile Include="src\CodeCommandStreamDataSource.h">
+      <Filter>Header Files\Data</Filter>
+    </ClCompile>
+    <ClCompile Include="src\Outgoing.h">
+      <Filter>Header Files\System</Filter>
+    </ClCompile>
+    <ClCompile Include="src\AbstractMultiMessageOutgoingSource.h">
+      <Filter>Header Files\System</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
@@ -433,9 +451,6 @@
       <Filter>Header Files\Modules\Audio</Filter>
     </ClInclude>
     <ClInclude Include="src\Modules\Audio\I2SAudioModule.h">
-      <Filter>Header Files\Modules\Audio</Filter>
-    </ClInclude>
-    <ClInclude Include="src\Modules\Audio\I2SHelper.h">
       <Filter>Header Files\Modules\Audio</Filter>
     </ClInclude>
     <ClInclude Include="src\System\SystemStatus.h">

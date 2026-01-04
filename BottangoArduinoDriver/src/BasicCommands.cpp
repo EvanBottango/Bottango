@@ -30,10 +30,6 @@
 #endif
 #endif
 
-#ifdef ENABLE_STATUS_LIGHTS
-#include "StatusLights.h"
-#endif
-
 #ifdef ENABLE_ESP_OTA_UPDATE
 #include "OTAUpdateUtil.h"
 #endif
@@ -286,15 +282,15 @@ namespace BasicCommands
     }
 
 	// ToDo: Do we want to leave this kind of functions within the BasicCommands, or move it to the module code?
-	// My opinnion is to move it out of here to reduce the #ifdef clutter and have everything contained within the module code.
+	// My opinion is to move it out of here to reduce the #ifdef clutter and have everything contained within the module code.
 #ifdef AUDIO_SD_I2S
     void registerAudioEvent(char **args)
     {
-        char *identifier = args[1];
+        /*char* identifier = args[1];
         char *hash = args[2];
 
         I2SAudioEffector *newEffector = new I2SAudioEffector(identifier, hash, static_cast<IAudioPlayback*>(InterfaceRegistry::get(Modules::AudioI2S)));
-        BottangoCore::effectorPool.addEffector(newEffector);
+        BottangoCore::effectorPool.addEffector(newEffector);*/
     }
 #endif
 

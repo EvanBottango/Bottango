@@ -3,6 +3,7 @@
 #include "../BottangoArduinoModules.h"
 #include "Module Handling/ModuleMaster.h"
 #include "System/SystemStatus.h"
+#include "I2SAudioEffector.h"
 
 #if defined(RELAY_SUPPORTED) && defined(RELAY_COMS_ESPNOW)
 #include "ESPNOWUtil.h"
@@ -620,9 +621,13 @@ namespace BottangoCore
 		// ToDo: (24.12.2025) Move the registering of optional modules into the ModuleMaster, to have them at their own place
 		// This is to reduce complexity for adding new modules. This way "Module" code stays within the ModuleMaster part.
 		// (25.12.2025) Or mabye not? I'm not sure yet.
+		// (04.01.2026) Solution: See below
         else if (strcmp_P(commandName, BasicCommands::I2S_RegisterAudioEvent()) == 0)
         {
-            BasicCommands::registerAudioEvent(splitCommandBuffer);
+			// ToDo: Leave the logic to register the effecotr up to the effector itself
+			// This way the BasicCommands don't need to know about module specific stuff
+			I2SAudioEffector* newEffector = new I2SAudioEffector(splitCommandBuffer);
+            //BasicCommands::registerAudioEvent(splitCommandBuffer);
         }
         /*else if (strcmp_P(commandName, BasicCommands::AUDIO_BIN) == 0)
         {
@@ -921,8 +926,8 @@ namespace BottangoCore
 		// mMaster.executePhase(Phase::Logic)
 		//    -> parseCommands()
 		// mMaster.executePhase(Phase::Output)
-		//    -> drive all effectors
-		//    -> LEDs and stuff
+		//    -> Status-LEDs
+		// effectorPool.updateAllDriveTargets()
 		// mMaster.executePhase(Phase::Late)
 		//	  -> OnLateLoop() callback
 
