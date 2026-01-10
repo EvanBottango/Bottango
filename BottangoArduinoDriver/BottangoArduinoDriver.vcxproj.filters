@@ -70,6 +70,12 @@
     <Filter Include="Header Files\Relay Coms">
       <UniqueIdentifier>{ab8cb5c0-bafe-426c-9fb1-f02b6ab0794b}</UniqueIdentifier>
     </Filter>
+    <Filter Include="Header Files\Communication">
+      <UniqueIdentifier>{60192ad9-30c1-497c-b37b-21524c874268}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source Files\Communication">
+      <UniqueIdentifier>{fc953fa3-f460-475f-bedc-54f7ed69fe0c}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="BottangoArduinoDriver.ino" />
@@ -427,6 +433,18 @@
     <ClCompile Include="src\AbstractMultiMessageOutgoingSource.h">
       <Filter>Header Files\System</Filter>
     </ClCompile>
+    <ClCompile Include="src\Communication\DataSource.cpp">
+      <Filter>Source Files\Communication</Filter>
+    </ClCompile>
+    <ClCompile Include="src\Communication\SerialSource.cpp">
+      <Filter>Source Files\Communication</Filter>
+    </ClCompile>
+    <ClCompile Include="src\Communication\CmdParser.cpp">
+      <Filter>Source Files\Communication</Filter>
+    </ClCompile>
+    <ClCompile Include="src\Communication\AsciiParser.cpp">
+      <Filter>Source Files\Communication</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="__vm\.BottangoArduinoDriver.vsarduino.h">
@@ -455,6 +473,18 @@
     </ClInclude>
     <ClInclude Include="src\System\SystemStatus.h">
       <Filter>Header Files\System</Filter>
+    </ClInclude>
+    <ClInclude Include="src\Communication\DataSource.h">
+      <Filter>Header Files\Communication</Filter>
+    </ClInclude>
+    <ClInclude Include="src\Communication\SerialSource.h">
+      <Filter>Header Files\Communication</Filter>
+    </ClInclude>
+    <ClInclude Include="src\Communication\CmdParser.h">
+      <Filter>Header Files\Communication</Filter>
+    </ClInclude>
+    <ClInclude Include="src\Communication\AsciiParser.h">
+      <Filter>Header Files\Communication</Filter>
     </ClInclude>
   </ItemGroup>
 </Project>

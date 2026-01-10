@@ -1,6 +1,7 @@
 // !!! DRIVER VERSION: 0.7.1p7a !!!
 // !!! Api Version: 9 !!!
 
+#include "DataSource.h"
 #include "src/BottangoCore.h"
 #include "src/BasicCommands.h"
 

@@ -132,6 +132,22 @@
     <ClCompile Include="src\CommandStreamProvider.cpp">
       <DeploymentContent>true</DeploymentContent>
     </ClCompile>
+    <ClCompile Include="src\Communication\AsciiParser.cpp">
+      <SubType>
+      </SubType>
+    </ClCompile>
+    <ClCompile Include="src\Communication\CmdParser.cpp">
+      <SubType>
+      </SubType>
+    </ClCompile>
+    <ClCompile Include="src\Communication\DataSource.cpp">
+      <SubType>
+      </SubType>
+    </ClCompile>
+    <ClCompile Include="src\Communication\SerialSource.cpp">
+      <SubType>
+      </SubType>
+    </ClCompile>
     <ClCompile Include="src\Curve.cpp">
       <DeploymentContent>true</DeploymentContent>
     </ClCompile>
@@ -475,6 +491,22 @@
       <FileType>CppCode</FileType>
       <DeploymentContent>true</DeploymentContent>
     </ClCompile>
+    <ClInclude Include="src\Communication\AsciiParser.h">
+      <SubType>
+      </SubType>
+    </ClInclude>
+    <ClInclude Include="src\Communication\CmdParser.h">
+      <SubType>
+      </SubType>
+    </ClInclude>
+    <ClInclude Include="src\Communication\DataSource.h">
+      <SubType>
+      </SubType>
+    </ClInclude>
+    <ClInclude Include="src\Communication\SerialSource.h">
+      <SubType>
+      </SubType>
+    </ClInclude>
     <ClInclude Include="src\Interfaces\AudioPlayback.h" />
     <ClInclude Include="src\Module Handling\ModuleLoop.h" />
     <ClInclude Include="src\Module Handling\ModuleMaster.h" />

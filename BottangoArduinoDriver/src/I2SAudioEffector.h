@@ -13,8 +13,8 @@
 class I2SAudioEffector : public AbstractEffector
 {
 public:
-    //I2SAudioEffector(char* identifier, char* hash, IAudioPlayback* interface);
-	I2SAudioEffector(char** args);
+    I2SAudioEffector(char* identifier, char* hash, IAudioPlayback* interface);
+	//I2SAudioEffector(char** args);
 
     virtual void updateOnLoop() override;
     virtual void driveOnLoop() override;

@@ -626,8 +626,10 @@ namespace BottangoCore
         {
 			// ToDo: Leave the logic to register the effecotr up to the effector itself
 			// This way the BasicCommands don't need to know about module specific stuff
-			I2SAudioEffector* newEffector = new I2SAudioEffector(splitCommandBuffer);
-            //BasicCommands::registerAudioEvent(splitCommandBuffer);
+			//BottangoCore::effectorPool.addEffector<I2SAudioEffector>(splitCommandBuffer);
+			//I2SAudioEffector* newEffector = new I2SAudioEffector(splitCommandBuffer);
+			//BottangoCore::effectorPool
+            BasicCommands::registerAudioEvent(splitCommandBuffer);
         }
         /*else if (strcmp_P(commandName, BasicCommands::AUDIO_BIN) == 0)
         {

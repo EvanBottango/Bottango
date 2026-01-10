@@ -11,19 +11,10 @@
 #include "Module Handling/ModuleMaster.h"
 
 // Signal is 0 - 0, and just use that for movement calculations, so that this can act like a bog standard loop driven effector
-I2SAudioEffector::I2SAudioEffector(char** args/*char* identifier, char* hash, IAudioPlayback* interface*/) : AbstractEffector(0, 1)
+I2SAudioEffector::I2SAudioEffector(/*char** args*/char* identifier, char* hash, IAudioPlayback* interface) : AbstractEffector(0, 1)
 {
-	// Register ourself to the effector pool
-	BottangoCore::effectorPool.addEffector(this);
-
-	// Parse arguments
-	char* identifier = args[1];
-	char* hash = args[2];
-
     strcpy(myIdentifier, identifier);
     Callbacks::onEffectorRegistered(this);
-
-	AudioInterface = static_cast<IAudioPlayback*>(InterfaceRegistry::get(Modules::AudioI2S));;
 
     char effectorIdentifier[9];
 	// ToDo: Why do we copy the identifier into "myIdentifier" and then immediately read it back out into "effectorIdentifier"? Why not just use "myIdentifier" directly?

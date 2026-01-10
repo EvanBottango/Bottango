@@ -286,11 +286,13 @@ namespace BasicCommands
 #ifdef AUDIO_SD_I2S
     void registerAudioEvent(char **args)
     {
-        /*char* identifier = args[1];
+        char* identifier = args[1];
         char *hash = args[2];
 
-        I2SAudioEffector *newEffector = new I2SAudioEffector(identifier, hash, static_cast<IAudioPlayback*>(InterfaceRegistry::get(Modules::AudioI2S)));
-        BottangoCore::effectorPool.addEffector(newEffector);*/
+		BottangoCore::effectorPool.addEffector<I2SAudioEffector>(identifier, hash, static_cast<IAudioPlayback*>(InterfaceRegistry::get(Modules::AudioI2S)));
+
+        //I2SAudioEffector *newEffector = new I2SAudioEffector(identifier, hash, static_cast<IAudioPlayback*>(InterfaceRegistry::get(Modules::AudioI2S)));
+        //BottangoCore::effectorPool.addEffector(newEffector);
     }
 #endif
 
