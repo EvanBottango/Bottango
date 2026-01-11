@@ -4,16 +4,15 @@
 #define _AsciiParser_h
 
 #include <Arduino.h>
-#include "CmdParser.h"
+#include "FrameDecoder.h"
 
-class AsciiParser : public CmdParser
+class Parser
 {
 public:
-	bool parseCommand(DataSource* source) override;
+	bool parseCommand(FrameDecoder* decoder);
 
 private:
 	bool splitIntoBuffer(char* stringToSplit, byte& paramsCount);
 };
 
 #endif
-

@@ -10,16 +10,12 @@ class SerialSource : public DataSource
 {
 	void readData() override;
 
-	bool hasData() override;
-
 	bool tryConsumeData(char* out) override;
 private:
 	bool checkHash(const char* cmdString);
 
 	unsigned long timeOfLastChar = 0;
 	bool commandInProgress = false;
-	bool validCommandAvailable = false;
-	//char* splitCommandBuffer[COMMANDS_PARAMS_SIZE];
 
 	char serialCommandBuffer[MAX_COMMAND_LENGTH];
 	int serialCommandIdx = 0;

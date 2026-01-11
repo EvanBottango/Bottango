@@ -132,11 +132,15 @@
     <ClCompile Include="src\CommandStreamProvider.cpp">
       <DeploymentContent>true</DeploymentContent>
     </ClCompile>
-    <ClCompile Include="src\Communication\AsciiParser.cpp">
+    <ClCompile Include="src\Communication\AsciiFrameDecoder.cpp">
       <SubType>
       </SubType>
     </ClCompile>
-    <ClCompile Include="src\Communication\CmdParser.cpp">
+    <ClCompile Include="src\Communication\Parser.cpp">
+      <SubType>
+      </SubType>
+    </ClCompile>
+    <ClCompile Include="src\Communication\FrameDecoder.cpp">
       <SubType>
       </SubType>
     </ClCompile>
@@ -491,11 +495,15 @@
       <FileType>CppCode</FileType>
       <DeploymentContent>true</DeploymentContent>
     </ClCompile>
-    <ClInclude Include="src\Communication\AsciiParser.h">
+    <ClInclude Include="src\Communication\AsciiFrameDecoder.h">
       <SubType>
       </SubType>
     </ClInclude>
-    <ClInclude Include="src\Communication\CmdParser.h">
+    <ClInclude Include="src\Communication\Parser.h">
+      <SubType>
+      </SubType>
+    </ClInclude>
+    <ClInclude Include="src\Communication\FrameDecoder.h">
       <SubType>
       </SubType>
     </ClInclude>

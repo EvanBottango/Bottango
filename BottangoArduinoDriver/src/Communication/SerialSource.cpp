@@ -23,7 +23,7 @@ void SerialSource::readData()
 			if (checkHash(serialCommandBuffer))
 			{
 				Outgoing::printOutputStringPROGMEM(BasicCommands::READY);
-				validCommandAvailable = true;
+				validDataAvailable = true;
 			}
 			else
 			{
@@ -71,16 +71,12 @@ void SerialSource::readData()
 	}
 }
 
-bool SerialSource::hasData()
-{
-	return validCommandAvailable;
-}
-
 bool SerialSource::tryConsumeData(char* out)
 {
-	if (validCommandAvailable)
+	if (validDataAvailable)
 	{
 		out = serialCommandBuffer;
+		validDataAvailable = false;
 		return true;
 	}
 

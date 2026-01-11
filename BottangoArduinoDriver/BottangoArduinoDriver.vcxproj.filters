@@ -439,10 +439,13 @@
     <ClCompile Include="src\Communication\SerialSource.cpp">
       <Filter>Source Files\Communication</Filter>
     </ClCompile>
-    <ClCompile Include="src\Communication\CmdParser.cpp">
+    <ClCompile Include="src\Communication\FrameDecoder.cpp">
       <Filter>Source Files\Communication</Filter>
     </ClCompile>
-    <ClCompile Include="src\Communication\AsciiParser.cpp">
+    <ClCompile Include="src\Communication\Parser.cpp">
+      <Filter>Source Files\Communication</Filter>
+    </ClCompile>
+    <ClCompile Include="src\Communication\AsciiFrameDecoder.cpp">
       <Filter>Source Files\Communication</Filter>
     </ClCompile>
   </ItemGroup>
@@ -480,10 +483,13 @@
     <ClInclude Include="src\Communication\SerialSource.h">
       <Filter>Header Files\Communication</Filter>
     </ClInclude>
-    <ClInclude Include="src\Communication\CmdParser.h">
+    <ClInclude Include="src\Communication\FrameDecoder.h">
       <Filter>Header Files\Communication</Filter>
     </ClInclude>
-    <ClInclude Include="src\Communication\AsciiParser.h">
+    <ClInclude Include="src\Communication\Parser.h">
+      <Filter>Header Files\Communication</Filter>
+    </ClInclude>
+    <ClInclude Include="src\Communication\AsciiFrameDecoder.h">
       <Filter>Header Files\Communication</Filter>
     </ClInclude>
   </ItemGroup>
