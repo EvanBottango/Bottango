@@ -19,6 +19,8 @@
 #define MAX_REGISTERED_EFFECTORS 16 // most modern boards can handle 16 or more (EX, ESP32, etc.)
 #endif
 
+// #define USE_TEENSYPWM            // uncomment this line to use the PWMServo library for the Teensy family of devices (when available)
+
 // ---------------------------------- //
 
 // !! Module Configuration !!
