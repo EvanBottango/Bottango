@@ -5,7 +5,7 @@
 #include "Arduino.h"
 #ifdef ESP32
 #include <ESP32Servo.h>
-#elif defined(CORE_TEENSY)
+#elif defined(CORE_TEENSY) && defined(USE_TEENSYPWM)
 #include <PWMServo.h>
 #else
 #include "Servo.h"
@@ -23,7 +23,7 @@ public:
 protected:
 private:
     byte pin = 0;
-#ifdef CORE_TEENSY
+#if defined(CORE_TEENSY) && defined(USE_TEENSYPWM)
     PWMServo servo;
 #else
     Servo servo;

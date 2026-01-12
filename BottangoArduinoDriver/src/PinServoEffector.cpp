@@ -28,7 +28,7 @@ PinServoEffector::PinServoEffector(byte pin, short minPWM, short maxPWM, int max
 #ifdef ESP32
     servo.setTimerWidth(16);
 #endif
-#ifdef CORE_TEENSY
+#if defined(CORE_TEENSY) && defined(USE_TEENSYPWM)
     servo.write(180 * (startSignal - 544) / 1856);
 #else
     servo.writeMicroseconds(startSignal);
@@ -42,7 +42,7 @@ void PinServoEffector::driveOnLoop()
     bool didChange = false;
     if (currentSignal != targetSignal)
     {
-#ifdef CORE_TEENSY
+#if defined(CORE_TEENSY) && defined(USE_TEENSYPWM)
         servo.write(180 * (targetSignal - 544) / 1856);
 #else
         servo.writeMicroseconds(targetSignal);
