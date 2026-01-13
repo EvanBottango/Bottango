@@ -8,9 +8,14 @@
 
 class SerialSource : public DataSource
 {
+	void onPhase(Phase p) override;
+
+	void init() override;
+
 	void readData() override;
 
 	bool tryConsumeData(char* out) override;
+
 private:
 	bool checkHash(const char* cmdString);
 

@@ -2,10 +2,21 @@
 // 
 // 
 
-#include "AsciiFrameDecoder.h"
+#include "AsciiCmdDecoder.h"
+#include "../Errors.h"
 
+void AsciiCmdDecoder::onPhase(Phase p)
+{
+	// Only decode commands during the Logic phase
+	if (p != Phase::Logic)
+	{
+		return;
+	}
 
-void AsciiFrameDecoder::decode(DataSource* source)
+	decode();
+}
+
+void AsciiCmdDecoder::decode()
 {
 	char* stringToSplit = nullptr;
 

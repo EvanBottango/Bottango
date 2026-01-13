@@ -4,7 +4,28 @@
 
 #include "SerialSource.h"
 #include "../Outgoing.h"
+#include "../BasicCommands.h"
 
+void SerialSource::onPhase(Phase p)
+{
+	// Only read data during the Communication phase
+	if (p != Phase::Communication)
+	{
+		return;
+	}
+	readData();
+}
+
+void SerialSource::init()
+{
+	serialCommandBuffer[serialCommandIdx] = '\0';
+
+	Serial.begin(BAUD_RATE);
+
+	Outgoing::printLine();
+	Outgoing::printOutputStringPROGMEM(BasicCommands::BOOT);
+	Outgoing::printLine();
+}
 
 void SerialSource::readData()
 {

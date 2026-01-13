@@ -78,7 +78,8 @@ namespace BottangoCore
 #if defined(RELAY_SUPPORTED)
         initRelayComs();
 #elif defined(USE_USB_SERIAL)
-        initUSBSerialComms();
+		// Moved to mMaster.initModules();
+        //initUSBSerialComms();
 #elif defined(USE_ESP32_WIFI)
         initESP32WifiComs();
 #endif
@@ -938,9 +939,12 @@ namespace BottangoCore
 
 
         Callbacks::onEarlyLoop();
+		mMaster.executePhase(Phase::Input);
+		mMaster.executePhase(Phase::Communication);
+		mMaster.executePhase(Phase::Logic);
+		mMaster.executePhase(Phase::Output);
 
-        updateReadBuffer(false); // standard read
-
+        //updateReadBuffer(false); // standard read
 
 #ifdef RELAY_SUPPORTED
         if (isRelayPeer)
@@ -949,7 +953,7 @@ namespace BottangoCore
         }
 #endif
 
-        if (initialized)
+        /*if (initialized)
         {
 
 #ifdef ENABLE_DYNAMIC_ANIMATION_SOURCE_SWITCH
@@ -982,7 +986,7 @@ namespace BottangoCore
                 BasicCommands::reboot(false);
             }
 #endif
-        }
+        }*/
 
         // update outgoing multimessage sender if any
         if (activeOutgoingMultimessage != nullptr)
@@ -1019,10 +1023,7 @@ namespace BottangoCore
                 lastWaitForConnectLog = Time::getCurrentTimeInMs();
             }
         }
-#endif
-
-		mMaster.executePhase(Phase::Input);
-		mMaster.executePhase(Phase::Output);
+#endif		
     }
 
     bool isOffline()

@@ -15,6 +15,9 @@
  // Second approach is more flexible and extensible, but adds complexity.
 enum class Modules : uint8_t
 {
+	DataSource,
+	Decoder,
+	Parser,
 	StopButton,
 	StatusLights,
 	AudioI2S,

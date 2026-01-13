@@ -4,13 +4,15 @@
 #define _AsciiFrameDecoder_h
 
 #include <Arduino.h>
-#include "FrameDecoder.h"
+#include "CommandDecoder.h"
 #include "../../BottangoArduinoConfig.h"
 
-class AsciiFrameDecoder : public FrameDecoder
+class AsciiCmdDecoder : public CommandDecoder
 {
 public:
-	void decode(DataSource* source) override;
+	void onPhase(Phase p) override;
+
+	void decode() override;
 };
 
 #endif

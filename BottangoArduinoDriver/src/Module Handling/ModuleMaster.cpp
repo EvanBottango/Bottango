@@ -5,6 +5,11 @@
 
 #include "ModuleMaster.h"
 #include "../../BottangoArduinoModules.h"
+
+#include "../Communication/SerialSource.h"
+#include "../Communication/AsciiCmdDecoder.h"
+#include "../Communication/Parser.h"
+
 #include "../Modules/StopButtonModule.h"
 #include "../Modules/StatusLightsModule.h"
 #include "../Modules/Audio/I2SAudioModule.h"
@@ -12,6 +17,17 @@
 
 void ModuleMaster::setupModules()
 {
+	static SerialSource serialSource;
+	modules[(int)Modules::DataSource] = &serialSource;
+
+	static AsciiCmdDecoder asciiDecoder;
+	modules[(int)Modules::Decoder] = &asciiDecoder;
+	asciiDecoder.setDataSource(&serialSource);
+
+	static Parser parser;
+	modules[(int)Modules::Parser] = &parser;
+	parser.setCommandDecoder(&asciiDecoder);
+
 #ifdef STOP_BUTTON_SUPPORTED
 	static StopButtonModule stopButton;
 	modules[(int)Modules::StopButton] = &stopButton;

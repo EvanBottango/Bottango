@@ -5,8 +5,9 @@
 
 #include <Arduino.h>
 #include "../../BottangoArduinoConfig.h"
+#include "../Module Handling/ModuleLoop.h"
 
-class DataSource
+class DataSource : public LoopModule
 {
 public:
 	/**
@@ -18,7 +19,7 @@ public:
 	 * @brief Returns true if there is data available to consume.
 	 * @return true if data is available, false otherwise.
 	 */
-	virtual bool hasData() {}
+	virtual bool hasData();
 
 	/**
 	 * @brief Try to consume data from the source.

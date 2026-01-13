@@ -4,15 +4,20 @@
 #define _AsciiParser_h
 
 #include <Arduino.h>
-#include "FrameDecoder.h"
+#include "CommandDecoder.h"
+#include "../Module Handling/ModuleLoop.h"
 
-class Parser
+class Parser : public LoopModule
 {
 public:
-	bool parseCommand(FrameDecoder* decoder);
+	void onPhase(Phase p) override;
+
+	void setCommandDecoder(CommandDecoder* cmdDecoder);
+	
+	bool parseCommand();	
 
 private:
-	bool splitIntoBuffer(char* stringToSplit, byte& paramsCount);
+	CommandDecoder* decoder;
 };
 
 #endif
