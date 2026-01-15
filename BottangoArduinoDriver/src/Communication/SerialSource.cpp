@@ -40,19 +40,19 @@ void SerialSource::readData()
 		if (incomingChar == '\n')
 		{
 			commandInProgress = false;
+			timeOfLastChar = 0;
 
 			if (checkHash(serialCommandBuffer))
 			{
 				Outgoing::printOutputStringPROGMEM(BasicCommands::READY);
 				validDataAvailable = true;
+
+				//Serial.printf("Got: %s\n", serialCommandBuffer);
 			}
 			else
 			{
 				Outgoing::printOutputStringPROGMEM(BasicCommands::HASH_FAIL);
 			}
-
-			serialCommandIdx = 0;
-			serialCommandBuffer[serialCommandIdx] = '\0';
 		}
 		// Ignore \0
 		else if (incomingChar == '\0')
@@ -92,12 +92,15 @@ void SerialSource::readData()
 	}
 }
 
-bool SerialSource::tryConsumeData(char* out)
+bool SerialSource::tryConsumeData(char** out)
 {
 	if (validDataAvailable)
 	{
-		out = serialCommandBuffer;
+		//Serial.printf("Consume Data: %s\n", serialCommandBuffer);
+		*out = serialCommandBuffer;
 		validDataAvailable = false;
+		serialCommandIdx = 0;
+		//serialCommandBuffer[serialCommandIdx] = '\0';
 		return true;
 	}
 

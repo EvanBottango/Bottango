@@ -14,13 +14,13 @@ public:
 
 	virtual bool hasCommand();
 
-	virtual bool tryConsumeCommand(char** out);
+	virtual char** tryConsumeCommand();
 
 	virtual void setDataSource(DataSource* src);
 
 protected:
 	char* splitCommandBuffer[COMMANDS_PARAMS_SIZE];
-	bool validFrameAvailable = false;
+	bool validCommandAvailable = false;
 	DataSource* source;
 };
 

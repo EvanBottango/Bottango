@@ -7,18 +7,18 @@
 
 bool CommandDecoder::hasCommand()
 {
-	return validFrameAvailable;
+	return validCommandAvailable;
 }
 
-bool CommandDecoder::tryConsumeCommand(char** out)
+char** CommandDecoder::tryConsumeCommand()
 {
-	if (validFrameAvailable)
+	if (validCommandAvailable)
 	{
-		out = splitCommandBuffer;
-		return true;
+		validCommandAvailable = false;
+		return splitCommandBuffer;
 	}
 
-	return false;
+	return nullptr;
 }
 
 void CommandDecoder::setDataSource(DataSource* src)

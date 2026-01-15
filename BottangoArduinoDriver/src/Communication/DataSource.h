@@ -26,11 +26,13 @@ public:
 	 * @param out Pointer to the data.
 	 * @return true if data is available, false otherwise.
 	 */
-	virtual bool tryConsumeData(char* out) {}
+	virtual bool tryConsumeData(char** out)
+	{
+		return false;
+	}
 
 protected:
 	bool validDataAvailable = false;
 };
 
 #endif
-

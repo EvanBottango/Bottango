@@ -24,12 +24,21 @@ void Parser::setCommandDecoder(CommandDecoder* cmdDecoder)
 bool Parser::parseCommand()
 {
 	// ToDo: Pointer to pointer is not needed anymore, this can be refactored to just use char*
-	char** splitCommandBuffer = nullptr;
+	char** splitCommandBuffer = decoder->tryConsumeCommand();
+	//char** splitCommandBuffer;// = decoder->splitCommandBuffer;
 
-	if (decoder->tryConsumeCommand(splitCommandBuffer) == false)
+	//if (decoder->tryConsumeCommand(splitCommandBuffer) == false)
+	if (splitCommandBuffer == nullptr)
 	{
 		return false;
 	}
+
+	//Outgoing::printOutputStringMem("Parsing\n");
+	/*Serial.printf("Parser Start\n");
+	Serial.printf("Command 0: %s\n", splitCommandBuffer[0]);
+	Serial.printf("Command 1: %s\n", splitCommandBuffer[1]);
+	Serial.printf("Command 2: %s\n", splitCommandBuffer[2]);
+	Serial.flush();*/
 
 	// ToDo: LEDs and stuff
 	//SystemStatus::systemStatus.CommandStatus = SystemStatus::eCommandStatus::NewCommand;
@@ -142,4 +151,9 @@ bool Parser::parseCommand()
 	{
 		BasicCommands::stepperSync(splitCommandBuffer);
 	}
+
+	//Serial.printf("Parser End\n");
+	//Serial.flush();
+
+	return true;
 }
