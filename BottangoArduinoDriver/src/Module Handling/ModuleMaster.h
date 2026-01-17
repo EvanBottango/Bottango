@@ -18,6 +18,7 @@ enum class Modules : uint8_t
 	DataSource,
 	Decoder,
 	Parser,
+	EffectorPool,
 	StopButton,
 	StatusLights,
 	AudioI2S,
@@ -57,6 +58,12 @@ public:
 	 * @param p The phase to execute.
 	 */
 	void executePhase(Phase p);
+
+	template <typename T>
+	T* getModule(Modules moduleType)
+	{
+		return static_cast<T*>(modules[(int)moduleType]);
+	}
 
 private:
 	/**

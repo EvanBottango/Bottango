@@ -46,7 +46,7 @@
 // !! AUDIO !!
 // (select only 1)
 //#define AUDIO_TRIGGER_EVENT                                 // uncomment this line to have audio keyframes act as trigger events
-#define AUDIO_SD_I2S                                     // uncomment this line to have audio keyframes play audio over i2s, reading audio file from SD card
+//#define AUDIO_SD_I2S                                     // uncomment this line to have audio keyframes play audio over i2s, reading audio file from SD card
 
 // extra features
 #define DYNAMIC_VOLUME                                   // uncomment this line to adjust volume of i2s signal based on analog pin read

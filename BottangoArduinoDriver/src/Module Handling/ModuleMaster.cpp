@@ -4,6 +4,7 @@
  */
 
 #include "ModuleMaster.h"
+#include "../BottangoCore.h"
 #include "../../BottangoArduinoModules.h"
 
 #include "../Communication/SerialSource.h"
@@ -28,6 +29,8 @@ void ModuleMaster::setupModules()
 	modules[(int)Modules::Parser] = &parser;
 	parser.setCommandDecoder(&asciiDecoder);
 
+	modules[(int)Modules::EffectorPool] = &BottangoCore::effectorPool;
+
 #ifdef STOP_BUTTON_SUPPORTED
 	static StopButtonModule stopButton;
 	modules[(int)Modules::StopButton] = &stopButton;
@@ -49,7 +52,10 @@ void ModuleMaster::initModules()
 {
 	for (int i = 0; i < (int)Modules::Max; i++)
 	{
-		modules[i]->init();
+		if (modules[i] != nullptr)
+		{
+			modules[i]->init();
+		}
 	}
 }
 
@@ -57,8 +63,16 @@ void ModuleMaster::executePhase(Phase p)
 {
 	for (int i = 0; i < (int)Modules::Max; i++)
 	{
-		modules[i]->onPhase(p);
+		if (modules[i] != nullptr)
+		{
+			modules[i]->onPhase(p);
+		}
 	}
 }
+
+/*void* ModuleMaster::getModule(Modules moduleType)
+{
+	return modules[(int)moduleType];
+}*/
 
 /** @} */

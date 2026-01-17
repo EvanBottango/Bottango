@@ -55,6 +55,7 @@ namespace SystemStatus
 		ePowerStatus PowerStatus = ePowerStatus::Off;
 		eUserLED UserLED = eUserLED::Off;
 		eCommandStatus CommandStatus = eCommandStatus::Idle;
+		bool initialized = false;
 		//bool resetPreferences = false;
 	};
 

@@ -4,14 +4,15 @@
 #include "AbstractEffector.h"
 #include "CircularArray.h"
 #include "../BottangoArduinoConfig.h"
-#include <vector>
-#include <memory>
+#include "Module Handling/ModuleLoop.h"
 
-class EffectorPool
+class EffectorPool : public LoopModule
 {
 
 public:
     EffectorPool();
+
+	void onPhase(Phase p) override;
 
     void addEffector(AbstractEffector *effector);
 
@@ -24,9 +25,9 @@ public:
 	template <typename T, typename... Args>
 	void addEffector(Args&&... args)
 	{
-		static_assert(std::is_base_of<AbstractEffector, T>::value, "T must derive from AbstractEffector");
+		//static_assert(std::is_base_of<AbstractEffector, T>::value, "T must derive from AbstractEffector");
 
-		T* newEffector = new T(std::forward<Args>(args)...);
+		T* newEffector = new T(args...);
 		addEffector(newEffector);
 	}
 
@@ -54,8 +55,6 @@ public:
 
     bool effectorUsesFloatCurve(char *identifier);
 
-	// ToDo: Use unique_ptr for effectors to make ownership clearer and avoid memory leaks
-	//CircularArray<std::unique_ptr<AbstractEffector>> effectors = CircularArray<std::unique_ptr<AbstractEffector>>(MAX_REGISTERED_EFFECTORS);
     CircularArray<AbstractEffector> effectors = CircularArray<AbstractEffector>(MAX_REGISTERED_EFFECTORS);
 
     AbstractEffector *getEffector(char *identifier);

@@ -2,9 +2,20 @@
 #include "EffectorPool.h"
 #include "Errors.h"
 #include "FreeRam.h"
+#include "System/SystemStatus.h"
 
 EffectorPool::EffectorPool()
 {
+}
+
+void EffectorPool::onPhase(Phase p)
+{
+	if (p != Phase::Output) return;
+
+	if (SystemStatus::systemStatus.initialized)
+	{
+		updateAllDriveTargets();
+	}	
 }
 
 void EffectorPool::addEffector(AbstractEffector *inEffector)
@@ -164,7 +175,7 @@ void EffectorPool::deregisterAll()
     {
         AbstractEffector *effector = effectors.get(i);
         effector->destroy(true);
-        delete effectors.get(i);
+		delete effector;
     }
     effectors.clear();
 

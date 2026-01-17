@@ -2,6 +2,7 @@
 
 #include "../BottangoArduinoModules.h"
 #include "Module Handling/ModuleMaster.h"
+#include "Communication/DataSource.h"
 #include "System/SystemStatus.h"
 #include "I2SAudioEffector.h"
 
@@ -30,10 +31,10 @@ namespace BottangoCore
 #endif
 #endif
 
-    char delimiters[] = ",";
+    //char delimiters[] = ",";
 
-    bool initialized = false;
-    bool handshake = false;
+    //bool initialized = false;
+	//bool handshake = false;		// Handshake is never used?
 #if defined(USE_CODE_COMMAND_STREAM) || defined(USE_SD_CARD_COMMAND_STREAM)
     CommandStreamProvider *commandStreamProvider = nullptr;
 #endif
@@ -46,12 +47,12 @@ namespace BottangoCore
     const unsigned long SERVER_CHECK_INTERVAL_MS = 3000;   // recheck server every 3 seconds
 #endif
 
-    char serialCommandBuffer[MAX_COMMAND_LENGTH];
+    /*char serialCommandBuffer[MAX_COMMAND_LENGTH];
     int serialCommandIdx = 0;
 
     unsigned long timeOfLastChar = 0;
     bool commandInProgress = false;
-    char *splitCommandBuffer[COMMANDS_PARAMS_SIZE];
+    char *splitCommandBuffer[COMMANDS_PARAMS_SIZE];*/
 
     void bottangoSetup()
     {
@@ -458,7 +459,7 @@ namespace BottangoCore
         }
 #endif
         // Regular tokenization
-        byte idxResult = 0;
+        /*byte idxResult = 0;
         char *token = strtok(stringToSplit, delimiters);
 
         while (token != NULL)
@@ -472,7 +473,7 @@ namespace BottangoCore
             token = strtok(NULL, delimiters);
         }
 
-        paramsCount = idxResult;
+        paramsCount = idxResult;*/
         return true;
     }
 
@@ -480,7 +481,9 @@ namespace BottangoCore
     // param commandString: e.g. "rSP,9,1000,3000"
     bool executeCommand(char *commandString, bool secondary)
     {
-        bool sendReady = true;
+		return true;
+
+        /*bool sendReady = true;
 
 		SystemStatus::systemStatus.CommandStatus = SystemStatus::eCommandStatus::NewCommand;
 
@@ -631,12 +634,12 @@ namespace BottangoCore
 			//I2SAudioEffector* newEffector = new I2SAudioEffector(splitCommandBuffer);
 			//BottangoCore::effectorPool
             BasicCommands::registerAudioEvent(splitCommandBuffer);
-        }
+        }*/
         /*else if (strcmp_P(commandName, BasicCommands::AUDIO_BIN) == 0)
         {
             BasicCommands::processAudioBinary(splitCommandBuffer);
         }*/
-#endif
+/*#endif
 #ifdef RELAY_SUPPORTED
         else if (strcmp_P(commandName, BasicCommands::REGISTER_RELAY) == 0)
         {
@@ -679,7 +682,7 @@ namespace BottangoCore
         }
 #endif
 
-        return sendReady;
+        return sendReady;*/
     }
 
     // note this is destructive to the string
@@ -741,7 +744,9 @@ namespace BottangoCore
         }
 
         unsigned long time = Time::getCurrentTimeInMs();
-        char *commandName = splitCommandBuffer[0];
+
+		// ToDo: This is still needed, but is commented out for now, until I get to the point of the relay stuff. The global var splitCommandBuffer does not exist anymore.
+        /*char* commandName = splitCommandBuffer[0];
 
         if (returnStartTime)
         {
@@ -762,7 +767,7 @@ namespace BottangoCore
                 unsigned long startTime = getMSTimeOfCommand(cmdCopy, true);
                 time = startTime + atol(splitCommandBuffer[3]);
             }
-        }
+        }*/
 
         return time;
     }
@@ -889,55 +894,19 @@ namespace BottangoCore
         {
             char t = Serial.read();
         }
-        initialized = false;
-        commandInProgress = false;
-        serialCommandIdx = 0;
-        serialCommandBuffer[serialCommandIdx] = '\0';
-        timeOfLastChar = 0;
+		SystemStatus::systemStatus.initialized = false;
+		//initialized = false;
+
+		DataSource* dataSource = mMaster.getModule<DataSource>(Modules::DataSource);
+		dataSource->resetBuffer();
+        //commandInProgress = false;
+        //serialCommandIdx = 0;
+        //serialCommandBuffer[serialCommandIdx] = '\0';
+        //timeOfLastChar = 0;
     }
 
     void bottangoLoop()
     {
-		// Overview:
-		// onEarlyLoop() callback
-		// updateReadBuffer()
-		//	-> Receive data
-		//  -> Parse commands
-		// drive all effectors
-		// update multimessage sender
-		// OnLateLoop() callback
-
-		// ToDo: Remove parse commands from updateReadBuffer() and make it a separate function. Receiving data and parsing commands are two different things.
-		// This will make it possible to switch command sources more easily.
-
-		// My proposed structure:
-		// onEarlyLoop() callback
-		// dataSource->updateReadBuffer()
-		// parseCommands()
-		// drive all effectors
-		// update multimessage sender
-		// OnLateLoop() callback
-
-		// Module approach:
-		// mMaster.executePhase(Phase::Early)
-		//    -> onEarlyLoop() callback
-		// mMaster.executePhase(Phase::Input)
-		//    -> read Pins / Analog Inputs
-		// mMaster.executePhase(Phase::Communication)
-		//    -> dataSource->updateReadBuffer()
-		//    -> update multimessage sender
-		// mMaster.executePhase(Phase::Logic)
-		//    -> parseCommands()
-		// mMaster.executePhase(Phase::Output)
-		//    -> Status-LEDs
-		// effectorPool.updateAllDriveTargets()
-		// mMaster.executePhase(Phase::Late)
-		//	  -> OnLateLoop() callback
-
-		// Special-Case RELAY_SUPPORTED:
-
-
-
         Callbacks::onEarlyLoop();
 		mMaster.executePhase(Phase::Input);
 		mMaster.executePhase(Phase::Communication);
@@ -1044,7 +1013,7 @@ namespace BottangoCore
 
     void updateReadBuffer(bool secondary)
     {
-
+/*
 #if defined(USE_ESP32_WIFI)
         if !(updateWifiConnectionStatus())
         {
@@ -1248,7 +1217,7 @@ namespace BottangoCore
         {
             Outgoing::setSecondaryPeerOutgoing(false);
         }
-#endif
+#endif*/
     }
 
     bool rcvAvailable(bool secondary)

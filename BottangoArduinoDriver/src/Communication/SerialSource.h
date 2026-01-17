@@ -17,6 +17,8 @@ public:
 
 	bool tryConsumeData(char** out) override;
 
+	void resetBuffer() override;
+
 private:
 	bool checkHash(const char* cmdString);
 

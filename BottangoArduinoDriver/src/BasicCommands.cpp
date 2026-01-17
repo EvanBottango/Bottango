@@ -62,8 +62,9 @@ namespace BasicCommands
 
         if (!secondary)
         {
-            BottangoCore::initialized = true;
-            BottangoCore::handshake = true;
+            //BottangoCore::initialized = true;
+			SystemStatus::systemStatus.initialized = true;
+            //BottangoCore::handshake = true;
 
             if (!offlinePlayback)
             {
@@ -212,8 +213,7 @@ namespace BasicCommands
         int maxPWMSec = atoi(args[5]);
         int startPWM = atoi(args[6]);
 
-        I2CServoEffector *newEffector = new I2CServoEffector(address, pinId, minPWM, maxPWM, maxPWMSec, startPWM);
-        BottangoCore::effectorPool.addEffector(newEffector);
+		BottangoCore::effectorPool.addEffector<I2CServoEffector>(address, pinId, minPWM, maxPWM, maxPWMSec, startPWM);
     }
 
     void registerPinStepper(char **args)

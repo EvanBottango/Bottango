@@ -50,16 +50,16 @@ namespace BottangoCore
 
     extern EffectorPool effectorPool;
     extern AbstractMultiMessageOutgoingSource *activeOutgoingMultimessage;
-    extern bool initialized;
-    extern bool handshake;
-    extern char delimiters[];
+    //extern bool initialized;
+    //extern bool handshake;
+    //extern char delimiters[];
 
-    extern char serialCommandBuffer[MAX_COMMAND_LENGTH];
-    extern int serialCommandIdx;
+    //extern char serialCommandBuffer[MAX_COMMAND_LENGTH];
+    //extern int serialCommandIdx;
 
-    extern unsigned long timeOfLastChar;
-    extern bool commandInProgress;
-    extern char *splitCommandBuffer[COMMANDS_PARAMS_SIZE];
+    //extern unsigned long timeOfLastChar;
+    //extern bool commandInProgress;
+    //extern char *splitCommandBuffer[COMMANDS_PARAMS_SIZE];
 
     void initUSBSerialComms();
 

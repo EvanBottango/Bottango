@@ -107,6 +107,15 @@ bool SerialSource::tryConsumeData(char** out)
 	return false;
 }
 
+void SerialSource::resetBuffer()
+{
+	serialCommandIdx = 0;
+	serialCommandBuffer[serialCommandIdx] = '\0';
+	validDataAvailable = false;
+	commandInProgress = false;
+	timeOfLastChar = 0;
+}
+
 bool SerialSource::checkHash(const char* cmdString)
 {
 	if (cmdString[0] == '\0')

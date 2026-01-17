@@ -31,6 +31,8 @@ public:
 		return false;
 	}
 
+	virtual void resetBuffer() {}
+
 protected:
 	bool validDataAvailable = false;
 };
