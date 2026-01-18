@@ -13,7 +13,11 @@ void Parser::onPhase(Phase p)
 		return;
 	}
 
-	parseCommand();
+	if (parseCommand())
+	{
+		// Workaround for handshake bug - see SerialSource.cpp readData() for details
+		Outgoing::printOutputStringPROGMEM(BasicCommands::READY);
+	}	
 }
 
 void Parser::setCommandDecoder(CommandDecoder* cmdDecoder)

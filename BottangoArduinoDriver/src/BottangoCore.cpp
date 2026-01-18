@@ -78,7 +78,7 @@ namespace BottangoCore
         // init comms types
 #if defined(RELAY_SUPPORTED)
         initRelayComs();
-#elif defined(USE_USB_SERIAL)
+//#elif defined(USE_USB_SERIAL)
 		// Moved to mMaster.initModules();
         //initUSBSerialComms();
 #elif defined(USE_ESP32_WIFI)
