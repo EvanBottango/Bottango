@@ -27,11 +27,8 @@ void Parser::setCommandDecoder(CommandDecoder* cmdDecoder)
 
 bool Parser::parseCommand()
 {
-	// ToDo: Pointer to pointer is not needed anymore, this can be refactored to just use char*
 	char** splitCommandBuffer = decoder->tryConsumeCommand();
-	//char** splitCommandBuffer;// = decoder->splitCommandBuffer;
 
-	//if (decoder->tryConsumeCommand(splitCommandBuffer) == false)
 	if (splitCommandBuffer == nullptr)
 	{
 		return false;

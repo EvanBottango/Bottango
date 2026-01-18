@@ -5,6 +5,7 @@
 #include "AsciiCmdDecoder.h"
 #include "../Errors.h"
 #include "../Outgoing.h"
+#include "../../BottangoArduinoModules.h"
 
 void AsciiCmdDecoder::onPhase(Phase p)
 {
@@ -25,6 +26,17 @@ void AsciiCmdDecoder::decode()
 	{
 		return;
 	}
+
+#ifdef ALLOW_SYNC_COMMANDS
+	// before split, check if this is a syncronized command
+	// we don't actually want to split a syncronized command, but to parse it's own unique syntax
+	if (strncmp_P(commandString, BasicCommands::SYNC_COMMAND, 3) == 0)
+	{
+		BasicCommands::executeSyncronizedCommands(commandString, secondary);
+		return sendReady;
+	}
+#endif
+
 
 	//Outgoing::printOutputStringMem("Decoding Command\n");
 	//Serial.printf("Decoding Command: %s\n", stringToSplit);
