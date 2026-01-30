@@ -735,13 +735,18 @@ namespace BasicCommands
     void beginGetNextSyncCommand(char *syncCmd, char prefixBuffer[CMD_PREFIX_SIZE])
     {
         // 1) Strip up to and including the first comma
+		// String contains: sSY,sc,id1,x,y,z;id2,x,y,z;id3,x,y,z*scI,id4,hash/0
+		//                      | Pointer
         char *commaPtr = strchr(syncCmd, ',');
         memmove(syncCmd, commaPtr + 1, strlen(commaPtr + 1) + 1);
 
         // 2) Seed prefixBuffer with the first token
+		// String contains: sc,id1,x,y,z;id2,x,y,z;id3,x,y,z*scI,id4,hash/0
         commaPtr = strchr(syncCmd, ',');
         int seedLength = int(commaPtr - syncCmd + 1);
         memcpy(prefixBuffer, syncCmd, seedLength);
+
+		// String contains: sc
         prefixBuffer[seedLength] = '\0';
     }
 

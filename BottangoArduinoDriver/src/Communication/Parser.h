@@ -14,7 +14,7 @@ public:
 
 	void setCommandDecoder(CommandDecoder* cmdDecoder);
 	
-	bool parseCommand();	
+	bool parseCommand(char** splitCommandBuffer);
 
 private:
 	CommandDecoder* decoder;

@@ -13,11 +13,28 @@ void Parser::onPhase(Phase p)
 		return;
 	}
 
-	if (parseCommand())
+	/*char** splitCommandBuffer = decoder->tryConsumeCommand();
+
+	if (parseCommand(splitCommandBuffer))
 	{
 		// Workaround for handshake bug - see SerialSource.cpp readData() for details
 		Outgoing::printOutputStringPROGMEM(BasicCommands::READY);
-	}	
+	}*/
+
+	char** splitCommandBuffer = decoder->tryConsumeCommand();
+
+	if (splitCommandBuffer != nullptr)
+	{
+		while (splitCommandBuffer)
+		{
+			parseCommand(splitCommandBuffer);
+			splitCommandBuffer = decoder->tryConsumeCommand();
+		}
+
+		// Workaround for handshake bug - see SerialSource.cpp readData() for details
+		Outgoing::printOutputStringPROGMEM(BasicCommands::READY);
+	}
+	
 }
 
 void Parser::setCommandDecoder(CommandDecoder* cmdDecoder)
@@ -25,9 +42,9 @@ void Parser::setCommandDecoder(CommandDecoder* cmdDecoder)
 	decoder = cmdDecoder;
 }
 
-bool Parser::parseCommand()
+bool Parser::parseCommand(char** splitCommandBuffer)
 {
-	char** splitCommandBuffer = decoder->tryConsumeCommand();
+	//char** splitCommandBuffer = decoder->tryConsumeCommand();
 
 	if (splitCommandBuffer == nullptr)
 	{

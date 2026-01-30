@@ -17,6 +17,8 @@ public:
 
 	bool tryConsumeData(char** out) override;
 
+	//void releaseBuffer();
+
 	void resetBuffer() override;
 
 private:
@@ -27,6 +29,7 @@ private:
 
 	char serialCommandBuffer[MAX_COMMAND_LENGTH];
 	int serialCommandIdx = 0;
+	//bool bufferLocked = false;
 };
 
 

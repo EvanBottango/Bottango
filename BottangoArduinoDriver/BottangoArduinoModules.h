@@ -20,7 +20,7 @@
 // children will use this and override choice of USB Serial or Wifi and only talk to parent via this relay method
 // parents will still use usb serial or wifi to talk to desktop app, and this setting for child comms.
 
-// #define ALLOW_SYNC_COMMANDS                             // parse commands that contain multiple commands wrapped in a single message
+#define ALLOW_SYNC_COMMANDS                             // parse commands that contain multiple commands wrapped in a single message
 
 // ---------------------------------- //
 

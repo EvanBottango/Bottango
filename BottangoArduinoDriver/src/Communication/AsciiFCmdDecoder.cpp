@@ -6,6 +6,7 @@
 #include "../Errors.h"
 #include "../Outgoing.h"
 #include "../../BottangoArduinoModules.h"
+#include "../BasicCommands.h"
 
 void AsciiCmdDecoder::onPhase(Phase p)
 {
@@ -27,21 +28,28 @@ void AsciiCmdDecoder::decode()
 		return;
 	}
 
-#ifdef ALLOW_SYNC_COMMANDS
-	// before split, check if this is a syncronized command
-	// we don't actually want to split a syncronized command, but to parse it's own unique syntax
-	if (strncmp_P(commandString, BasicCommands::SYNC_COMMAND, 3) == 0)
+#ifdef ALLOW_SYNC_COMMANDS	
+	// Check for sync command. If found, set validCommandAvailable to true and return.
+	// The command is split when calling tryConsumeCommand() next time.
+	if (strncmp_P(stringToSplit, BasicCommands::SYNC_COMMAND, 3) == 0)
 	{
-		BasicCommands::executeSyncronizedCommands(commandString, secondary);
-		return sendReady;
+		//validCommandAvailable = true;
+		syncCommandInProgress = true;
+
+		// Start sync command and get first frame
+		beginSyncCommand(stringToSplit);
+		return;
 	}
 #endif
+	
+	splitCommand(stringToSplit);
 
+	// ToDo: Relase buffer when done
+	//paramsCount = idxResult;
+}
 
-	//Outgoing::printOutputStringMem("Decoding Command\n");
-	//Serial.printf("Decoding Command: %s\n", stringToSplit);
-	//Outgoing::printLine();
-
+void AsciiCmdDecoder::splitCommand(char* stringToSplit)
+{
 	int idxResult = 0;
 	char delimiters[] = ",";
 	char* token = strtok(stringToSplit, delimiters);
@@ -59,13 +67,135 @@ void AsciiCmdDecoder::decode()
 	}
 
 	validCommandAvailable = true;
+}
 
-	/*Serial.printf("Decode 0: %s\n", splitCommandBuffer[0]);
-	Serial.printf("Decode 1: %s\n", splitCommandBuffer[1]);
-	Serial.printf("Decode 2: %s\n", splitCommandBuffer[2]);
+char** AsciiCmdDecoder::tryConsumeCommand()
+{
+#ifdef ALLOW_SYNC_COMMANDS
+	if (syncCommandInProgress)
+	{
+		if (hasMoreFrames())
+		{
+			splitCommand(getNextFrame());
+			return splitCommandBuffer;
+		}
+		else
+		{
+			validCommandAvailable = false;
+			syncCommandInProgress = false;
+			return nullptr;
+		}
+		
+	}
+#endif
 
-	Outgoing::printOutputStringMem("Decoding Done\n");
-	Serial.flush();*/
+	if (validCommandAvailable)
+	{
+		validCommandAvailable = false;
+		return splitCommandBuffer;
+	}
 
-	//paramsCount = idxResult;
-};
+	return nullptr;
+}
+
+void AsciiCmdDecoder::beginSyncCommand(char* stringToSplit)
+{
+	expectNewCommand = true;
+	buffer = stringToSplit;
+
+	// Remove hash at the end (everything after the last comma before 'h')
+	char* lastComma = strrchr(buffer, ',');
+	if (lastComma && lastComma[1] == 'h')
+	{
+		*lastComma = '\0';
+	}
+
+	// Skip MessageCommand (sSY,)
+	char* pos = strchr(buffer, ',');
+	if (!pos)
+	{
+		nextFrameStart = nullptr;
+		return;
+	}
+
+	nextFrameStart = pos + 1; // Points to first command
+}
+
+char* AsciiCmdDecoder::getNextFrame()
+{
+	if (!nextFrameStart || *nextFrameStart == '\0')
+	{
+		return nullptr;
+	}
+
+	// Check if a new command starts (marked with asterisk)
+	if (*nextFrameStart == '*')
+	{
+		nextFrameStart++; // Skip the asterisk
+		expectNewCommand = true;
+	}
+
+	if (expectNewCommand)
+	{
+		// New command - find end of command
+		currentCommand = nextFrameStart;
+		commandEnd = strchr(currentCommand, ',');
+		if (!commandEnd)
+		{
+			return nullptr;
+		}
+
+		// Place currentFrameStart after the command
+		currentFrameStart = commandEnd + 1;
+		expectNewCommand = false;
+	}
+	else
+	{
+		// No new command, use the previous one
+		currentFrameStart = nextFrameStart;
+	}
+
+	// Find the end of the current frame (up to ; or end)
+	char* frameEnd = currentFrameStart;
+	while (*frameEnd != '\0' && *frameEnd != ';')
+	{
+		frameEnd++;
+	}
+
+	// Save what comes after this frame
+	if (*frameEnd == ';')
+	{
+		nextFrameStart = frameEnd + 1;
+		*frameEnd = '\0'; // Terminate the current frame
+	}
+	else
+	{
+		// End reached
+		nextFrameStart = frameEnd;
+	}
+
+	// Now we build the frame: Command + , + FrameData
+	// Calculate lengths
+	size_t commandLen = commandEnd - currentCommand;
+	size_t frameDataLen = frameEnd - currentFrameStart;
+
+	// Move frame data to the right to make space for command
+	memmove(currentCommand + commandLen + 1, currentFrameStart, frameDataLen + 1); // +1 for \0
+
+	// Set comma after command
+	currentCommand[commandLen] = ',';
+
+	// The complete frame starts at currentCommand
+	return currentCommand;
+}
+
+bool AsciiCmdDecoder::hasMoreFrames()
+{
+	// Return true or false, depending on whether there are more frames to process
+	// Return always false when sync commands are not enabled
+#ifdef ALLOW_SYNC_COMMANDS
+	return nextFrameStart && *nextFrameStart != '\0';
+#else
+	return false;
+#endif
+}
