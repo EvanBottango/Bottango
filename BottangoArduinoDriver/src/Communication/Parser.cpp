@@ -44,8 +44,6 @@ void Parser::setCommandDecoder(CommandDecoder* cmdDecoder)
 
 bool Parser::parseCommand(char** splitCommandBuffer)
 {
-	//char** splitCommandBuffer = decoder->tryConsumeCommand();
-
 	if (splitCommandBuffer == nullptr)
 	{
 		return false;

@@ -9,7 +9,7 @@
 void SerialSource::onPhase(Phase p)
 {
 	// Only read data during the Communication phase, and if the buffer is not locked
-	if (p != Phase::Communication/*|| bufferLocked */ )
+	if (p != Phase::Communication)
 	{
 		return;
 	}
@@ -99,22 +99,14 @@ bool SerialSource::tryConsumeData(char** out)
 {
 	if (validDataAvailable)
 	{
-		//Serial.printf("Consume Data: %s\n", serialCommandBuffer);
 		*out = serialCommandBuffer;
 		validDataAvailable = false;
 		serialCommandIdx = 0;
-		//bufferLocked = true;
-		//serialCommandBuffer[serialCommandIdx] = '\0';
 		return true;
 	}
 
 	return false;
 }
-
-/*void SerialSource::releaseBuffer()
-{
-	bufferLocked = false;
-}*/
 
 void SerialSource::resetBuffer()
 {

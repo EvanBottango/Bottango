@@ -17,11 +17,14 @@ public:
 
 	bool tryConsumeData(char** out) override;
 
-	//void releaseBuffer();
-
 	void resetBuffer() override;
 
 private:
+	/**
+	 * @brief Checks the hash of a command string for validity.
+	 * @param cmdString Pointer to the command string to check.
+	 * @return true if the hash is valid, false otherwise.
+	 */
 	bool checkHash(const char* cmdString);
 
 	unsigned long timeOfLastChar = 0;
@@ -29,8 +32,6 @@ private:
 
 	char serialCommandBuffer[MAX_COMMAND_LENGTH];
 	int serialCommandIdx = 0;
-	//bool bufferLocked = false;
 };
-
 
 #endif

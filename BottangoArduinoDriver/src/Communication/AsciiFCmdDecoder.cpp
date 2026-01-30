@@ -33,7 +33,6 @@ void AsciiCmdDecoder::decode()
 	// The command is split when calling tryConsumeCommand() next time.
 	if (strncmp_P(stringToSplit, BasicCommands::SYNC_COMMAND, 3) == 0)
 	{
-		//validCommandAvailable = true;
 		syncCommandInProgress = true;
 
 		// Start sync command and get first frame
@@ -43,9 +42,6 @@ void AsciiCmdDecoder::decode()
 #endif
 	
 	splitCommand(stringToSplit);
-
-	// ToDo: Relase buffer when done
-	//paramsCount = idxResult;
 }
 
 void AsciiCmdDecoder::splitCommand(char* stringToSplit)
@@ -76,11 +72,13 @@ char** AsciiCmdDecoder::tryConsumeCommand()
 	{
 		if (hasMoreFrames())
 		{
+			// Get next frame and split it
 			splitCommand(getNextFrame());
 			return splitCommandBuffer;
 		}
 		else
 		{
+			// Reset sync command state
 			validCommandAvailable = false;
 			syncCommandInProgress = false;
 			return nullptr;
@@ -98,6 +96,7 @@ char** AsciiCmdDecoder::tryConsumeCommand()
 	return nullptr;
 }
 
+#ifdef ALLOW_SYNC_COMMANDS
 void AsciiCmdDecoder::beginSyncCommand(char* stringToSplit)
 {
 	expectNewCommand = true;
@@ -191,11 +190,6 @@ char* AsciiCmdDecoder::getNextFrame()
 
 bool AsciiCmdDecoder::hasMoreFrames()
 {
-	// Return true or false, depending on whether there are more frames to process
-	// Return always false when sync commands are not enabled
-#ifdef ALLOW_SYNC_COMMANDS
 	return nextFrameStart && *nextFrameStart != '\0';
-#else
-	return false;
-#endif
 }
+#endif

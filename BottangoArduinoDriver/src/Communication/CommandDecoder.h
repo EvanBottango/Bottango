@@ -10,12 +10,27 @@
 class CommandDecoder : public LoopModule
 {
 public:
+	/**
+	 * @brief Decode data from the data source.
+	 */
 	virtual void decode() {};
 
+	/**
+	 * @brief Returns true if there is a valid command available to consume.
+	 * @return true if a command is available, false otherwise.
+	 */
 	virtual bool hasCommand();
 
+	/**
+	 * @brief Try to consume a command from the decoder.
+	 * @return Pointer to the command parameters array if a command is available, nullptr otherwise.
+	 */
 	virtual char** tryConsumeCommand();
 
+	/**
+	 * @brief Set the data source for the command decoder.
+	 * @param src Pointer to the data source.
+	 */
 	virtual void setDataSource(DataSource* src);
 
 protected:
