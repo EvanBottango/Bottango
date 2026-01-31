@@ -103,6 +103,12 @@
     <Filter Include="Source Files\lib\ESP32Servo">
       <UniqueIdentifier>{fd09cb44-ae82-425b-a2ff-bb0d03e18ac9}</UniqueIdentifier>
     </Filter>
+    <Filter Include="Header Files\DataSource">
+      <UniqueIdentifier>{b19c278b-8e9d-4300-a71a-65a7d7cb4265}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source Files\DataSource">
+      <UniqueIdentifier>{46ef5b88-0660-40a7-aafc-89b10c92f413}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="BottangoArduinoDriver.ino" />
@@ -229,9 +235,6 @@
     <ClCompile Include="src\SDCardCommandStreamDataSource.h">
       <Filter>Header Files\Data</Filter>
     </ClCompile>
-    <ClCompile Include="src\SDCardUtil.h">
-      <Filter>Header Files\Data</Filter>
-    </ClCompile>
     <ClCompile Include="src\Time.h">
       <Filter>Header Files\System</Filter>
     </ClCompile>
@@ -252,9 +255,6 @@
     </ClCompile>
     <ClCompile Include="src\FreeRam.h">
       <Filter>Header Files\System\Util</Filter>
-    </ClCompile>
-    <ClCompile Include="src\TxtBuffer.h">
-      <Filter>Header Files\Data</Filter>
     </ClCompile>
     <ClCompile Include="src\PersistentConfigUtil.h">
       <Filter>Header Files\System\Util</Filter>
@@ -298,19 +298,10 @@
     <ClCompile Include="src\AbstractMultiMessageOutgoingSource.h">
       <Filter>Header Files\System</Filter>
     </ClCompile>
-    <ClCompile Include="src\Communication\DataSource.cpp">
-      <Filter>Source Files\Communication</Filter>
-    </ClCompile>
-    <ClCompile Include="src\Communication\SerialSource.cpp">
-      <Filter>Source Files\Communication</Filter>
-    </ClCompile>
     <ClCompile Include="src\Communication\CommandDecoder.cpp">
       <Filter>Source Files\Communication</Filter>
     </ClCompile>
     <ClCompile Include="src\Communication\Parser.cpp">
-      <Filter>Source Files\Communication</Filter>
-    </ClCompile>
-    <ClCompile Include="src\Communication\AsciiFCmdDecoder.cpp">
       <Filter>Source Files\Communication</Filter>
     </ClCompile>
     <ClCompile Include="src\AbstractEffector.cpp">
@@ -445,9 +436,6 @@
     <ClCompile Include="src\SDCardCommandStreamDataSource.cpp">
       <Filter>Source Files\Data</Filter>
     </ClCompile>
-    <ClCompile Include="src\SDCardUtil.cpp">
-      <Filter>Source Files\Data</Filter>
-    </ClCompile>
     <ClCompile Include="src\AudioBinaryUtil.cpp">
       <Filter>Source Files\OTA</Filter>
     </ClCompile>
@@ -474,6 +462,24 @@
     </ClCompile>
     <ClCompile Include="src\ModulesResponder.cpp">
       <Filter>Source Files\Module Handling</Filter>
+    </ClCompile>
+    <ClCompile Include="src\DataSource\DataSource.cpp">
+      <Filter>Source Files\DataSource</Filter>
+    </ClCompile>
+    <ClCompile Include="src\DataSource\SerialSource.cpp">
+      <Filter>Source Files\DataSource</Filter>
+    </ClCompile>
+    <ClCompile Include="src\Communication\AsciiCmdDecoder.cpp">
+      <Filter>Source Files\Communication</Filter>
+    </ClCompile>
+    <ClCompile Include="src\DataSource\SdCardSource.cpp">
+      <Filter>Source Files\DataSource</Filter>
+    </ClCompile>
+    <ClCompile Include="src\DataSource\SDCardUtil.cpp">
+      <Filter>Source Files\DataSource</Filter>
+    </ClCompile>
+    <ClCompile Include="src\Modules\OfflineAnimationControl.cpp">
+      <Filter>Source Files\Modules</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
@@ -504,12 +510,6 @@
     <ClInclude Include="src\System\SystemStatus.h">
       <Filter>Header Files\System</Filter>
     </ClInclude>
-    <ClInclude Include="src\Communication\DataSource.h">
-      <Filter>Header Files\Communication</Filter>
-    </ClInclude>
-    <ClInclude Include="src\Communication\SerialSource.h">
-      <Filter>Header Files\Communication</Filter>
-    </ClInclude>
     <ClInclude Include="src\Communication\CommandDecoder.h">
       <Filter>Header Files\Communication</Filter>
     </ClInclude>
@@ -518,6 +518,24 @@
     </ClInclude>
     <ClInclude Include="src\Communication\AsciiCmdDecoder.h">
       <Filter>Header Files\Communication</Filter>
+    </ClInclude>
+    <ClInclude Include="src\DataSource\DataSource.h">
+      <Filter>Header Files\DataSource</Filter>
+    </ClInclude>
+    <ClInclude Include="src\DataSource\SerialSource.h">
+      <Filter>Header Files\DataSource</Filter>
+    </ClInclude>
+    <ClInclude Include="src\DataSource\SdCardSource.h">
+      <Filter>Header Files\DataSource</Filter>
+    </ClInclude>
+    <ClInclude Include="src\DataSource\SDCardUtil.h">
+      <Filter>Header Files\DataSource</Filter>
+    </ClInclude>
+    <ClInclude Include="src\DataSource\TxtBuffer.h">
+      <Filter>Header Files\DataSource</Filter>
+    </ClInclude>
+    <ClInclude Include="src\Modules\OfflineAnimationControl.h">
+      <Filter>Header Files\Modules</Filter>
     </ClInclude>
   </ItemGroup>
 </Project>

@@ -8,7 +8,7 @@
 
 void SerialSource::onPhase(Phase p)
 {
-	// Only read data during the Communication phase, and if the buffer is not locked
+	// Only read data during the Communication phase
 	if (p != Phase::Communication)
 	{
 		return;

@@ -49,6 +49,8 @@ void CommandStreamProvider::runSetup()
 
     commandStreamIsSetup = true;
 
+	// Current open file should be setup.
+	// This command parses the setup file and registers all effectors
     runInProgressCommand();
 
     // parse configs
@@ -77,7 +79,7 @@ void CommandStreamProvider::startCommandStream(byte streamID, bool loop)
         }
 #endif
 
-		// ToDo: Why is this in the CommandStreamProvider and not within the SD-Card code?
+		// Note: Why is this in the CommandStreamProvider and not within the SD-Card code?
 		// Looking at Line 104: Maybe its just a naming thing and this is a general status indicator LED
 		SystemStatus::systemStatus.Signal = SystemStatus::eSignal::SDError;
 

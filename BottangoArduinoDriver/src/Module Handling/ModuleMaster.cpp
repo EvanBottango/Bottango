@@ -7,7 +7,9 @@
 #include "../BottangoCore.h"
 #include "../../BottangoArduinoModules.h"
 
-#include "../Communication/SerialSource.h"
+#include "../DataSource/SerialSource.h"
+#include "../DataSource/SdCardSource.h"
+
 #include "../Communication/AsciiCmdDecoder.h"
 #include "../Communication/Parser.h"
 
@@ -19,7 +21,12 @@
 void ModuleMaster::setupModules()
 {
 	static SerialSource serialSource;
-	modules[(int)Modules::DataSource] = &serialSource;
+	modules[(int)Modules::DataSource_1] = &serialSource;
+
+#ifdef USE_SD_CARD_COMMAND_STREAM
+	static SdCardSource sdCardSource;
+	modules[(int)Modules::DataSource_2] = &sdCardSource;
+#endif
 
 	static AsciiCmdDecoder asciiDecoder;
 	modules[(int)Modules::Decoder] = &asciiDecoder;

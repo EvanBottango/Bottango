@@ -2,7 +2,7 @@
 
 #include "../BottangoArduinoModules.h"
 #include "Module Handling/ModuleMaster.h"
-#include "Communication/DataSource.h"
+#include "DataSource/DataSource.h"
 #include "System/SystemStatus.h"
 #include "I2SAudioEffector.h"
 
@@ -31,10 +31,6 @@ namespace BottangoCore
 #endif
 #endif
 
-    //char delimiters[] = ",";
-
-    //bool initialized = false;
-	//bool handshake = false;		// Handshake is never used?
 #if defined(USE_CODE_COMMAND_STREAM) || defined(USE_SD_CARD_COMMAND_STREAM)
     CommandStreamProvider *commandStreamProvider = nullptr;
 #endif
@@ -46,13 +42,6 @@ namespace BottangoCore
     const unsigned long NETWORK_CHECK_INTERVAL_MS = 15000; // recheck wifi connection every 15 seconds
     const unsigned long SERVER_CHECK_INTERVAL_MS = 3000;   // recheck server every 3 seconds
 #endif
-
-    /*char serialCommandBuffer[MAX_COMMAND_LENGTH];
-    int serialCommandIdx = 0;
-
-    unsigned long timeOfLastChar = 0;
-    bool commandInProgress = false;
-    char *splitCommandBuffer[COMMANDS_PARAMS_SIZE];*/
 
     void bottangoSetup()
     {
@@ -79,7 +68,7 @@ namespace BottangoCore
 #if defined(RELAY_SUPPORTED)
         initRelayComs();
 //#elif defined(USE_USB_SERIAL)
-		// Moved to mMaster.initModules();
+		// Note: Moved to mMaster.initModules();
         //initUSBSerialComms();
 #elif defined(USE_ESP32_WIFI)
         initESP32WifiComs();
@@ -113,19 +102,21 @@ namespace BottangoCore
 
 // enter exported animation if required
 #ifdef ENABLE_DYNAMIC_ANIMATION_SOURCE_SWITCH
+		// ToDo: implement dynamic source switch
         if (PersistentConfigUtil::getUseExportedCommandStream())
 #endif
 #if defined(USE_CODE_COMMAND_STREAM) || defined(USE_SD_CARD_COMMAND_STREAM)
         {
-#ifdef ENABLE_STATUS_LIGHTS
-			SystemStatus::systemStatus.ConnectionStatus = SystemStatus::eConnectionStatus::Export_Playback;
+			// Note: Moved to mMaster.initModules();
+//#ifdef ENABLE_STATUS_LIGHTS
+			//SystemStatus::systemStatus.ConnectionStatus = SystemStatus::eConnectionStatus::Export_Playback;
             //StatusLights::setDesiredColor(CONNECTION_STATUS_LIGHT, STATUS_COLOR_CONNECTION_EXPORT_PLAYBACK);
             //StatusLights::setLightMode(CONNECTION_STATUS_LIGHT, StatusLights::LightMode::MODE_PULSE);
-#endif
-            commandStreamProvider = new CommandStreamProvider();
-            initialized = true;
+//#endif
+            /*commandStreamProvider = new CommandStreamProvider();
+            SystemStatus::systemStatus.initialized = true;
             Callbacks::onThisControllerStarted();
-            commandStreamProvider->runSetup();
+            commandStreamProvider->runSetup();*/
         }
 #endif
 
@@ -745,8 +736,8 @@ namespace BottangoCore
 
         unsigned long time = Time::getCurrentTimeInMs();
 
-		// ToDo: This is still needed, but is commented out for now, until I get to the point of the relay stuff. The global var splitCommandBuffer does not exist anymore.
-        /*char* commandName = splitCommandBuffer[0];
+		// Note / ToDo: This is still needed, but is commented out for now, until I get to the point of the relay stuff. The global var splitCommandBuffer does not exist anymore.
+        char* commandName = splitCommandBuffer[0];
 
         if (returnStartTime)
         {
@@ -767,7 +758,7 @@ namespace BottangoCore
                 unsigned long startTime = getMSTimeOfCommand(cmdCopy, true);
                 time = startTime + atol(splitCommandBuffer[3]);
             }
-        }*/
+        }
 
         return time;
     }

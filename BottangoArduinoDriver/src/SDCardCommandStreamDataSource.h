@@ -5,8 +5,9 @@
 
 #include "AbstractCommandStreamDataSource.h"
 #include "../BottangoArduinoConfig.h"
-#include "SDCardUtil.h"
-#include "TxtBuffer.h"
+#include "DataSource/SDCardUtil.h"
+#include "DataSource/TxtBuffer.h"
+#include <FS.h>
 
 #ifdef ESP32
 #include <freertos/FreeRTOS.h>

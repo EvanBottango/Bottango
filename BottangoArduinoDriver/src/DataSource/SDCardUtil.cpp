@@ -1,9 +1,10 @@
-#include "../BottangoArduinoModules.h"
+#include "../../BottangoArduinoModules.h"
 #if defined(USE_SD_CARD_COMMAND_STREAM) || defined(AUDIO_SD_I2S)
+
 #include "SDCardUtil.h"
-#include "../BottangoArduinoConfig.h"
-#include "Outgoing.h"
-#include "System/SystemStatus.h"
+#include "../../BottangoArduinoConfig.h"
+#include "../Outgoing.h"
+#include "../System/SystemStatus.h"
 
 //#ifdef ENABLE_STATUS_LIGHTS
 //#include "StatusLights.h"
@@ -322,4 +323,4 @@ namespace SDCardUtil
         strcat(output, workingString); // "/audio/FFFFFFFFhash.txt"
     }
 }
-#endif
+#endif // (USE_SD_CARD_COMMAND_STREAM) || defined(AUDIO_SD_I2S)

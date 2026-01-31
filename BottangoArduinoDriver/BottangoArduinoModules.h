@@ -29,11 +29,11 @@
 // otherwise select one of the below:
 
 // #define USE_CODE_COMMAND_STREAM                             // uncomment this line to drive animations from exported code instead of live control
-// #define USE_SD_CARD_COMMAND_STREAM                       // uncomment this line to drive animations from files on an SD card instead of live control (Note, arduino Uno / Nano / mega not supported)
+#define USE_SD_CARD_COMMAND_STREAM                       // uncomment this line to drive animations from files on an SD card instead of live control (Note, arduino Uno / Nano / mega not supported)
 
 
 // if you have selected one of the above, enable this to dynamically switch between USB or the selected above exported animation source
-// #define ENABLE_DYNAMIC_ANIMATION_SOURCE_SWITCH              // uncomment this line to monitor a pin at boot to switch between live control or saved animation playback.
+#define ENABLE_DYNAMIC_ANIMATION_SOURCE_SWITCH              // uncomment this line to monitor a pin at boot to switch between live control or saved animation playback.
 
 
 // ---------------------------------- //
@@ -49,7 +49,7 @@
 //#define AUDIO_SD_I2S                                     // uncomment this line to have audio keyframes play audio over i2s, reading audio file from SD card
 
 // extra features
-#define DYNAMIC_VOLUME                                   // uncomment this line to adjust volume of i2s signal based on analog pin read
+// #define DYNAMIC_VOLUME                                   // uncomment this line to adjust volume of i2s signal based on analog pin read
 // #define PIN_ON_AUDIO_PLAY                                // uncomment this line to take a pin high when playing audio (to enable an amp, etc.)
 
 // ---------------------------------- //
@@ -80,7 +80,7 @@
 // #define UTILITY_PIN 0                                       // monitor a specific button/pin for some utility behaviors
 
 // #define RESET_PREFS_SUPPORTED                               // support reset persistent storage with utility button
-// #define TOGGLE_DEBUG                                        // support toggle verbose logging
+#define TOGGLE_DEBUG                                        // support toggle verbose logging
 
 #endif
 #endif

@@ -1,12 +1,12 @@
 #ifndef TXTBUFFER_H
 #define TXTBUFFER_H
 
-#include "../BottangoArduinoModules.h"
+#include "../../BottangoArduinoModules.h"
 #if defined(RELAY_COMS_ESPNOW) || defined(USE_SD_CARD_COMMAND_STREAM)
 
-#include "../BottangoArduinoConfig.h"
 #include <cstring>
-#include "Outgoing.h"
+#include "../../BottangoArduinoConfig.h"
+#include "../Outgoing.h"
 
 #ifdef ESP32
 #include <freertos/semphr.h>

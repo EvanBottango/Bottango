@@ -1,4 +1,4 @@
-#include "../BottangoArduinoModules.h"
+#include "../../BottangoArduinoModules.h"
 #if defined(USE_SD_CARD_COMMAND_STREAM) || defined(AUDIO_SD_I2S)
 
 #ifndef SDCardUtil_h
@@ -66,5 +66,5 @@ namespace SDCardUtil
 #endif
 
 } // namespace SDCardUtil
-#endif
-#endif
+#endif // (USE_SD_CARD_COMMAND_STREAM) || defined(AUDIO_SD_I2S)
+#endif // SDCardUtil_h

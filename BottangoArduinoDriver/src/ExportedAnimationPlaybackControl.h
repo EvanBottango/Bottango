@@ -47,6 +47,6 @@ namespace ExportedAnimationPlaybackControl
     void logConfig(AnimationConfiguration *config);
 #endif
 }
-#endif
+#endif // defined(USE_SD_CARD_COMMAND_STREAM) || defined(USE_CODE_COMMAND_STREAM)
 
-#endif
+#endif // EXPORTEDANIMATIONPLAYBACKCONTROL_H

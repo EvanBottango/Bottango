@@ -15,7 +15,8 @@
  // Second approach is more flexible and extensible, but adds complexity.
 enum class Modules : uint8_t
 {
-	DataSource,
+	DataSource_1,
+	DataSource_2,
 	Decoder,
 	Parser,
 	EffectorPool,
