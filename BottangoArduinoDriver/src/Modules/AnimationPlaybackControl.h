@@ -10,7 +10,7 @@
 #include "../Module Handling/ModuleLoop.h"
 #include "../CircularArray.h"
 
-class OfflineAnimationControl : LoopModule
+class AnimationPlaybackControl : LoopModule
 {
 public:
 	struct AnimationConfiguration
@@ -26,7 +26,9 @@ public:
 		uint_fast16_t buttonLadderMax = 0; // max for button ladder
 	};
 
-	void onPhase(Phase p);
+	void onPhase(Phase p) override;
+
+	void init() override {};
 
 	void runSetup();
 

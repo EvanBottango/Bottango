@@ -8,6 +8,7 @@
 #include "../BottangoArduinoConfig.h"
 #include "../BottangoArduinoCallbacks.h"
 #include "../BottangoArduinoModules.h"
+#include "Module Handling/ModuleMaster.h"
 #include "Time.h"
 #include "Outgoing.h"
 #include <Arduino.h>
@@ -50,6 +51,7 @@ namespace BottangoCore
 
     extern EffectorPool effectorPool;
     extern AbstractMultiMessageOutgoingSource *activeOutgoingMultimessage;
+	extern ModuleMaster mMaster;
     //extern bool initialized;
     //extern bool handshake;
     //extern char delimiters[];

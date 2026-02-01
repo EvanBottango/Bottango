@@ -478,8 +478,14 @@
     <ClCompile Include="src\DataSource\SDCardUtil.cpp">
       <Filter>Source Files\DataSource</Filter>
     </ClCompile>
-    <ClCompile Include="src\Modules\OfflineAnimationControl.cpp">
+    <ClCompile Include="src\Modules\AnimationPlaybackControl.cpp">
       <Filter>Source Files\Modules</Filter>
+    </ClCompile>
+    <ClCompile Include="src\Module Handling\ModuleSlot.cpp">
+      <Filter>Source Files\Module Handling</Filter>
+    </ClCompile>
+    <ClCompile Include="src\DataSource\RS485Source.cpp">
+      <Filter>Source Files\DataSource</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
@@ -534,8 +540,14 @@
     <ClInclude Include="src\DataSource\TxtBuffer.h">
       <Filter>Header Files\DataSource</Filter>
     </ClInclude>
-    <ClInclude Include="src\Modules\OfflineAnimationControl.h">
+    <ClInclude Include="src\Modules\AnimationPlaybackControl.h">
       <Filter>Header Files\Modules</Filter>
+    </ClInclude>
+    <ClInclude Include="src\Module Handling\ModuleSlot.h">
+      <Filter>Header Files\Module Handling</Filter>
+    </ClInclude>
+    <ClInclude Include="src\DataSource\RS485Source.h">
+      <Filter>Header Files\DataSource</Filter>
     </ClInclude>
   </ItemGroup>
 </Project>

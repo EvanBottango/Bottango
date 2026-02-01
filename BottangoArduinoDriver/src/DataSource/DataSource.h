@@ -19,7 +19,10 @@ public:
 	 * @brief Returns true if there is data available to consume.
 	 * @return true if data is available, false otherwise.
 	 */
-	virtual bool hasData();
+	virtual bool hasData()
+	{
+		return validDataAvailable;
+	}
 
 	/**
 	 * @brief Try to consume data from the source.
@@ -33,8 +36,19 @@ public:
 
 	virtual void resetBuffer() {}
 
+	virtual bool isActiveSource()
+	{
+		return isActive;
+	}
+
+	virtual void setActiveSource(bool active)
+	{
+		isActive = active;
+	}	
+
 protected:
 	bool validDataAvailable = false;
+	bool isActive = false;
 };
 
 #endif

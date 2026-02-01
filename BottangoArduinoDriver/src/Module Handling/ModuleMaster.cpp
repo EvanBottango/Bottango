@@ -20,13 +20,18 @@
 
 void ModuleMaster::setupModules()
 {
+	// The serial data source is always present and active
 	static SerialSource serialSource;
-	modules[(int)Modules::DataSource_1] = &serialSource;
+	modules[(int)Modules::DataSource_Serial] = &serialSource;
+	serialSource.setActiveSource(true);
 
-#ifdef USE_SD_CARD_COMMAND_STREAM
+	//slotSecondary.place<SdCardSource>();
+
+	// Note: Moved to OfflineAnimationControl.cpp (or maybe a better name would be AnimationPlaybackControl?)
+/*#ifdef USE_SD_CARD_COMMAND_STREAM
 	static SdCardSource sdCardSource;
-	modules[(int)Modules::DataSource_2] = &sdCardSource;
-#endif
+	modules[(int)Modules::DataSource_Secondary] = &sdCardSource;
+#endif*/
 
 	static AsciiCmdDecoder asciiDecoder;
 	modules[(int)Modules::Decoder] = &asciiDecoder;

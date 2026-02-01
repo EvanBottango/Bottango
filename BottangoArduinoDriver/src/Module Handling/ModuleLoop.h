@@ -23,6 +23,8 @@ enum class Phase
 class LoopModule
 {
 public:
+	LoopModule() = default;
+	virtual ~LoopModule() = default;
 	/**
 	 * @brief Virtual callback invoked when a phase occurs. Override in derived classes to handle given phase.
 	 * @param p The phase being executed.

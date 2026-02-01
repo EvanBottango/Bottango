@@ -101,12 +101,12 @@ namespace BottangoCore
 #endif
 
 // enter exported animation if required
-#ifdef ENABLE_DYNAMIC_ANIMATION_SOURCE_SWITCH
+//#ifdef ENABLE_DYNAMIC_ANIMATION_SOURCE_SWITCH
 		// ToDo: implement dynamic source switch
-        if (PersistentConfigUtil::getUseExportedCommandStream())
-#endif
-#if defined(USE_CODE_COMMAND_STREAM) || defined(USE_SD_CARD_COMMAND_STREAM)
-        {
+//        if (PersistentConfigUtil::getUseExportedCommandStream())
+//#endif
+//#if defined(USE_CODE_COMMAND_STREAM) || defined(USE_SD_CARD_COMMAND_STREAM)
+//        {
 			// Note: Moved to mMaster.initModules();
 //#ifdef ENABLE_STATUS_LIGHTS
 			//SystemStatus::systemStatus.ConnectionStatus = SystemStatus::eConnectionStatus::Export_Playback;
@@ -117,8 +117,8 @@ namespace BottangoCore
             SystemStatus::systemStatus.initialized = true;
             Callbacks::onThisControllerStarted();
             commandStreamProvider->runSetup();*/
-        }
-#endif
+ //       }
+//#endif
 
     }
 
@@ -888,7 +888,7 @@ namespace BottangoCore
 		SystemStatus::systemStatus.initialized = false;
 		//initialized = false;
 
-		DataSource* dataSource = mMaster.getModule<DataSource>(Modules::DataSource);
+		DataSource* dataSource = mMaster.getModule<DataSource>(Modules::DataSource_Serial);
 		dataSource->resetBuffer();
         //commandInProgress = false;
         //serialCommandIdx = 0;

@@ -154,6 +154,10 @@
       <DeploymentContent>true</DeploymentContent>
     </ClCompile>
     <ClCompile Include="src\DataSource\DataSource.cpp" />
+    <ClCompile Include="src\DataSource\RS485Source.cpp">
+      <SubType>
+      </SubType>
+    </ClCompile>
     <ClCompile Include="src\DataSource\SdCardSource.cpp">
       <SubType>
       </SubType>
@@ -208,12 +212,16 @@
     </ClCompile>
     <ClCompile Include="src\Module Handling\ModuleLoop.cpp" />
     <ClCompile Include="src\Module Handling\ModuleMaster.cpp" />
+    <ClCompile Include="src\Module Handling\ModuleSlot.cpp">
+      <SubType>
+      </SubType>
+    </ClCompile>
     <ClCompile Include="src\ModulesResponder.cpp">
       <DeploymentContent>true</DeploymentContent>
     </ClCompile>
     <ClCompile Include="src\Modules\Audio\I2SAudEventStatusResponder.cpp" />
     <ClCompile Include="src\Modules\Audio\I2SAudioModule.cpp" />
-    <ClCompile Include="src\Modules\OfflineAnimationControl.cpp">
+    <ClCompile Include="src\Modules\AnimationPlaybackControl.cpp">
       <SubType>
       </SubType>
     </ClCompile>
@@ -500,6 +508,10 @@
       </SubType>
     </ClInclude>
     <ClInclude Include="src\DataSource\DataSource.h" />
+    <ClInclude Include="src\DataSource\RS485Source.h">
+      <SubType>
+      </SubType>
+    </ClInclude>
     <ClInclude Include="src\DataSource\SdCardSource.h">
       <SubType>
       </SubType>
@@ -510,9 +522,13 @@
     <ClInclude Include="src\Interfaces\AudioPlayback.h" />
     <ClInclude Include="src\Module Handling\ModuleLoop.h" />
     <ClInclude Include="src\Module Handling\ModuleMaster.h" />
+    <ClInclude Include="src\Module Handling\ModuleSlot.h">
+      <SubType>
+      </SubType>
+    </ClInclude>
     <ClInclude Include="src\Modules\Audio\I2SAudEventStatusResponder.h" />
     <ClInclude Include="src\Modules\Audio\I2SAudioModule.h" />
-    <ClInclude Include="src\Modules\OfflineAnimationControl.h">
+    <ClInclude Include="src\Modules\AnimationPlaybackControl.h">
       <SubType>
       </SubType>
     </ClInclude>
