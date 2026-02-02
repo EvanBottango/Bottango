@@ -41,9 +41,15 @@ public:
 
 	bool openFile(const char* path);
 
+	bool openSetup();
+
+	bool openAnimation(uint8_t animIndex, bool loop);
+
 	//void readData() override;
 
 	void prepareNextCommand();
+
+	void peekNextCommand(char* out);
 
 	bool tryConsumeData(char** out) override;
 
@@ -55,13 +61,11 @@ private:
 	TxtBuffer<TXT_BUFFER_SIZE_SD> cardReadBuffer;
 	File currentFile;
 
-	byte index = 0;
-	bool setup = false;
+	uint8_t index = 0;
 	bool onLoop = false;
-	volatile bool cardReadComplete = false;
+	volatile bool fileReadComplete = false;
 	bool shouldLoop = false;
 	bool dataComplete = false;
-	bool isValid = false;
 
 	//unsigned long timeOfNextCommand = 0;
 	//unsigned long msEndOfLatestCommand = 0;
@@ -74,10 +78,11 @@ private:
 	void updateOnLoop();
 #endif
 
-	void runSetup();
-	void checkIsValid();
+	//void checkIsValid();
+
 	bool fillBufferChunk();
-	void getNextCommand(bool peek);
+
+	void getNextCommand(char* buffer, bool peek);
 
 	//unsigned long getMSTimeOfCommand(char* commandString, bool returnStartTime);
 };

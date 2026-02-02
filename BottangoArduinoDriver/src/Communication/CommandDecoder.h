@@ -33,6 +33,10 @@ public:
 	 */
 	virtual void setDataSource(DataSource* src);
 
+	virtual unsigned long getStartTime(char* command) {};
+
+	virtual unsigned long getEndTime(char* command) {};
+
 protected:
 	char* splitCommandBuffer[COMMANDS_PARAMS_SIZE];
 	bool validCommandAvailable = false;

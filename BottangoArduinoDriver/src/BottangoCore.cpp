@@ -737,7 +737,7 @@ namespace BottangoCore
         unsigned long time = Time::getCurrentTimeInMs();
 
 		// Note / ToDo: This is still needed, but is commented out for now, until I get to the point of the relay stuff. The global var splitCommandBuffer does not exist anymore.
-        char* commandName = splitCommandBuffer[0];
+       /*char* commandName = splitCommandBuffer[0];
 
         if (returnStartTime)
         {
@@ -758,7 +758,7 @@ namespace BottangoCore
                 unsigned long startTime = getMSTimeOfCommand(cmdCopy, true);
                 time = startTime + atol(splitCommandBuffer[3]);
             }
-        }
+        }*/
 
         return time;
     }

@@ -29,7 +29,7 @@ SdCardSource::~SdCardSource()
 	// Graceful task shutdown with timeout to prevent hangs
 
 #ifdef ESP32
-	cardReadComplete = true;
+	fileReadComplete = true;
 	if (fillTaskHandle)
 	{
 		// Notify the task to wake up and see the cardReadComplete flag
@@ -79,7 +79,7 @@ void SdCardSource::init()
 		Callbacks::onThisControllerStarted();
 
 		// ToDo: Rename this function. It does not run / parse / execute the setup file anymore. It only opens it
-		runSetup();
+		//runSetup();
 	}
 }
 
@@ -98,14 +98,84 @@ bool SdCardSource::openFile(const char* path)
 	return xQueueSend(commandQueue, &cmd, portMAX_DELAY) == pdTRUE;
 }
 
+bool SdCardSource::openSetup()
+{
+	// Open setup file, only if another file is not already open
+	if (!currentFile)
+	{
+		dataComplete = false;
+		fileReadComplete = false;
+
+		char finalPath[MAX_FILE_PATH_SIZE];
+		finalPath[0] = '\0';
+
+		// Get setup file path
+		SDCardUtil::getSetupFilePath(finalPath);
+
+		// Open setup file and check for errors
+		SDCardUtil::SDFileError fileError;
+		currentFile = SDCardUtil::openFile(finalPath, fileError);
+		if (fileError != SDCardUtil::SDFileError::ERR_NONE || !currentFile)
+		{
+			SDCardUtil::closeFile(currentFile);
+			return false;
+		}
+
+#ifdef ESP32
+		startFillTask(); // ESP32: Background task fills buffer
+#else
+		updateOnLoop(); // Non-ESP32: Buffer filled during main loop via updateOnLoop(), but needs to be primed
+#endif
+	}
+	
+	return false;
+}
+
+bool SdCardSource::openAnimation(uint8_t animIndex, bool loop)
+{
+	// Open animation file, only if another file is not already open
+	if (!currentFile)
+	{
+		dataComplete = false;
+		fileReadComplete = false;
+		onLoop = false;
+
+		index = animIndex;
+		shouldLoop = loop;
+
+		char finalPath[MAX_FILE_PATH_SIZE];
+		finalPath[0] = '\0';
+
+		// Get animation file path
+		SDCardUtil::getAnimationFilePath(index, finalPath, loop, false);
+
+		// Open animation file and check for errors
+		SDCardUtil::SDFileError fileError;
+		currentFile = SDCardUtil::openFile(finalPath, fileError);
+		if (fileError != SDCardUtil::SDFileError::ERR_NONE || !currentFile)
+		{
+			SDCardUtil::closeFile(currentFile);
+			return false;
+		}
+
+#ifdef ESP32
+		startFillTask(); // ESP32: Background task fills buffer
+#else
+		updateOnLoop(); // Non-ESP32: Buffer filled during main loop via updateOnLoop(), but needs to be primed
+#endif
+	}
+
+	return false;
+}
+
 void SdCardSource::prepareNextCommand()
 {
 	// Read the next line from the currently opened file until '\n'
-	getNextCommand(false);
+	getNextCommand(commandBuffer, false);
 
 #ifndef ESP32
 	// got something empty back? Let's update data source and try one more time
-	if (output[0] == '\0')
+	if (commandBuffer[0] == '\0')
 	{
 		updateOnLoop();
 		getNextCommand(false);
@@ -133,26 +203,12 @@ void SdCardSource::prepareNextCommand()
 	}*/
 }
 
-void SdCardSource::runSetup()
+void SdCardSource::peekNextCommand(char* out)
 {
-	setup = true;
-	shouldLoop = false;
-	dataComplete = false;
-	cardReadComplete = false;
-
-	checkIsValid();
-
-	if (isValid)
-	{
-#ifdef ESP32
-		startFillTask(); // ESP32: Background task fills buffer
-#else
-		updateOnLoop(); // Non-ESP32: Buffer filled during main loop via updateOnLoop(), but needs to be primed
-#endif
-	}
+	getNextCommand(out, true);
 }
 
-void SdCardSource::checkIsValid()
+/*void SdCardSource::checkIsValid()
 {
 	// Validate required files exist before starting buffer operations
 	char path[MAX_FILE_PATH_SIZE];
@@ -196,7 +252,7 @@ void SdCardSource::checkIsValid()
 	}
 
 	isValid = true;
-}
+}*/
 
 #ifdef ESP32
 void SdCardSource::startFillTask()
@@ -217,7 +273,7 @@ void SdCardSource::fillTask(void* param)
 {
 	SdCardSource* self = static_cast<SdCardSource*>(param);
 
-	while (!self->cardReadComplete)
+	while (!self->fileReadComplete)
 	{
 		// Keep reading blocks until the buffer is nearly full
 		while (self->fillBufferChunk())
@@ -226,7 +282,7 @@ void SdCardSource::fillTask(void* param)
 		}
 
 		// Block until buffer has space (producer/consumer sync)
-		if (!self->cardReadComplete &&
+		if (!self->fileReadComplete &&
 			self->cardReadBuffer.getSpaceAvailable() < TXT_BUFFER_READ_CHUNK_SIZE)
 		{
 			ulTaskNotifyTake(pdTRUE, portMAX_DELAY);
@@ -246,7 +302,7 @@ void SdCardSource::fillTask(void* param)
 void SdCardSource::updateOnLoop()
 {
 	// Non-ESP32: Fill buffer during main loop idle time
-	if (!cardReadComplete && cardReadBuffer.getSpaceAvailable() >= TXT_BUFFER_READ_CHUNK_SIZE)
+	if (!fileReadComplete && cardReadBuffer.getSpaceAvailable() >= TXT_BUFFER_READ_CHUNK_SIZE)
 	{
 		fillBufferChunk();
 	}
@@ -271,7 +327,7 @@ bool SdCardSource::fillBufferChunk()
 	 // Core buffer filling logic shared by ESP32 task and non-ESP32 loop
 
 	 // open file if needed
-	if (!currentFile)
+	/*if (!currentFile)
 	{
 		char finalPath[MAX_FILE_PATH_SIZE];
 		finalPath[0] = '\0';
@@ -297,7 +353,7 @@ bool SdCardSource::fillBufferChunk()
 			SDCardUtil::closeFile(currentFile);
 			return false;
 		}
-	}
+	}*/
 
 	if (SDCardUtil::safeAvailable(currentFile) && cardReadBuffer.getSpaceAvailable() >= TXT_BUFFER_READ_CHUNK_SIZE)
 	{
@@ -306,11 +362,13 @@ bool SdCardSource::fillBufferChunk()
 		int bytesRead = currentFile.readBytes(tempBuffer, TXT_BUFFER_READ_CHUNK_SIZE);
 		SDCardUtil::unlockCard();
 
+		// Add read data to circular buffer
 		for (int i = 0; i < bytesRead; i++)
 		{
 			cardReadBuffer.addChar(tempBuffer[i]);
 		}
 
+		// No more data available?
 		if (!SDCardUtil::safeAvailable(currentFile))
 		{
 			// End of file: handle looping or completion
@@ -330,21 +388,21 @@ bool SdCardSource::fillBufferChunk()
 					currentFile = SDCardUtil::openFile(loopPath, fileError2);
 					if (fileError2 != SDCardUtil::SDFileError::ERR_NONE || !currentFile)
 					{
-						cardReadComplete = true;
+						fileReadComplete = true;
 						SDCardUtil::closeFile(currentFile);
 						return false;
 					}
 				}
 				else
 				{
-					cardReadComplete = true;
+					fileReadComplete = true;
 					SDCardUtil::closeFile(currentFile);
 					return false;
 				}
 			}
 			else
 			{
-				cardReadComplete = true;
+				fileReadComplete = true;
 				SDCardUtil::closeFile(currentFile);
 				return false;
 			}
@@ -367,15 +425,15 @@ bool SdCardSource::tryConsumeData(char** out)
 	return false;
 }
 
-void SdCardSource::getNextCommand(bool peek)
+void SdCardSource::getNextCommand(char* buffer, bool peek)
 {
 	// Copy a whole command (sC,12,...\n\0) into the command buffer
 	// ToDo: This funcion can also return \0, if the buffer is empty (Underflow-Error). The following code does not check for that case?
-	cardReadBuffer.getNextTxt(commandBuffer, peek);
+	cardReadBuffer.getNextTxt(buffer, peek);
 
 	if (!peek)
 	{
-		if (commandBuffer[0] == '\0' && cardReadComplete)
+		if (buffer[0] == '\0' && fileReadComplete)
 		{
 			dataComplete = true;
 		}
@@ -398,7 +456,7 @@ void SdCardSource::resetBuffer()
 	// Gracefully stop background task before reset
 	if (fillTaskHandle)
 	{
-		cardReadComplete = true;
+		fileReadComplete = true;
 		xTaskNotifyGive((TaskHandle_t)fillTaskHandle);
 		while (fillTaskHandle != nullptr)
 		{
@@ -409,7 +467,7 @@ void SdCardSource::resetBuffer()
 
 	onLoop = false;
 	dataComplete = false;
-	cardReadComplete = false;
+	fileReadComplete = false;
 	cardReadBuffer.clear();
 	commandBuffer[0] = '\0';
 

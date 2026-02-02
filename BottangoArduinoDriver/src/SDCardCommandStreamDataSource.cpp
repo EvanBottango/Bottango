@@ -287,7 +287,7 @@ void SDCardCommandStreamDataSource::updateOnLoop()
 {
 #ifndef ESP32
     // Non-ESP32: Fill buffer during main loop idle time
-    if (!cardReadComplete && cardReadBuffer.getSpaceAvailable() >= TXT_BUFFER_READ_CHUNK_SIZE)
+    if (!fileReadComplete && cardReadBuffer.getSpaceAvailable() >= TXT_BUFFER_READ_CHUNK_SIZE)
     {
         fillBufferChunk();
     }

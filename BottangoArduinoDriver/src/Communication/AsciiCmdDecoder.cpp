@@ -19,6 +19,11 @@ void AsciiCmdDecoder::onPhase(Phase p)
 	decode();
 }
 
+void AsciiCmdDecoder::init()
+{
+	splitData.splitCommandBuffer = splitCommandBuffer;
+}
+
 void AsciiCmdDecoder::decode()
 {
 	char* stringToSplit = nullptr;
@@ -28,59 +33,65 @@ void AsciiCmdDecoder::decode()
 		return;
 	}
 
+	validCommandAvailable = false;
+	splitData.stringToSplit = stringToSplit;
+	if (splitCommand(&splitData))
+	{
+		validCommandAvailable = true;
+	}
+}
+
+bool AsciiCmdDecoder::splitCommand(/*char* stringToSplit*/splitCommandData* data) const
+{
 #ifdef ALLOW_SYNC_COMMANDS	
 	// Check for sync command. If found, set validCommandAvailable to true and return.
 	// The command is split when calling tryConsumeCommand() next time.
-	if (strncmp_P(stringToSplit, BasicCommands::SYNC_COMMAND, 3) == 0)
+	if (strncmp_P(data->stringToSplit, BasicCommands::SYNC_COMMAND, 3) == 0)
 	{
-		syncCommandInProgress = true;
+		data->syncCommandInProgress = true;
 
 		// Start sync command and get first frame
-		beginSyncCommand(stringToSplit);
+		beginSyncCommand(data);
 		return;
 	}
 #endif
-	
-	splitCommand(stringToSplit);
-}
 
-void AsciiCmdDecoder::splitCommand(char* stringToSplit)
-{
 	int idxResult = 0;
 	char delimiters[] = ",";
-	char* token = strtok(stringToSplit, delimiters);
-	validCommandAvailable = false;
+	char* token = strtok(data->stringToSplit, delimiters);
+	//validCommandAvailable = false;
 
 	while (token != NULL)
 	{
 		if (idxResult >= COMMANDS_PARAMS_SIZE) // Check buffer capacity
 		{
 			Error::reportError_TooManyParams(idxResult);
-			return;
+			return false;
 		}
-		splitCommandBuffer[idxResult++] = token;
+		data->splitCommandBuffer[idxResult++] = token;
 		token = strtok(NULL, delimiters);
 	}
 
-	validCommandAvailable = true;
+	return true;
 }
 
 char** AsciiCmdDecoder::tryConsumeCommand()
 {
 #ifdef ALLOW_SYNC_COMMANDS
-	if (syncCommandInProgress)
+	if (splitData.syncCommandInProgress)
 	{
-		if (hasMoreFrames())
+		if (hasMoreFrames(&splitData))
 		{
 			// Get next frame and split it
-			splitCommand(getNextFrame());
+			getNextFrame(&splitData);
+			splitCommand(&splitData);
 			return splitCommandBuffer;
 		}
 		else
 		{
 			// Reset sync command state
 			validCommandAvailable = false;
-			syncCommandInProgress = false;
+			splitData.syncCommandInProgress = false;
 			return nullptr;
 		}
 		
@@ -90,72 +101,122 @@ char** AsciiCmdDecoder::tryConsumeCommand()
 	if (validCommandAvailable)
 	{
 		validCommandAvailable = false;
-		return splitCommandBuffer;
+		return splitData.splitCommandBuffer;
 	}
 
 	return nullptr;
 }
 
-#ifdef ALLOW_SYNC_COMMANDS
-void AsciiCmdDecoder::beginSyncCommand(char* stringToSplit)
+unsigned long AsciiCmdDecoder::getStartTime(char* command)
 {
-	expectNewCommand = true;
-	buffer = stringToSplit;
+	splitCommandData data;
+	data.splitCommandBuffer = splitCommandBuffer;
+
+	if (splitCommand(&data))
+	{
+		// First parameter is command name, second is start time
+		if (data.splitCommandBuffer[2] != nullptr)
+		{
+			return Time::getLastSyncedTimeInMs() + strtoul(data.splitCommandBuffer[2], nullptr, 10);
+		}
+	}
+
+	return 0;
+}
+
+unsigned long AsciiCmdDecoder::getEndTime(char* command)
+{
+	splitCommandData data;
+	data.splitCommandBuffer = splitCommandBuffer;
+
+	if (splitCommand(&data))
+	{
+		unsigned long endTime = 0;
+
+		// First parameter is command name, third is end time
+		if (data.splitCommandBuffer[3] != nullptr)
+		{
+			endTime = strtoul(data.splitCommandBuffer[3], nullptr, 10);
+
+#ifdef ALLOW_SYNC_COMMANDS
+			// With multi-frame sync commands, we need to check all frames for the latest end time
+			while (hasMoreFrames(&data))
+			{
+				getNextFrame(&data);
+				unsigned long subCmdTime = strtoul(data.splitCommandBuffer[3], nullptr, 10);
+				if (subCmdTime > endTime)
+				{
+					endTime = subCmdTime;
+				}
+			}
+#endif
+
+			return Time::getLastSyncedTimeInMs() + endTime;
+		}
+	}
+
+	return 0;
+}
+
+#ifdef ALLOW_SYNC_COMMANDS
+void AsciiCmdDecoder::beginSyncCommand(/*char* stringToSplit*/splitCommandData* data) const
+{
+	data->expectNewCommand = true;
 
 	// Remove hash at the end (everything after the last comma before 'h')
-	char* lastComma = strrchr(buffer, ',');
+	char* lastComma = strrchr(data->stringToSplit, ',');
 	if (lastComma && lastComma[1] == 'h')
 	{
 		*lastComma = '\0';
 	}
 
 	// Skip MessageCommand (sSY,)
-	char* pos = strchr(buffer, ',');
+	char* pos = strchr(data->stringToSplit, ',');
 	if (!pos)
 	{
-		nextFrameStart = nullptr;
+		data->nextFrameStart = nullptr;
 		return;
 	}
 
-	nextFrameStart = pos + 1; // Points to first command
+	data->nextFrameStart = pos + 1; // Points to first command
 }
 
-char* AsciiCmdDecoder::getNextFrame()
+void AsciiCmdDecoder::getNextFrame(splitCommandData* data) const
 {
-	if (!nextFrameStart || *nextFrameStart == '\0')
+	if (!data->nextFrameStart || *data->nextFrameStart == '\0')
 	{
-		return nullptr;
+		data->currentCommand = nullptr;
 	}
 
 	// Check if a new command starts (marked with asterisk)
-	if (*nextFrameStart == '*')
+	if (*data->nextFrameStart == '*')
 	{
-		nextFrameStart++; // Skip the asterisk
-		expectNewCommand = true;
+		data->nextFrameStart++; // Skip the asterisk
+		data->expectNewCommand = true;
 	}
 
-	if (expectNewCommand)
+	if (data->expectNewCommand)
 	{
 		// New command - find end of command
-		currentCommand = nextFrameStart;
-		commandEnd = strchr(currentCommand, ',');
-		if (!commandEnd)
+		data->currentCommand = data->nextFrameStart;
+		data->commandEnd = strchr(data->currentCommand, ',');
+		if (!data->commandEnd)
 		{
-			return nullptr;
+			data->currentCommand = nullptr;
 		}
 
 		// Place currentFrameStart after the command
-		currentFrameStart = commandEnd + 1;
-		expectNewCommand = false;
+		data->currentFrameStart = data->commandEnd + 1;
+		data->expectNewCommand = false;
 	}
 	else
 	{
 		// No new command, use the previous one
-		currentFrameStart = nextFrameStart;
+		data->currentFrameStart = data->nextFrameStart;
 	}
 
 	// Find the end of the current frame (up to ; or end)
-	char* frameEnd = currentFrameStart;
+	char* frameEnd = data->currentFrameStart;
 	while (*frameEnd != '\0' && *frameEnd != ';')
 	{
 		frameEnd++;
@@ -164,32 +225,32 @@ char* AsciiCmdDecoder::getNextFrame()
 	// Save what comes after this frame
 	if (*frameEnd == ';')
 	{
-		nextFrameStart = frameEnd + 1;
+		data->nextFrameStart = frameEnd + 1;
 		*frameEnd = '\0'; // Terminate the current frame
 	}
 	else
 	{
 		// End reached
-		nextFrameStart = frameEnd;
+		data->nextFrameStart = frameEnd;
 	}
 
 	// Now we build the frame: Command + , + FrameData
 	// Calculate lengths
-	size_t commandLen = commandEnd - currentCommand;
-	size_t frameDataLen = frameEnd - currentFrameStart;
+	size_t commandLen = data->commandEnd - data->currentCommand;
+	size_t frameDataLen = frameEnd - data->currentFrameStart;
 
 	// Move frame data to the right to make space for command
-	memmove(currentCommand + commandLen + 1, currentFrameStart, frameDataLen + 1); // +1 for \0
+	memmove(data->currentCommand + commandLen + 1, data->currentFrameStart, frameDataLen + 1); // +1 for \0
 
 	// Set comma after command
-	currentCommand[commandLen] = ',';
+	data->currentCommand[commandLen] = ',';
 
 	// The complete frame starts at currentCommand
-	return currentCommand;
+	//return data->currentCommand;
 }
 
-bool AsciiCmdDecoder::hasMoreFrames()
+bool AsciiCmdDecoder::hasMoreFrames(splitCommandData* data) const
 {
-	return nextFrameStart && *nextFrameStart != '\0';
+	return data->nextFrameStart && *data->nextFrameStart != '\0';
 }
 #endif
