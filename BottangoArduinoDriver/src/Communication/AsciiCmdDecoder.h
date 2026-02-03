@@ -10,68 +10,43 @@
 class AsciiCmdDecoder : public CommandDecoder
 {
 public:
-	struct splitCommandData
-	{
-		char** splitCommandBuffer;
-		char* stringToSplit;
-#ifdef ALLOW_SYNC_COMMANDS
-		//char* buffer = nullptr;
-		char* currentCommand = nullptr;
-		char* commandEnd = nullptr;
-		char* currentFrameStart = nullptr;
-		char* nextFrameStart = nullptr;
-		bool expectNewCommand = true;
-		bool syncCommandInProgress = false;
-#endif // ALLOW_SYNC_COMMANDS
-	};
-
 	void onPhase(Phase p) override;
 
-	void init() override {};
+	void init() override;
 
 	void decode() override;
 
 	char** tryConsumeCommand() override;
 
-	unsigned long getStartTime(char* command) override;
-
-	unsigned long getEndTime(char* command) override;
-
-private:
 	/**
 	 * @brief Splits a command string into components in-place.
 	 * @param stringToSplit Pointer to a writable, null-terminated string containing the command to split. Must be non-null; the function will modify the buffer.
 	 */
-	bool splitCommand(/*char* stringToSplit*/splitCommandData* data) const;
+	bool splitCommand(splitCommandData* data) const override;
 
 #ifdef ALLOW_SYNC_COMMANDS
-	splitCommandData splitData;
-
-	/*char* buffer = nullptr;
-	char* currentCommand = nullptr;
-	char* commandEnd = nullptr;
-	char* currentFrameStart = nullptr;
-	char* nextFrameStart = nullptr;
-	bool expectNewCommand = true;
-	bool syncCommandInProgress = false;*/
-
 	/**
 	 * @brief Initializes the sync command parsing state with a new command string.
 	 * @param stringToSplit Pointer to a writable, null-terminated string containing the sync command to parse. Must be non-null; the function will modify the buffer.
 	 */
-	void beginSyncCommand(/*char* stringToSplit*/splitCommandData* data) const;
+	void beginSyncCommand(splitCommandData* data) const override;
 
 	/**
 	 * @brief Retrieves the next frame from the current sync command.
 	 * @return Pointer to the next frame string, or nullptr if no more frames are available.
 	 */
-	void getNextFrame(splitCommandData* data) const;
+	void getNextFrame(splitCommandData* data) const override;
 
 	/**
 	 * @brief Checks whether additional frames from a multi-frame are available.
 	 * @return true if there are more frames available; false otherwise.
 	 */
-	bool hasMoreFrames(splitCommandData* data) const;
+	bool hasMoreFrames(splitCommandData* data) const override;
+#endif // ALLOW_SYNC_COMMANDS
+
+private:
+#ifdef ALLOW_SYNC_COMMANDS
+	splitCommandData splitData;
 #endif
 };
 

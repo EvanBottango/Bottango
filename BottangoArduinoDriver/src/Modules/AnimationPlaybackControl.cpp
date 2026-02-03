@@ -267,7 +267,7 @@ bool AnimationPlaybackControl::readyForNextCommand()
 	}
 
 	// at end of animation and not looping
-	// ToDo: dataSource-dataComplete implementieren
+	// ToDo: dataSource->dataComplete implementieren
 	/*if (dataSource->dataComplete)
 	{
 		return false;
@@ -315,28 +315,6 @@ bool AnimationPlaybackControl::readyForNextCommand()
 #endif*/
 
 	return false;
-}
-
-// ToDo: Delete
-void AnimationPlaybackControl::getCommandTimes(char* command)
-{
-	if (command[0] != '\0')
-	{
-		/*char outputCopy[MAX_COMMAND_LENGTH] = {0};
-		strcpy(outputCopy, command);
-		long endTime = BottangoCore::getMSTimeOfCommand(outputCopy, false);
-		if (endTime > msEndOfLatestCommand)
-		{
-			msEndOfLatestCommand = endTime;
-		}
-
-		char nextCommandBuffer[MAX_COMMAND_LENGTH] = { 0 };
-		getNextCommand(true);
-		if (nextCommandBuffer[0] != '\0')
-		{
-			timeOfNextCommand = BottangoCore::getMSTimeOfCommand(nextCommandBuffer, true);
-		}*/
-	}
 }
 
 #ifdef EXPORTED_ANIM_LOGGING

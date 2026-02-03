@@ -10,6 +10,21 @@
 class CommandDecoder : public LoopModule
 {
 public:
+	struct splitCommandData
+	{
+		char* splitCommandBuffer[COMMANDS_PARAMS_SIZE];
+		char* stringToSplit;
+#ifdef ALLOW_SYNC_COMMANDS
+		//char* currentCommand = nullptr;
+		char* syncCommandToSplit = nullptr;
+		char* commandEnd = nullptr;
+		char* currentFrameStart = nullptr;
+		char* nextFrameStart = nullptr;
+		bool expectNewCommand = true;
+		bool syncCommandInProgress = false;
+#endif // ALLOW_SYNC_COMMANDS
+	};
+
 	/**
 	 * @brief Decode data from the data source.
 	 */
@@ -33,12 +48,38 @@ public:
 	 */
 	virtual void setDataSource(DataSource* src);
 
-	virtual unsigned long getStartTime(char* command) {};
+	/**
+	 * @brief Splits a command string into components in-place.
+	 * @param stringToSplit Pointer to a writable, null-terminated string containing the command to split. Must be non-null; the function will modify the buffer.
+	 */
+	virtual bool splitCommand(splitCommandData* data) const
+	{
+		return false;
+	}
+#ifdef ALLOW_SYNC_COMMANDS
+	/**
+	 * @brief Initializes the sync command parsing state with a new command string.
+	 * @param stringToSplit Pointer to a writable, null-terminated string containing the sync command to parse. Must be non-null; the function will modify the buffer.
+	 */
+	virtual void beginSyncCommand(splitCommandData* data) const {};
 
-	virtual unsigned long getEndTime(char* command) {};
+	/**
+	 * @brief Retrieves the next frame from the current sync command.
+	 * @return Pointer to the next frame string, or nullptr if no more frames are available.
+	 */
+	virtual void getNextFrame(splitCommandData* data) const {};
+
+	/**
+	 * @brief Checks whether additional frames from a multi-frame are available.
+	 * @return true if there are more frames available; false otherwise.
+	 */
+	virtual bool hasMoreFrames(splitCommandData* data) const
+	{
+		return false;
+	}
+#endif // ALLOW_SYNC_COMMANDS
 
 protected:
-	char* splitCommandBuffer[COMMANDS_PARAMS_SIZE];
 	bool validCommandAvailable = false;
 	DataSource* source;
 };

@@ -45,8 +45,6 @@ private:
 	AnimationConfiguration* parseConfiguration(File configFile);
 #endif // USE_SD_CARD_COMMAND_STREAM
 
-	void getCommandTimes(char* command);
-
 #ifdef EXPORTED_ANIM_LOGGING
 	void logConfig(AnimationConfiguration* config);
 #endif // EXPORTED_ANIM_LOGGING

@@ -173,3 +173,128 @@ bool Parser::parseCommand(char** splitCommandBuffer)
 
 	return true;
 }
+
+unsigned long Parser::getStartTime(char* command)
+{
+	CommandDecoder::splitCommandData data;
+	data.stringToSplit = command;
+
+	unsigned long startTime = (unsigned long)-1;
+	bool commandWithTimeFound = false;
+
+	// Split the incoming command
+	// The splitCommand functions handles both regular and sync commands
+	if (decoder->splitCommand(&data))
+	{
+#ifdef ALLOW_SYNC_COMMANDS
+		// Sync command handling
+		if (data.syncCommandInProgress)
+		{
+			// With multi-frame sync commands, we need to check all frames for the earliest start time
+			while (decoder->hasMoreFrames(&data))
+			{
+				decoder->getNextFrame(&data);
+
+				// Split command and test if this sub-command has a start time
+				if (decoder->splitCommand(&data) && commandHasStartTime(data.splitCommandBuffer[0]) && data.splitCommandBuffer[2] != nullptr)
+				{
+					unsigned long subCmdTime = strtoul(data.splitCommandBuffer[2], nullptr, 10);
+					commandWithTimeFound = true;					
+
+					// Find the earliest start time
+					if (subCmdTime < startTime)
+					{
+						startTime = subCmdTime;
+					}
+				}				
+			}
+
+			*data.splitCommandBuffer[0] = '\0';	// Clear command to avoid re-processing
+		}
+#endif // ALLOW_SYNC_COMMANDS
+
+		// To avoid re-processing when ALLOW_SYNC_COMMANDS is defined, splitCommandBuffer[0] is cleared above.
+		// commandHasStartTime will return false if so.
+		if (commandHasStartTime(data.splitCommandBuffer[0]) && data.splitCommandBuffer[2] != nullptr)
+		{
+			commandWithTimeFound = true;
+			startTime = strtoul(data.splitCommandBuffer[2], nullptr, 10);
+		}
+	}
+
+	// Command with start time found, return the calculated absolute time
+	if (commandWithTimeFound)
+	{
+		return Time::getLastSyncedTimeInMs() + startTime;
+	}
+	// Even if no command with time was found, return at least the current time
+	return startTime;
+}
+
+unsigned long Parser::getEndTime(char* command)
+{
+	splitCommandData data;
+	data.splitCommandBuffer = splitCommandBuffer;
+
+	if (splitCommand(&data))
+	{
+		unsigned long endTime = 0;
+
+		// First parameter is command name, third is end time
+		if (data.splitCommandBuffer[3] != nullptr)
+		{
+			endTime = strtoul(data.splitCommandBuffer[3], nullptr, 10);
+
+#ifdef ALLOW_SYNC_COMMANDS
+			// With multi-frame sync commands, we need to check all frames for the latest end time
+			while (hasMoreFrames(&data))
+			{
+				getNextFrame(&data);
+				unsigned long subCmdTime = strtoul(data.splitCommandBuffer[3], nullptr, 10);
+				if (subCmdTime > endTime)
+				{
+					endTime = subCmdTime;
+				}
+			}
+#endif // ALLOW_SYNC_COMMANDS
+
+			return Time::getLastSyncedTimeInMs() + endTime;
+		}
+	}
+
+	return 0;
+}
+
+bool Parser::commandHasStartTime(char* commandName) const
+{
+	if (commandName == nullptr || *commandName == '\0')
+	{
+		return false;
+	}
+
+	if (strcmp_P(commandName, BasicCommands::SET_CURVE) == 0 ||
+		strcmp_P(commandName, BasicCommands::SET_ONOFFCURVE) == 0 ||
+		strcmp_P(commandName, BasicCommands::SET_TRIGGERCURVE) == 0 ||
+		strcmp_P(commandName, BasicCommands::SET_COLOR_CURVE) == 0)
+	{
+		return true;
+	}
+
+	return false;
+}
+
+bool Parser::commandHasEndTime(char* commandName) const
+{
+	if (commandName == nullptr || *commandName == '\0')
+	{
+		return false;
+	}
+
+	if (strcmp_P(commandName, BasicCommands::SET_CURVE) == 0 ||
+		strcmp_P(commandName, BasicCommands::SET_COLOR_CURVE) == 0)
+	{
+		return true;
+	}
+
+	return false;
+}

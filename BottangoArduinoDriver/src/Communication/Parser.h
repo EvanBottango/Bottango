@@ -25,6 +25,14 @@ public:
 	 */
 	bool parseCommand(char** splitCommandBuffer);
 
+	unsigned long getStartTime(char* command);
+
+	unsigned long getEndTime(char* command);
+
+	bool commandHasStartTime(char* commandName) const;
+
+	bool commandHasEndTime(char* commandName) const;
+
 private:
 	CommandDecoder* decoder;
 };
