@@ -6,7 +6,7 @@
 
 // #define BOTTANGO_IMPULSE
 // #define BOTTANGO_NOVA
-// #define BOTTANGO_SOLAR
+#define BOTTANGO_SOLAR
 
 #if defined(BOTTANGO_IMPULSE) || defined(BOTTANGO_NOVA) || defined(BOTTANGO_SOLAR)
 #define OVERRIDE_MODULES
@@ -30,7 +30,8 @@
 
 // relay
 #define RELAY_SUPPORTED
-#define RELAY_COMS_ESPNOW
+// #define RELAY_COMS_ESPNOW
+#define RELAY_COMS_RS485
 
 // Utility pin
 #define UTILITY_PIN 0

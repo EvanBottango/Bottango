@@ -213,13 +213,13 @@ I2SAudioEffector::I2SAudioEffector(char *identifier, char *hash) : AbstractEffec
         BottangoCore::activeOutgoingMultimessage = nullptr;
     }
     BottangoCore::activeOutgoingMultimessage = new I2SAudEventStatusResponder(responderCode);
-    BottangoCore::activeOutgoingMultimessage->initializeMultiMessage();
 #ifdef RELAY_SUPPORTED
     if (Outgoing::secondaryPeerOutgoing)
     {
         BottangoCore::activeOutgoingMultimessage->setSecondary();
     }
 #endif
+    BottangoCore::activeOutgoingMultimessage->initializeMultiMessage();
 
 #if defined(USE_CODE_COMMAND_STREAM) || defined(USE_SD_CARD_COMMAND_STREAM)
     if (BottangoCore::isOffline() && BottangoCore::commandStreamProvider != nullptr && !(responderCode == I2S_AUDIO_STATUS_READY || responderCode == I2S_AUDIO_STATUS_NO_HASH_MATCH_ON_CARD))

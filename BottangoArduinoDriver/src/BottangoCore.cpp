@@ -2,8 +2,17 @@
 
 #include "../BottangoArduinoModules.h"
 
-#if defined(RELAY_SUPPORTED) && defined(RELAY_COMS_ESPNOW)
-#include "ESPNOWUtil.h"
+#ifdef RELAY_SUPPORTED
+#include "IRelayComms.h"
+
+#ifdef RELAY_COMS_ESPNOW
+#include "RelayCommsESPNow.h"
+#endif
+
+#ifdef RELAY_COMS_RS485
+#include "RelayCommsRS485.h"
+#endif
+
 #endif
 
 #ifdef ENABLE_STATUS_LIGHTS
@@ -20,14 +29,17 @@ namespace BottangoCore
     AbstractMultiMessageOutgoingSource *activeOutgoingMultimessage = nullptr;
 
 #ifdef RELAY_SUPPORTED
+    IRelayComms *relayComs = nullptr;
     RelayChildPool *relayPool = nullptr;
     bool isRelayBridge = false;
     bool isRelayPeer = false;
     char *secondaryPeerCommandBuffer = nullptr;
     int secondaryCommandIdx = 0;
     unsigned long secondaryTimeOfLastChar = 0;
-    unsigned long lastHeartbeatTime = 0;
+    unsigned long lastPollTimeAsPeer = 0;
     bool secondaryCommandInProgress = false;
+    int thisPeerID = 0;
+    bool hasPeerId = false;
 #ifdef RELAY_LOGGING
     unsigned long lastWaitForConnectLog = 0;
 #endif
@@ -164,6 +176,12 @@ namespace BottangoCore
 #if defined(RELAY_SUPPORTED)
     void initRelayComs()
     {
+#ifdef RELAY_COMS_ESPNOW
+        relayComs = new RelayCommsESPNow();
+#elif defined(RELAY_COMS_RS485)
+        relayComs = new RelayCommsRS485();
+#endif
+
         int relayState = PersistentConfigUtil::getRelayState();
         if (relayState == VALUE_RELAY_STATE_LIVE_USB)
         {
@@ -198,7 +216,7 @@ namespace BottangoCore
 #endif
 
             relayPool = new RelayChildPool();
-            ESPNowUtil::initializeESPNowAsBridge();
+            relayComs->initializeAsBridge();
 
 #ifdef RELAY_LOGGING
 #ifdef TOGGLE_DEBUG
@@ -214,6 +232,7 @@ namespace BottangoCore
         {
             isRelayBridge = false;
             isRelayPeer = true;
+            hasPeerId = false;
 
             secondaryCommandIdx = 0;
             secondaryCommandInProgress = false;
@@ -239,8 +258,8 @@ namespace BottangoCore
 
 #endif
 
-#ifdef RELAY_COMS_ESPNOW
-            ESPNowUtil::initializeESPNowAsPeer();
+#ifdef RELAY_SUPPORTED
+            relayComs->initializeAsPeer();
             Outgoing::printLine();
             Outgoing::printOutputStringPROGMEM(BasicCommands::BOOT);
             Outgoing::printLine();
@@ -545,7 +564,15 @@ namespace BottangoCore
         }
         else if (strcmp_P(commandName, BasicCommands::HANDSHAKE_REQUEST) == 0)
         {
-            BasicCommands::sendHandshakeResponse(splitCommandBuffer, secondary);
+            // Ignore duplicate handshake requests after the initial handshake completes.
+            if (!secondary && BottangoCore::handshake)
+            {
+                sendReady = false;
+            }
+            else
+            {
+                BasicCommands::sendHandshakeResponse(splitCommandBuffer, secondary);
+            }
         }
         else if (strcmp_P(commandName, BasicCommands::MODULES_REQUEST) == 0)
         {
@@ -650,21 +677,19 @@ namespace BottangoCore
         {
             BasicCommands::deregisterAllRelayControllers(splitCommandBuffer);
         }
-        else if (strcmp_P(commandName, BasicCommands::RELAY_HEARTBEAT_REQUEST) == 0)
+        else if (strcmp_P(commandName, BasicCommands::RELAY_POLL_REQUEST) == 0)
         {
-            BasicCommands::requestHeartbeat(splitCommandBuffer);
+            BasicCommands::requestPoll(splitCommandBuffer);
             sendReady = false;
         }
         else if (strcmp_P(commandName, BasicCommands::REQUEST_PEER_BOOT) == 0)
         {
             BasicCommands::requestBoot(splitCommandBuffer);
         }
-#ifdef RELAY_COMS_ESPNOW
         else if (strcmp_P(commandName, BasicCommands::GET_MAC_ADDRESS) == 0)
         {
             BasicCommands::getMACAddress(splitCommandBuffer);
         }
-#endif
 #endif
 #ifdef ENABLE_ESP_OTA_UPDATE
         else if (strcmp_P(commandName, BasicCommands::OTA_UPDATE) == 0)
@@ -823,7 +848,7 @@ namespace BottangoCore
                 return true;
             }
 #endif
-#ifdef RELAY_COMS_ESPNOW
+#ifdef RELAY_SUPPORTED
             // get MAC address is allowed
             else if (strcmp_P(commandName, BasicCommands::GET_MAC_ADDRESS) == 0)
             {
@@ -869,6 +894,7 @@ namespace BottangoCore
         int hashStartIdx = idx + 2;
 
         idx -= 1; // For ','
+        int hashDataEndIdx = idx;
 
         int hsh = 0;
         while (idx >= 0)
@@ -903,6 +929,10 @@ namespace BottangoCore
         updateReadBuffer(false); // standard read
 
 #ifdef RELAY_SUPPORTED
+        if (relayComs != nullptr)
+        {
+            relayComs->update();
+        }
         if (isRelayPeer)
         {
             updateReadBuffer(true); // secondary read when peer also
@@ -933,7 +963,7 @@ namespace BottangoCore
             {
                 relayPool->update();
             }
-            else if (isRelayPeer && millis() - lastHeartbeatTime > RELAY_HEARTBEAT_INTERVAL + RELAY_HEARTBEAT_KEEP_ALIVE_ADDITION)
+            else if (isRelayPeer && millis() - lastPollTimeAsPeer > RELAY_POLL_TIMEOUT_AS_PEER)
             {
                 Outgoing::toggleOnSecondaryOutgoing();
                 Outgoing::printOutputStringFlash(F("Lost Bridge!"));
@@ -1064,7 +1094,7 @@ namespace BottangoCore
     {
 
 #if defined(USE_ESP32_WIFI)
-        if !(updateWifiConnectionStatus())
+        if (!updateWifiConnectionStatus())
         {
             return;
         }
@@ -1164,6 +1194,12 @@ namespace BottangoCore
                     if (sendReady)
                     {
                         Outgoing::printOutputStringPROGMEM(BasicCommands::READY);
+                        if (activeOutgoingMultimessage != nullptr)
+                        {
+                            // send the data portion of a multi message response
+                            // after ok, if any is pending
+                            activeOutgoingMultimessage->emitPending();
+                        }
                     }
                 }
                 else
@@ -1280,7 +1316,11 @@ namespace BottangoCore
             }
             else
             {
-                return ESPNowUtil::peerRecvAvailable();
+                if (relayComs == nullptr)
+                {
+                    return false;
+                }
+                return relayComs->peerRecvAvailable();
             }
         }
         else
@@ -1308,7 +1348,11 @@ namespace BottangoCore
             }
             else
             {
-                return ESPNowUtil::peerReadNextChar();
+                if (relayComs == nullptr)
+                {
+                    return '\0'; // something has gone terribly wrong, shouldn't hit this
+                }
+                return relayComs->peerReadNextChar();
             }
         }
         else

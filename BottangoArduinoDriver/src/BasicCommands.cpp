@@ -22,9 +22,8 @@
 
 #ifdef RELAY_SUPPORTED
 #include "RelayChild.h"
-#ifdef RELAY_COMS_ESPNOW
+#include "UDIDHelper.h"
 #include "MACResponder.h"
-#endif
 #endif
 
 #ifdef ENABLE_STATUS_LIGHTS
@@ -39,8 +38,9 @@
 #include "PersistentConfigUtil.h"
 #endif
 
-#if defined(RELAY_SUPPORTED)
-#include "ESPNOWUtil.h"
+#ifdef RELAY_SUPPORTED
+#include "IRelayComms.h"
+#include "PersistentConfigUtil.h"
 #endif
 
 namespace BasicCommands
@@ -109,7 +109,7 @@ namespace BasicCommands
 #if defined(RELAY_SUPPORTED)
             if (BottangoCore::isRelayPeer)
             {
-                BottangoCore::lastHeartbeatTime = millis();
+                BottangoCore::lastPollTimeAsPeer = millis();
             }
 #endif
 
@@ -127,13 +127,13 @@ namespace BasicCommands
             BottangoCore::activeOutgoingMultimessage = nullptr;
         }
         BottangoCore::activeOutgoingMultimessage = new ModulesResponder();
-        BottangoCore::activeOutgoingMultimessage->initializeMultiMessage();
 #ifdef RELAY_SUPPORTED
         if (Outgoing::secondaryPeerOutgoing)
         {
             BottangoCore::activeOutgoingMultimessage->setSecondary();
         }
 #endif
+        BottangoCore::activeOutgoingMultimessage->initializeMultiMessage();
     }
 
     void continueInProgressMultiMessageResponse(char *args[])
@@ -549,15 +549,6 @@ namespace BasicCommands
             return;
         }
 
-        if (BottangoCore::activeOutgoingMultimessage != nullptr)
-        {
-            // shouldn't have an active...
-            BottangoCore::activeOutgoingMultimessage->cleanUpMultiMessage();
-            BottangoCore::activeOutgoingMultimessage = nullptr;
-        }
-        BottangoCore::activeOutgoingMultimessage = BottangoCore::relayPool;
-        BottangoCore::activeOutgoingMultimessage->initializeMultiMessage();
-
         char *macAddress = args[1];
 
 #ifdef RELAY_LOGGING
@@ -573,6 +564,23 @@ namespace BasicCommands
 
         RelayChild *newRelay = new RelayChild(macAddress);
         BottangoCore::relayPool->addRelay(newRelay);
+        int relayId = BottangoCore::relayPool->getIdForRelay(newRelay);
+        BottangoCore::relayPool->setRelayIdToReport(relayId);
+
+        if (BottangoCore::activeOutgoingMultimessage != nullptr)
+        {
+            // shouldn't have an active...
+            BottangoCore::activeOutgoingMultimessage->cleanUpMultiMessage();
+            BottangoCore::activeOutgoingMultimessage = nullptr;
+        }
+        BottangoCore::activeOutgoingMultimessage = BottangoCore::relayPool;
+#ifdef RELAY_SUPPORTED
+        if (Outgoing::secondaryPeerOutgoing)
+        {
+            BottangoCore::activeOutgoingMultimessage->setSecondary();
+        }
+#endif
+        BottangoCore::activeOutgoingMultimessage->initializeMultiMessage();
     }
 
     void deregisterRelayController(char **args)
@@ -605,12 +613,11 @@ namespace BasicCommands
             Outgoing::endToggleOnSecondaryOutgoing();
         }
 #endif
-        Outgoing::printLine();
         Outgoing::printOutputStringPROGMEM(BasicCommands::REPLY_PEER_BOOT);
         Outgoing::printLine();
     }
 
-    void requestHeartbeat(char **args)
+    void requestPoll(char **args)
     {
 #ifdef RELAY_LOGGING
 #ifdef TOGGLE_DEBUG
@@ -618,17 +625,16 @@ namespace BasicCommands
 #endif
         {
             Outgoing::toggleOnSecondaryOutgoing();
-            Outgoing::printOutputStringFlash(F("Peer recieved heartbeat request from bridge"));
+            Outgoing::printOutputStringFlash(F("Peer recieved poll request from bridge"));
             Outgoing::printLine();
             Outgoing::endToggleOnSecondaryOutgoing();
         }
 #endif
-        Outgoing::printOutputStringPROGMEM(BasicCommands::RELAY_HEARTBEAT_RESPONSE);
+        Outgoing::printOutputStringPROGMEM(BasicCommands::RELAY_POLL_RESPONSE);
         Outgoing::printLine();
-        BottangoCore::lastHeartbeatTime = millis();
+        BottangoCore::lastPollTimeAsPeer = millis();
     }
 
-#ifdef RELAY_COMS_ESPNOW
     // initialize mac address response
     void getMACAddress(char *args[])
     {
@@ -639,15 +645,12 @@ namespace BasicCommands
             BottangoCore::activeOutgoingMultimessage = nullptr;
         }
         BottangoCore::activeOutgoingMultimessage = new MACResponder();
-        BottangoCore::activeOutgoingMultimessage->initializeMultiMessage();
-#ifdef RELAY_SUPPORTED
         if (Outgoing::secondaryPeerOutgoing)
         {
             BottangoCore::activeOutgoingMultimessage->setSecondary();
         }
-#endif
+        BottangoCore::activeOutgoingMultimessage->initializeMultiMessage();
     }
-#endif
 #endif
 
 #ifdef ALLOW_SYNC_COMMANDS
@@ -870,7 +873,7 @@ namespace BasicCommands
                 // may just be updating bridge address
                 uint8_t newMac[6];
                 uint8_t currentMac[6];
-                ESPNowUtil::convertCStrToMac(args[3], newMac);
+                (void)UDIDHelper::convertCStrToMAC(args[3], newMac);
                 bool gotBridgeMac = PersistentConfigUtil::getBridgeMacAddress(currentMac);
 
                 bool newMatchesCurrent = false;

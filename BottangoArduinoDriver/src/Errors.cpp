@@ -4,7 +4,7 @@
 #include "../BottangoArduinoModules.h"
 
 #ifdef RELAY_SUPPORTED
-#include "ESPNOWUtil.h"
+#include "UDIDHelper.h"
 #endif
 namespace Error
 {
@@ -62,6 +62,13 @@ namespace Error
         Outgoing::printLine();
     }
 
+    void reportError_MultiMessageTimeout()
+    {
+        Outgoing::printLine();
+        Outgoing::printOutputStringFlash(F("errMultiMessageTimeout"));
+        Outgoing::printLine();
+    }
+
 #ifdef RELAY_SUPPORTED
     void reportError_NoRelayForID(int id)
     {
@@ -76,7 +83,7 @@ namespace Error
         Outgoing::printLine();
         Outgoing::printOutputStringFlash(F("errRelayCollision: "));
         char buffer[20];
-        ESPNowUtil::convertMacToCStr(mac, buffer);
+        UDIDHelper::convertMACToCStr(mac, buffer);
         Outgoing::printOutputStringMem(buffer);
         Outgoing::printLine();
     }

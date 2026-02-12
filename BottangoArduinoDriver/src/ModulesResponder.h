@@ -7,10 +7,7 @@
 
 #if defined(ENABLE_DYNAMIC_ANIMATION_SOURCE_SWITCH) || defined(RELAY_SUPPORTED) || defined(REPORT_UID)
 #include "PersistentConfigUtil.h"
-#endif
-
-#ifdef RELAY_COMS_ESPNOW
-#include "ESPNOWUtil.h"
+#include "UDIDHelper.h"
 #endif
 
 #define MODULES_COUNT 8 // number of possible modules to report
@@ -68,15 +65,12 @@ class ModulesResponder : public AbstractMultiMessageOutgoingSource
 {
 
 public:
-    virtual void initializeMultiMessage() override; // setup
-
-    virtual bool multiMessageisComplete() override; // when everything is done and responded to, ready to clean up
-
-    virtual void updateMultiMessage() override; // will send if anything to send, will timeout if waiting and no response, will send closing if ready/any
-
     virtual void cleanUpMultiMessage() override;
 
 private:
+    void onMultiMessageStart() override;
+    bool emitNextChunk() override;
+
     uint8_t iterator = 0;
     bool sendUIDResponse();
     bool sendBoardIDResponse();

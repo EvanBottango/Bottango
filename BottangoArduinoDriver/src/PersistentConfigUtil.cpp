@@ -3,8 +3,8 @@
 #include "../BottangoArduinoConfig.h"
 #include "BoardDefs.h"
 
-#if defined(RELAY_SUPPORTED) && defined(RELAY_COMS_ESPNOW)
-#include "ESPNOWUtil.h"
+#if defined(RELAY_SUPPORTED) || defined(REPORT_UID)
+#include "UDIDHelper.h"
 #endif
 
 #if defined(RESET_PREFS_SUPPORTED) && defined(ENABLE_STATUS_LIGHTS)
@@ -152,10 +152,8 @@ namespace PersistentConfigUtil
 
 #ifdef RELAY_SUPPORTED
                 prefs.remove(ESP32_PREFS_KEY_RELAY_STATE);
-#ifdef RELAY_COMS_ESPNOW
                 prefs.remove(ESP32_PREFS_KEY_RELAY_BRIDGE_MAC);
                 prefs.remove(ESP32_PREFS_KEY_RELAY_THIS_MAC);
-#endif
 #endif
 
 #ifdef REPORT_UID
@@ -260,7 +258,6 @@ namespace PersistentConfigUtil
 #endif
     }
 
-#ifdef RELAY_COMS_ESPNOW
     void storeBridgeMacAddress(uint8_t mac[6])
     {
         begin();
@@ -301,7 +298,7 @@ namespace PersistentConfigUtil
         }
         else
         {
-            ESPNowUtil::getThisDeviceMACAddress(mac);
+            UDIDHelper::getThisDeviceMacAddress(mac);
             prefs.putBytes(ESP32_PREFS_KEY_RELAY_THIS_MAC, mac, 6);
         }
 
@@ -312,10 +309,9 @@ namespace PersistentConfigUtil
     {
         uint8_t mac[6];
         getThisDeviceMacAddress(mac);
-        ESPNowUtil::convertMacToCStr(mac, str);
+        UDIDHelper::convertMACToCStr(mac, str);
     }
 
-#endif
 #endif
 
 #ifdef REPORT_UID
@@ -333,17 +329,6 @@ namespace PersistentConfigUtil
 #endif
 
         end();
-    }
-
-    void convertUidToCStr(const uint8_t uid[UID_LENGTH], char str[UID_CSTR_SIZE])
-    {
-        for (size_t i = 0; i < UID_LENGTH; ++i)
-        {
-            // write two hex chars per byte
-            sprintf(str + i * 2, "%02X", uid[i]);
-        }
-        // NULL terminate
-        str[UID_HEX_LEN] = '\0';
     }
 
 #endif

@@ -1,10 +1,8 @@
 #include <Arduino.h>
+#include <limits.h>
 #include "BottangoCore.h"
 
 #include "../BottangoArduinoModules.h"
-#if defined(RELAY_SUPPORTED) && defined(RELAY_COMS_ESPNOW)
-#include "ESPNOWUtil.h"
-#endif
 
 namespace Outgoing
 {
@@ -24,7 +22,7 @@ namespace Outgoing
 
     void printOutputStringFlash(const __FlashStringHelper *str)
     {
-#if defined(RELAY_SUPPORTED) && defined(RELAY_COMS_ESPNOW)
+#ifdef RELAY_SUPPORTED
         if (BottangoCore::isRelayPeer)
         {
             if (secondaryPeerOutgoing)
@@ -33,7 +31,10 @@ namespace Outgoing
             }
             else
             {
-                ESPNowUtil::peerPrint(str);
+                if (BottangoCore::relayComs != nullptr)
+                {
+                    BottangoCore::relayComs->peerPrint(str);
+                }
             }
         }
         else
@@ -49,7 +50,7 @@ namespace Outgoing
 
     void printOutputStringMem(const char *str)
     {
-#if defined(RELAY_SUPPORTED) && defined(RELAY_COMS_ESPNOW)
+#ifdef RELAY_SUPPORTED
         if (BottangoCore::isRelayPeer)
         {
             if (secondaryPeerOutgoing)
@@ -58,7 +59,10 @@ namespace Outgoing
             }
             else
             {
-                ESPNowUtil::peerPrint(str);
+                if (BottangoCore::relayComs != nullptr)
+                {
+                    BottangoCore::relayComs->peerPrint(str);
+                }
             }
         }
         else
@@ -74,14 +78,26 @@ namespace Outgoing
 
     void printOutputStringMem(int value)
     {
+#if INT_MAX == 2147483647
         char buffer[12];
+#elif INT_MAX == 32767
+        char buffer[7];
+#else
+        char buffer[12];
+#endif
         itoa(value, buffer, 10);
         printOutputStringMem(buffer);
     }
 
     void printOutputStringMem(long value)
     {
-        char buffer[10];
+#if LONG_MAX == 2147483647L
+        char buffer[12];
+#elif LONG_MAX == 9223372036854775807L
+        char buffer[21];
+#else
+        char buffer[21];
+#endif
         ltoa(value, buffer, 10);
         printOutputStringMem(buffer);
     }
@@ -110,7 +126,7 @@ namespace Outgoing
 
     void printLine()
     {
-#if defined(RELAY_SUPPORTED) && defined(RELAY_COMS_ESPNOW)
+#ifdef RELAY_SUPPORTED
         if (BottangoCore::isRelayPeer)
         {
             if (secondaryPeerOutgoing)
@@ -119,7 +135,10 @@ namespace Outgoing
             }
             else
             {
-                ESPNowUtil::peerPrintln();
+                if (BottangoCore::relayComs != nullptr)
+                {
+                    BottangoCore::relayComs->peerPrintln();
+                }
             }
         }
         else
@@ -175,14 +194,17 @@ namespace Outgoing
 
     void flush()
     {
-#if defined(RELAY_SUPPORTED) && defined(RELAY_COMS_ESPNOW)
+#ifdef RELAY_SUPPORTED
         if (secondaryPeerOutgoing)
         {
             Serial.flush();
         }
         else
         {
-            ESPNowUtil::peerFlush();
+            if (BottangoCore::relayComs != nullptr)
+            {
+                BottangoCore::relayComs->peerFlush();
+            }
         }
 #elif defined(USE_USB_SERIAL)
         Serial.flush();

@@ -101,18 +101,15 @@ namespace PersistentConfigUtil
     int getRelayState();
     void setRelayState(int value);
 
-#ifdef RELAY_COMS_ESPNOW
     void storeBridgeMacAddress(uint8_t mac[6]);
     bool getBridgeMacAddress(uint8_t mac[6]);
+
     void getThisDeviceMacAddress(uint8_t mac[6]);
     void getThisDeviceMacAddress(char *str);
 #endif
 
-#endif
-
 #ifdef REPORT_UID
     void getUID(uint8_t uid[UID_LENGTH]);
-    void convertUidToCStr(const uint8_t uid[UID_LENGTH], char str[UID_CSTR_SIZE]);
 #endif
 
 #ifdef NAMED_BOARD

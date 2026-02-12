@@ -12,15 +12,17 @@
 
 // !! RELAY !!
 
-// #define RELAY_SUPPORTED                                  // uncomment this line to allow for relay bridge / relay peer behavior
+#define RELAY_SUPPORTED                                  // uncomment this line to allow for relay bridge / relay peer behavior
 
 // relay Comms type.                                        // (select only 1 if relay behavior is supported)
-// #define RELAY_COMS_ESPNOW                                // select the kind of communication stack for relay parent <-> child. ESP-Now only supported currently
+// #define RELAY_COMS_ESPNOW                                // ESP-Now communication stack for relay parent <-> child.  only supported currently
+#define RELAY_COMS_RS485
+
 
 // children will use this and override choice of USB Serial or Wifi and only talk to parent via this relay method
 // parents will still use usb serial or wifi to talk to desktop app, and this setting for child comms.
 
-// #define ALLOW_SYNC_COMMANDS                             // parse commands that contain multiple commands wrapped in a single message
+#define ALLOW_SYNC_COMMANDS                             // parse commands that contain multiple commands wrapped in a single message
 
 // ---------------------------------- //
 

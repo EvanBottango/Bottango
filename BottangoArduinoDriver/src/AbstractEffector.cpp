@@ -68,7 +68,7 @@ void AbstractEffector::addCurve(Curve *curve)
         //         }
         // #endif
 
-        free(curves[curvesIdx]);
+        delete curves[curvesIdx];
     }
 
     curves[curvesIdx] = curve;
@@ -129,7 +129,7 @@ void AbstractEffector::clearCurves()
     stop();
     for (int i = 0; i < MAX_NUM_CURVES; ++i)
     {
-        free(curves[i]);
+        delete curves[i];
         curves[i] = NULL;
     }
 }
@@ -153,7 +153,7 @@ bool AbstractEffector::useFloatCurve()
 #elif defined(DEFAULT_FIXED_CURVE)
     return false;
 #else
-    retue true;
+    return true;
 #endif
 }
 

@@ -157,12 +157,10 @@ namespace BasicCommands
      */
     const char REPLY_PEER_BOOT[] PROGMEM = "sBOOT";
 
-#ifdef RELAY_COMS_ESPNOW
     /**
      * Command to get ESPNOW mac address
      */
     const char GET_MAC_ADDRESS[] PROGMEM = "rMAC";
-#endif
 #endif
 
 #ifdef ALLOW_SYNC_COMMANDS
@@ -226,8 +224,8 @@ namespace BasicCommands
     const char SET_CONFIG_RELAY_TYPE[] PROGMEM = "RLY"; // set relay type sub param
 
     const char RELAY_PEER_STOP_TIME[] PROGMEM = "STOP_TIME";   // set command source sub param
-    const char RELAY_HEARTBEAT_REQUEST[] PROGMEM = "RLY_HB";   // Relay heartbeat request
-    const char RELAY_HEARTBEAT_RESPONSE[] PROGMEM = "RLY_ACK"; // Relay heartbeat response
+    const char RELAY_POLL_REQUEST[] PROGMEM = "RLY_POLL";   // Relay poll request
+    const char RELAY_POLL_RESPONSE[] PROGMEM = "RLY_ACK";   // Relay poll response
 
 #endif
 
@@ -318,11 +316,11 @@ namespace BasicCommands
 
     void requestBoot(char **args);
 
-    void requestHeartbeat(char **args);
-#ifdef RELAY_COMS_ESPNOW
+    void requestPoll(char **args);
+
     void getMACAddress(char **args);
 #endif
-#endif
+
 #ifdef ALLOW_SYNC_COMMANDS
     bool getNextSyncCommand(char syncCmd[], char prefixBuffer[CMD_PREFIX_SIZE], char outputCommand[MAX_COMMAND_LENGTH]);
     void beginGetNextSyncCommand(char *syncCmd, char prefixBuffer[CMD_PREFIX_SIZE]);

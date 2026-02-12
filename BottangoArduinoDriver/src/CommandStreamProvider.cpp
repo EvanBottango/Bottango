@@ -113,7 +113,7 @@ void CommandStreamProvider::startCommandStream(byte streamID, bool loop)
         }
 
 #ifdef RELAY_SUPPORTED
-        if (ESPNowUtil::isBridge)
+        if (BottangoCore::isRelayBridge)
         {
             Time::stopTime();
             BottangoCore::relayPool->stopTimeOnConnectedPeers();

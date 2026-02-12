@@ -10,40 +10,36 @@ I2SAudEventStatusResponder::I2SAudEventStatusResponder(byte incomingStatus)
     status = incomingStatus;
 }
 
-void I2SAudEventStatusResponder::initializeMultiMessage()
+void I2SAudEventStatusResponder::onMultiMessageStart()
 {
-    statusSent = false;
 }
 
-bool I2SAudEventStatusResponder::multiMessageisComplete()
+bool I2SAudEventStatusResponder::emitNextChunk()
 {
-    return statusSent && !hasOutgoingMessage;
-}
-
-void I2SAudEventStatusResponder::updateMultiMessage()
-{
-    if (!statusSent)
+    if (hasEmittedAny())
     {
-#ifdef RELAY_SUPPORTED
-        if (secondary)
-        {
-            Outgoing::setSecondaryPeerOutgoing(true);
-        }
-#endif
-        Outgoing::printOutputStringPROGMEM(REPLY_AUD_STATUS);
-        Outgoing::printOutputStringFlash(F(","));
-        Outgoing::printOutputStringMem(status);
-        Outgoing::printLine();
-
-#ifdef RELAY_SUPPORTED
-        if (secondary)
-        {
-            Outgoing::setSecondaryPeerOutgoing(false);
-        }
-#endif
-
-        statusSent = true;
+        return false;
     }
+
+#ifdef RELAY_SUPPORTED
+    if (secondary)
+    {
+        Outgoing::setSecondaryPeerOutgoing(true);
+    }
+#endif
+    Outgoing::printOutputStringPROGMEM(REPLY_AUD_STATUS);
+    Outgoing::printOutputStringFlash(F(","));
+    Outgoing::printOutputStringMem(status);
+    Outgoing::printLine();
+
+#ifdef RELAY_SUPPORTED
+    if (secondary)
+    {
+        Outgoing::setSecondaryPeerOutgoing(false);
+    }
+#endif
+
+    return true;
 }
 
 void I2SAudEventStatusResponder::cleanUpMultiMessage()
