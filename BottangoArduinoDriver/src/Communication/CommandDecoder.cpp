@@ -2,7 +2,7 @@
 // 
 // 
 
-#include "CommandDecoder.h"
+#include "Communication/CommandDecoder.h"
 
 
 bool CommandDecoder::hasCommand()
@@ -12,10 +12,11 @@ bool CommandDecoder::hasCommand()
 
 char** CommandDecoder::tryConsumeCommand()
 {
+	// ToDo: Hier ist irgendwas seltsam? Wo ist splitCommandBuffer?
 	if (validCommandAvailable)
 	{
 		validCommandAvailable = false;
-		return splitCommandBuffer;
+		return splitCommandData.splitCommandBuffer;
 	}
 
 	return nullptr;

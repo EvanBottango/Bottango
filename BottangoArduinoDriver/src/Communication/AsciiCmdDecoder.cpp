@@ -41,7 +41,7 @@ void AsciiCmdDecoder::decode()
 	}
 }
 
-bool AsciiCmdDecoder::splitCommand(splitCommandData* data) const
+bool AsciiCmdDecoder::splitCommand(SplitCommandData* data) const
 {
 #ifdef ALLOW_SYNC_COMMANDS	
 	// Check for sync command. If found, set validCommandAvailable to true and return.
@@ -85,7 +85,7 @@ char** AsciiCmdDecoder::tryConsumeCommand()
 			// Get next frame and split it
 			getNextFrame(&splitData);
 			splitCommand(&splitData);
-			return splitCommandBuffer;
+			return splitData.splitCommandBuffer;
 		}
 		else
 		{
@@ -107,7 +107,7 @@ char** AsciiCmdDecoder::tryConsumeCommand()
 }
 
 #ifdef ALLOW_SYNC_COMMANDS
-void AsciiCmdDecoder::beginSyncCommand(splitCommandData* data) const
+void AsciiCmdDecoder::beginSyncCommand(SplitCommandData* data) const
 {
 	data->expectNewCommand = true;
 
@@ -132,7 +132,7 @@ void AsciiCmdDecoder::beginSyncCommand(splitCommandData* data) const
 	data->nextFrameStart = pos + 1; // Points to first command
 }
 
-void AsciiCmdDecoder::getNextFrame(splitCommandData* data) const
+void AsciiCmdDecoder::getNextFrame(SplitCommandData* data) const
 {
 	if (!data->nextFrameStart || *data->nextFrameStart == '\0')
 	{
@@ -197,7 +197,7 @@ void AsciiCmdDecoder::getNextFrame(splitCommandData* data) const
 	data->stringToSplit[commandLen] = ',';
 }
 
-bool AsciiCmdDecoder::hasMoreFrames(splitCommandData* data) const
+bool AsciiCmdDecoder::hasMoreFrames(SplitCommandData* data) const
 {
 	bool returnValue = data->nextFrameStart && *data->nextFrameStart != '\0';
 

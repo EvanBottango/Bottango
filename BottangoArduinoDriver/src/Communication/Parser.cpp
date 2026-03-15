@@ -176,7 +176,7 @@ bool Parser::parseCommand(char** splitCommandBuffer)
 
 unsigned long Parser::getStartTime(char* command)
 {
-	CommandDecoder::splitCommandData data;
+	CommandDecoder::SplitCommandData data;
 	data.stringToSplit = command;
 
 	unsigned long startTime = (unsigned long)-1;
@@ -233,7 +233,7 @@ unsigned long Parser::getStartTime(char* command)
 
 unsigned long Parser::getEndTime(char* command)
 {
-	splitCommandData data;
+	CommandDecoder::SplitCommandData data;
 	data.splitCommandBuffer = splitCommandBuffer;
 
 	if (splitCommand(&data))

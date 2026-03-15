@@ -3,7 +3,7 @@
 
 #include "LoopDrivenEffector.h"
 #include "Arduino.h"
-#ifdef ESP32
+#ifdef ESP32_
 #include "lib/ESP32Servo/src/ESP32Servo.h"
 #else
 #include "Servo.h"

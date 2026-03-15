@@ -1,6 +1,6 @@
 #include "OnOffCustomEvent.h"
 #include "OnOffCurve.h"
-#include "Time.h"
+#include "System/Time.h"
 #include "Errors.h"
 
 OnOffCustomEvent::OnOffCustomEvent(char *identifier, bool startOn, byte pin) : AbstractEffector(0, 1), pin(pin)

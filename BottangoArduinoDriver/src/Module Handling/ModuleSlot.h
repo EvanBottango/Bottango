@@ -36,7 +36,7 @@ struct SlotSize;
 // A new DataSource needs to be added here, in order to make sure its size is taken into account
 template <> struct SlotSize<Modules::DataSource_Secondary>
 {
-	static constexpr size_t value = max({
+	static constexpr size_t value = std::max({
 		sizeof(SdCardSource),
 		sizeof(RS485Source)
 		});

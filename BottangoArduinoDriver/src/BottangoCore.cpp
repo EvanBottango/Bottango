@@ -16,6 +16,7 @@ namespace BottangoCore
     AbstractMultiMessageOutgoingSource *activeOutgoingMultimessage = nullptr;
 
 	ModuleMaster mMaster = ModuleMaster();
+	char* splitCommandBuffer[COMMANDS_PARAMS_SIZE];
 
 #ifdef RELAY_SUPPORTED
     RelayChildPool *relayPool = nullptr;

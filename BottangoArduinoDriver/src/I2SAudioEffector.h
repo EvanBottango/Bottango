@@ -6,7 +6,7 @@
 #define I2SAudioEffector_h
 
 #include "AbstractEffector.h"
-#include "SDCardUtil.h"
+#include "DataSource/SDCardUtil.h"
 #include "../BottangoArduinoConfig.h"
 #include "Interfaces/AudioPlayback.h"
 

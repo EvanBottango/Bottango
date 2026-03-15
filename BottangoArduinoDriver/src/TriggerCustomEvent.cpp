@@ -1,6 +1,6 @@
 #include "TriggerCustomEvent.h"
 #include "TriggerCurve.h"
-#include "Time.h"
+#include "System/Time.h"
 #include "../BottangoArduinoConfig.h"
 #include "Errors.h"
 

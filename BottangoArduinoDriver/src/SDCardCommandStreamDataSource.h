@@ -7,7 +7,7 @@
 #include "../BottangoArduinoConfig.h"
 #include "DataSource/SDCardUtil.h"
 #include "DataSource/TxtBuffer.h"
-#include <FS.h>
+//#include <FS.h>
 
 #ifdef ESP32
 #include <freertos/FreeRTOS.h>

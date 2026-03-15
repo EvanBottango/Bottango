@@ -4,7 +4,7 @@
 #ifdef AUDIO_SD_I2S
 #include "I2SAudioEffector.h"
 #include "TriggerCurve.h"
-#include "Time.h"
+#include "System/Time.h"
 #include "../BottangoArduinoConfig.h"
 #include "Outgoing.h"
 #include "BottangoCore.h"

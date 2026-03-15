@@ -8,6 +8,7 @@
 #include "../BottangoArduinoConfig.h"
 #include <freertos/queue.h>
 #include <cstring>
+#include "Outgoing.h"
 
 #ifdef TOGGLE_DEBUG
 #include "PersistentConfigUtil.h"

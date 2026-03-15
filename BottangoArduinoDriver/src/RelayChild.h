@@ -6,8 +6,8 @@
 
 #include <Arduino.h>
 #include "../BottangoArduinoConfig.h"
-#include "Time.h"
-#include "TxtBuffer.h"
+#include "System/Time.h"
+#include "DataSource/TxtBuffer.h"
 
 class RelayChild
 {

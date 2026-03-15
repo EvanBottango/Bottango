@@ -9,7 +9,7 @@
 #include "../BottangoArduinoCallbacks.h"
 #include "../BottangoArduinoModules.h"
 #include "Module Handling/ModuleMaster.h"
-#include "Time.h"
+#include "System/Time.h"
 #include "Outgoing.h"
 #include <Arduino.h>
 
@@ -61,7 +61,7 @@ namespace BottangoCore
 
     //extern unsigned long timeOfLastChar;
     //extern bool commandInProgress;
-    //extern char *splitCommandBuffer[COMMANDS_PARAMS_SIZE];
+    extern char *splitCommandBuffer[COMMANDS_PARAMS_SIZE];
 
     void initUSBSerialComms();
 

@@ -7,7 +7,7 @@
 #ifdef USE_SD_CARD_COMMAND_STREAM
 
 #include <Arduino.h>
-#include <FS.h>
+//#include <FS.h>
 
 #include "DataSource.h"
 #include "../../BottangoArduinoConfig.h"

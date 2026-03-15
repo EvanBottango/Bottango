@@ -3,7 +3,7 @@
 
 #include "AbstractEffector.h"
 #include "Arduino.h"
-#include "Time.h"
+#include "System/Time.h"
 #include "ColorCurve.h"
 
 class ColorEffector : public AbstractEffector

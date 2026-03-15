@@ -10,7 +10,7 @@
 class CommandDecoder : public LoopModule
 {
 public:
-	struct splitCommandData
+	struct SplitCommandData
 	{
 		char* splitCommandBuffer[COMMANDS_PARAMS_SIZE];
 		char* stringToSplit;
@@ -52,7 +52,7 @@ public:
 	 * @brief Splits a command string into components in-place.
 	 * @param stringToSplit Pointer to a writable, null-terminated string containing the command to split. Must be non-null; the function will modify the buffer.
 	 */
-	virtual bool splitCommand(splitCommandData* data) const
+	virtual bool splitCommand(SplitCommandData* data) const
 	{
 		return false;
 	}
@@ -61,19 +61,19 @@ public:
 	 * @brief Initializes the sync command parsing state with a new command string.
 	 * @param stringToSplit Pointer to a writable, null-terminated string containing the sync command to parse. Must be non-null; the function will modify the buffer.
 	 */
-	virtual void beginSyncCommand(splitCommandData* data) const {};
+	virtual void beginSyncCommand(SplitCommandData* data) const {};
 
 	/**
 	 * @brief Retrieves the next frame from the current sync command.
 	 * @return Pointer to the next frame string, or nullptr if no more frames are available.
 	 */
-	virtual void getNextFrame(splitCommandData* data) const {};
+	virtual void getNextFrame(SplitCommandData* data) const {};
 
 	/**
 	 * @brief Checks whether additional frames from a multi-frame are available.
 	 * @return true if there are more frames available; false otherwise.
 	 */
-	virtual bool hasMoreFrames(splitCommandData* data) const
+	virtual bool hasMoreFrames(SplitCommandData* data) const
 	{
 		return false;
 	}
@@ -82,6 +82,7 @@ public:
 protected:
 	bool validCommandAvailable = false;
 	DataSource* source;
+	SplitCommandData splitCommandData;
 };
 
 #endif

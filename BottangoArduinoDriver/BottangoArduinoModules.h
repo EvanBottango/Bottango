@@ -12,10 +12,10 @@
 
 // !! RELAY !!
 
-// #define RELAY_SUPPORTED                                  // uncomment this line to allow for relay bridge / relay peer behavior
+//#define RELAY_SUPPORTED                                  // uncomment this line to allow for relay bridge / relay peer behavior
 
 // relay Comms type.                                        // (select only 1 if relay behavior is supported)
-// #define RELAY_COMS_ESPNOW                                // select the kind of communication stack for relay parent <-> child. ESP-Now only supported currently
+//#define RELAY_COMS_ESPNOW                                // select the kind of communication stack for relay parent <-> child. ESP-Now only supported currently
 
 // children will use this and override choice of USB Serial or Wifi and only talk to parent via this relay method
 // parents will still use usb serial or wifi to talk to desktop app, and this setting for child comms.
@@ -45,8 +45,8 @@
 
 // !! AUDIO !!
 // (select only 1)
-//#define AUDIO_TRIGGER_EVENT                                 // uncomment this line to have audio keyframes act as trigger events
-//#define AUDIO_SD_I2S                                     // uncomment this line to have audio keyframes play audio over i2s, reading audio file from SD card
+// #define AUDIO_TRIGGER_EVENT                                 // uncomment this line to have audio keyframes act as trigger events
+// #define AUDIO_SD_I2S                                     // uncomment this line to have audio keyframes play audio over i2s, reading audio file from SD card
 
 // extra features
 // #define DYNAMIC_VOLUME                                   // uncomment this line to adjust volume of i2s signal based on analog pin read

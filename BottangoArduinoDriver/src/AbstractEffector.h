@@ -3,7 +3,7 @@
 
 #include <Arduino.h>
 #include "Curve.h"
-#include "Time.h"
+#include "System/Time.h"
 #include "../BottangoArduinoCallbacks.h"
 #include "../BottangoArduinoConfig.h"
 

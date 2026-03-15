@@ -1,7 +1,7 @@
 #include "CommandStream.h"
 #include "Arduino.h"
 #include "../BottangoArduinoConfig.h"
-#include "Time.h"
+#include "System/Time.h"
 #include "BottangoCore.h"
 
 CommandStream::CommandStream(AbstractCommandStreamDataSource *dataSource)
