@@ -16,46 +16,39 @@
 #include "../Modules/StopButtonModule.h"
 #include "../Modules/StatusLightsModule.h"
 #include "../Modules/Audio/I2SAudioModule.h"
+#include "../Modules/AnimationPlaybackControl.h"
 #include "../Outgoing.h"
 
 void ModuleMaster::setupModules()
 {
 	// The serial data source is always present and active
-	static SerialSource serialSource;
-	modules[(int)Modules::DataSource_Serial] = &serialSource;
-	serialSource.setActiveSource(true);
+	SerialSource* serialSource = registerModule<SerialSource>(Modules::DataSource_Serial);
+	serialSource->setActiveSource(true);
 
-	//slotSecondary.place<SdCardSource>();
 
-	// Note: Moved to OfflineAnimationControl.cpp (or maybe a better name would be AnimationPlaybackControl?)
-/*#ifdef USE_SD_CARD_COMMAND_STREAM
-	static SdCardSource sdCardSource;
-	modules[(int)Modules::DataSource_Secondary] = &sdCardSource;
-#endif*/
+#if defined(USE_SD_CARD_COMMAND_STREAM) || defined(USE_CODE_COMMAND_STREAM)
+	registerModule<AnimationPlaybackControl>(Modules::AnimPlaybackCntrl);
+#endif
 
-	static AsciiCmdDecoder asciiDecoder;
-	modules[(int)Modules::Decoder] = &asciiDecoder;
-	asciiDecoder.setDataSource(&serialSource);
+	AsciiCmdDecoder* asciiDecoder = registerModule<AsciiCmdDecoder>(Modules::Decoder);
+	asciiDecoder->setDataSource(serialSource);
 
-	static Parser parser;
-	modules[(int)Modules::Parser] = &parser;
-	parser.setCommandDecoder(&asciiDecoder);
+	Parser* parser = registerModule<Parser>(Modules::Parser);
+	parser->setCommandDecoder(asciiDecoder);
 
-	modules[(int)Modules::EffectorPool] = &BottangoCore::effectorPool;
+	_modules[(int)Modules::EffectorPool] = &BottangoCore::effectorPool;
 
 #ifdef STOP_BUTTON_SUPPORTED
-	static StopButtonModule stopButton;
-	modules[(int)Modules::StopButton] = &stopButton;
-#endif
+	registerModule<StopButtonModule>(Modules::StopButton);
+#endif // STOP_BUTTON_SUPPORTED
 
 #ifdef ENABLE_STATUS_LIGHTS
-	static StatusLightsModule statusLights;
-	modules[(int)Modules::StatusLights] = &statusLights;
-#endif
+	registerModule<StatusLightsModule>(Modules::StatusLights);
+#endif // ENABLE_STATUS_LIGHTS
 
 #ifdef AUDIO_SD_I2S
 	static I2SAudioModule audioModule;
-	modules[(int)Modules::AudioI2S] = &audioModule;
+	_modules[(int)Modules::AudioI2S] = &audioModule;
 	InterfaceRegistry::registerInterface(Modules::AudioI2S, static_cast<IAudioPlayback*>(&audioModule));
 #endif
 }
@@ -64,9 +57,9 @@ void ModuleMaster::initModules()
 {
 	for (int i = 0; i < (int)Modules::Max; i++)
 	{
-		if (modules[i] != nullptr)
+		if (_modules[i] != nullptr)
 		{
-			modules[i]->init();
+			_modules[i]->init();
 		}
 	}
 }
@@ -75,9 +68,9 @@ void ModuleMaster::executePhase(Phase p)
 {
 	for (int i = 0; i < (int)Modules::Max; i++)
 	{
-		if (modules[i] != nullptr)
+		if (_modules[i] != nullptr)
 		{
-			modules[i]->onPhase(p);
+			_modules[i]->onPhase(p);
 		}
 	}
 }

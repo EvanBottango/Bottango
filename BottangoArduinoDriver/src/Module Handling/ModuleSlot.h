@@ -18,15 +18,16 @@
  // Second approach is more flexible and extensible, but adds complexity.
 enum class Modules : uint8_t
 {
-	DataSource_Serial,
-	DataSource_Secondary,
-	Decoder,
-	Parser,
-	EffectorPool,
-	StopButton,
-	StatusLights,
-	AudioI2S,
-	Max
+	DataSource_Serial,			// [Mandatory] Primary data source, always present and active
+	DataSource_Secondary,		// [Optinal] Secondary data source, can be switched between different modules (e.g. SD card, RS485, etc.)
+	Decoder,					// [Mandatory] Command decoder, parses raw data into commands. Can be switched between different decoders (e.g. ASCII, binary, etc.)
+	Parser,						// [Mandatory] Command parser, takes parsed commands and executes them
+	EffectorPool,				// [Mandatory] Pool of effectors that can be used by commands
+	StopButton,					// [Optinal] Stop button module, if supported
+	StatusLights,				// [Optinal] Status lights module, if supported
+	AudioI2S,					// [Optinal] I2S audio module, if supported
+	AnimPlaybackCntrl,			// [Mandatory] [Has to be second to last] Animation playback control module, is used automatically, depending on the active BottangoArduinoModules
+	Max							// [Mandatory] [Has to be the last] Sentinel value to indicate the number of modules, must always be last
 };
 
 template <Modules slot>
@@ -62,30 +63,30 @@ public:
 		static_assert(sizeof(T) <= MaxSize,"Module does not fit into this slot");
 
 		destroy();
-		new (buffer) T();
-		occupied = true;
-		return reinterpret_cast<T*>(buffer);
+		new (_buffer) T();
+		_occupied = true;
+		return reinterpret_cast<T*>(_buffer);
 	}
 
 	LoopModule* get() const
 	{
-		return occupied ? reinterpret_cast<LoopModule*>(buffer) : nullptr;
+		return _occupied ? reinterpret_cast<LoopModule*>(_buffer) : nullptr;
 	}
 
 	void destroy()
 	{
-		if (occupied)
+		if (_occupied)
 		{
-			reinterpret_cast<LoopModule*>(buffer)->~LoopModule();
-			occupied = false;
+			reinterpret_cast<LoopModule*>(_buffer)->~LoopModule();
+			_occupied = false;
 		}
 	}
 
 private:
 	// Note: The buffer needs to be aligned, otherwise it might crash
 	// std::max_align_t can be exchanged for a simple "4" for the ESP32
-	alignas(std::max_align_t) uint8_t buffer[MaxSize];
-	bool occupied = false;
+	alignas(std::max_align_t) uint8_t _buffer[MaxSize];
+	bool _occupied = false;
 };
 
 #endif // _ModuleSlot_h

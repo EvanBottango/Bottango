@@ -58,11 +58,11 @@ void StopButtonModule::handleStopAction()
 #if defined(USE_CODE_COMMAND_STREAM) || defined(USE_SD_CARD_COMMAND_STREAM)
 		if (stopIsShutdown)
 		{
-			stop(true);
+			BottangoCore::stop(true);
 		}
-		else if (commandStreamProvider != nullptr)
+		else if (BottangoCore::commandStreamProvider != nullptr)
 		{
-			commandStreamProvider->stop();
+			BottangoCore::commandStreamProvider->stop();
 		}
 #endif
 	}

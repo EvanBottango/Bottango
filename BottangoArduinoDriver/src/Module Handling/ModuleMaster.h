@@ -52,11 +52,12 @@ public:
 	template <typename T>
 	T* getModule(Modules moduleType)
 	{
-		return static_cast<T*>(modules[(int)moduleType]);
+		return static_cast<T*>(_modules[(int)moduleType]);
 	}
 
 	/**
-	 * @brief Registers a module of the specified type.
+	 * @brief Registers a module of the specified type. The module instance is stored in the modules registry and its pointer is returned.
+	 * Static storage duration is used for the module instance, so it will be automatically destroyed when the program ends.
 	 * @tparam T The type of the module to register.
 	 * @param moduleType The type of module to register.
 	 * @return Pointer to the registered module instance.
@@ -65,12 +66,13 @@ public:
 	T* registerModule(Modules moduleType)
 	{
 		static T moduleInstance;
-		modules[(int)moduleType] = &moduleInstance;
+		_modules[(int)moduleType] = &moduleInstance;
 		return &moduleInstance;
 	}
 
 	/**
-	 * @brief Register a data source into the secondary data source slot. The old instance in the slot will be destroyed gracefully using the destructor.
+	 * @brief Register a data source into the secondary data source slot and initialize it by calling init(). The old instance in the slot will be destroyed gracefully using the destructor.
+	 * Static storage duration is used for the module instance, so it will be automatically destroyed when the program ends.
 	 * @tparam T The concrete data source module type to place in the secondary data source slot.
 	 * @return Pointer to the newly created/placed module instance (T*), which is also stored in the modules registry.
 	 */
@@ -80,8 +82,11 @@ public:
 		// Note: we could add our own implementation of std::is_base_of. Or we just try to catch wrongfull use in Code Review.
 		//static_assert(std::is_base_of<DataSource, T>::value, "T must be derived from DataSource");
 
-		T* moduleInstance = slotSecondaryDataSource.place<T>();
-		modules[(int)Modules::DataSource_Secondary] = moduleInstance;
+		T* moduleInstance = _slotSecondaryDataSource.place<T>();
+
+		// Call init immediately to ensure the module is ready for use right after registration
+		moduleInstance->init(); 
+		_modules[(int)Modules::DataSource_Secondary] = moduleInstance;
 		return moduleInstance;
 	}
 
@@ -89,12 +94,12 @@ private:
 	/**
 	 * @brief An array of pointers to registered LoopModule instances.
 	 */
-	LoopModule* modules[(int)Modules::Max];
+	LoopModule* _modules[(int)Modules::Max] = {};
 
 	/**
 	 * @brief A module slot sized for the biggest possible secondary data source module.
 	 */
-	ModuleSlot<SlotSize<Modules::DataSource_Secondary>::value> slotSecondaryDataSource;
+	ModuleSlot<SlotSize<Modules::DataSource_Secondary>::value> _slotSecondaryDataSource;
 };
 
 /**

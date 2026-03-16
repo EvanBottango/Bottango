@@ -51,6 +51,7 @@ void CircularArray<T>::pushBack(T *data)
     array[idx++] = data;
 }
 
+// ToDo: add 'delete *toRemove;'
 template <class T>
 void CircularArray<T>::remove(T *toRemove)
 {
@@ -91,12 +92,14 @@ void CircularArray<T>::remove(T *toRemove)
     }
 }
 
+// ToDo: const!
 template <class T>
 T *CircularArray<T>::get(int index)
 {
     return array[index];
 }
 
+// ToDo: const!
 template <class T>
 byte CircularArray<T>::size()
 {

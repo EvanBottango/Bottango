@@ -47,13 +47,6 @@ bool Parser::parseCommand(char** splitCommandBuffer) const
 		return false;
 	}
 
-	//Outgoing::printOutputStringMem("Parsing\n");
-	/*Serial.printf("Parser Start\n");
-	Serial.printf("Command 0: %s\n", splitCommandBuffer[0]);
-	Serial.printf("Command 1: %s\n", splitCommandBuffer[1]);
-	Serial.printf("Command 2: %s\n", splitCommandBuffer[2]);
-	Serial.flush();*/
-
 	// ToDo: LEDs and stuff
 	//SystemStatus::systemStatus.CommandStatus = SystemStatus::eCommandStatus::NewCommand;
 
@@ -165,9 +158,6 @@ bool Parser::parseCommand(char** splitCommandBuffer) const
 	{
 		BasicCommands::stepperSync(splitCommandBuffer);
 	}
-
-	//Serial.printf("Parser End\n");
-	//Serial.flush();
 
 	return true;
 }

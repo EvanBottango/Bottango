@@ -46,6 +46,9 @@ namespace BottangoCore
 
     void bottangoSetup()
     {
+		// Set the initial connection status. This can be overwritten by a module during initModules()
+		SystemStatus::systemStatus.ConnectionStatus = SystemStatus::eConnectionStatus::No_Connection_Serial;
+
 		mMaster.setupModules();
 		mMaster.initModules();
 
@@ -90,8 +93,7 @@ namespace BottangoCore
             //StatusLights::setDesiredColor(CONNECTION_STATUS_LIGHT, STATUS_COLOR_NO_CONNECTION_SERIAL);
             //StatusLights::setLightMode(CONNECTION_STATUS_LIGHT, StatusLights::LightMode::MODE_BLINK);
         }
-#else
-		SystemStatus::systemStatus.ConnectionStatus = SystemStatus::eConnectionStatus::No_Connection_Serial;
+#else		
         //StatusLights::setDesiredColor(CONNECTION_STATUS_LIGHT, STATUS_COLOR_NO_CONNECTION_SERIAL);
         //StatusLights::setLightMode(CONNECTION_STATUS_LIGHT, StatusLights::LightMode::MODE_BLINK);
 #endif
@@ -121,6 +123,9 @@ namespace BottangoCore
  //       }
 //#endif
 
+		// Setup is done
+		SystemStatus::systemStatus.initialized = true;
+		Callbacks::onThisControllerStarted();
     }
 
     void initUSBSerialComms()

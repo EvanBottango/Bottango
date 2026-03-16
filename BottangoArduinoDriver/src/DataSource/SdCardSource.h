@@ -12,11 +12,12 @@
 #include "DataSource.h"
 #include "../../BottangoArduinoConfig.h"
 #include "TxtBuffer.h"
+#include "../Modules/AnimationPlaybackControl.h"
 
 #ifdef ESP32
 #include <freertos/FreeRTOS.h>
 #include <freertos/task.h>
-#endif
+#endif // ESP32
 
 enum class SdCmdType : uint8_t
 {
@@ -45,8 +46,6 @@ public:
 
 	bool openAnimation(uint8_t animIndex, bool loop);
 
-	//void readData() override;
-
 	void prepareNextCommand();
 
 	void peekNextCommand(char* out);
@@ -55,36 +54,35 @@ public:
 
 	void resetBuffer() override;
 
+	bool getConfigurationForAnimation(uint8_t animIndex, AnimationConfiguration* config) const;
+
+	void parseConfiguration(File configFile, AnimationConfiguration* config) const;
+
+	bool dataComplete() const { return _dataComplete; };
+
 private:
-	QueueHandle_t commandQueue;
-	char commandBuffer[MAX_COMMAND_LENGTH];
-	TxtBuffer<TXT_BUFFER_SIZE_SD> cardReadBuffer;
-	File currentFile;
+	QueueHandle_t _commandQueue;
+	char _commandBuffer[MAX_COMMAND_LENGTH];
+	TxtBuffer<TXT_BUFFER_SIZE_SD> _cardReadBuffer;
+	File _currentFile;
 
-	uint8_t index = 0;
-	bool onLoop = false;
-	volatile bool fileReadComplete = false;
-	bool shouldLoop = false;
-	bool dataComplete = false;
-
-	//unsigned long timeOfNextCommand = 0;
-	//unsigned long msEndOfLatestCommand = 0;
+	uint8_t _index = 0;
+	bool _onLoop = false;
+	volatile bool _fileReadComplete = false;
+	bool _shouldLoop = false;
+	bool _dataComplete = false;
 
 #ifdef ESP32
-	volatile TaskHandle_t fillTaskHandle = nullptr;
+	volatile TaskHandle_t _fillTaskHandle = nullptr;
 	void startFillTask();
 	static void fillTask(void* param);
 #else
 	void updateOnLoop();
 #endif
 
-	//void checkIsValid();
-
 	bool fillBufferChunk();
 
-	void getNextCommand(char* buffer, bool peek);
-
-	//unsigned long getMSTimeOfCommand(char* commandString, bool returnStartTime);
+	void getNextCommand(char* buffer, bool peek = false);
 };
 
 
