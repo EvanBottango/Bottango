@@ -28,16 +28,16 @@ void AsciiCmdDecoder::decode()
 {
 	char* stringToSplit = nullptr;
 
-	if (source->tryConsumeData(&stringToSplit) == false)
+	if (_source->tryConsumeData(&stringToSplit) == false)
 	{
 		return;
 	}
 
-	validCommandAvailable = false;
-	splitData.stringToSplit = stringToSplit;
-	if (splitCommand(&splitData))
+	_validCommandAvailable = false;
+	_splitData.stringToSplit = stringToSplit;
+	if (splitCommand(&_splitData))
 	{
-		validCommandAvailable = true;
+		_validCommandAvailable = true;
 	}
 }
 
@@ -78,29 +78,29 @@ bool AsciiCmdDecoder::splitCommand(SplitCommandData* data) const
 char** AsciiCmdDecoder::tryConsumeCommand()
 {
 #ifdef ALLOW_SYNC_COMMANDS
-	if (splitData.syncCommandInProgress)
+	if (_splitData.syncCommandInProgress)
 	{
-		if (hasMoreFrames(&splitData))
+		if (hasMoreFrames(&_splitData))
 		{
 			// Get next frame and split it
-			getNextFrame(&splitData);
-			splitCommand(&splitData);
-			return splitData.splitCommandBuffer;
+			getNextFrame(&_splitData);
+			splitCommand(&_splitData);
+			return _splitData.splitCommandBuffer;
 		}
 		else
 		{
 			// Reset sync command state
-			validCommandAvailable = false;
+			_validCommandAvailable = false;
 			return nullptr;
 		}
 		
 	}
 #endif // ALLOW_SYNC_COMMANDS
 
-	if (validCommandAvailable)
+	if (_validCommandAvailable)
 	{
-		validCommandAvailable = false;
-		return splitData.splitCommandBuffer;
+		_validCommandAvailable = false;
+		return _splitData.splitCommandBuffer;
 	}
 
 	return nullptr;

@@ -6,17 +6,16 @@
 #include <Arduino.h>
 #include "DataSource.h"
 
+/**
+ * @brief Serial data source. It uses the default Arduino Serial interface to read incoming commands. Commands are expected to be terminated with a newline character ('\n') and include a hash for validation.
+ */
 class SerialSource : public DataSource
 {
 public:
 	void onPhase(Phase p) override;
-
 	void init() override;
-
 	void readData() override;
-
 	bool tryConsumeData(char** out) override;
-
 	void resetBuffer() override;
 
 private:
@@ -27,11 +26,25 @@ private:
 	 */
 	bool checkHash(const char* cmdString);
 
-	unsigned long timeOfLastChar = 0;
-	bool commandInProgress = false;
+	/**
+	 * @brief Stores the time of the last received character for timeout handling.
+	 */
+	unsigned long _timeOfLastChar = 0;
 
-	char serialCommandBuffer[MAX_COMMAND_LENGTH];
-	int serialCommandIdx = 0;
+	/**
+	 * @brief Helper, that indicates whether a command is currently being received. Used for timeout handling.
+	 */
+	bool _commandInProgress = false;
+
+	/** @brief The buffer for a command.This buffer is used for all following phases : Decode, Parse and Execute, until the command is consumed.
+	 * It is not copied, we work directly with this buffer
+	 */
+	char _serialCommandBuffer[MAX_COMMAND_LENGTH];
+
+	/**
+	 * @brief Helper, to point to the current position in the buffer for storing incoming characters.
+	 */
+	int _serialCommandIdx = 0;
 };
 
 #endif

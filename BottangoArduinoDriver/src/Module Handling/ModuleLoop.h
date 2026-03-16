@@ -5,6 +5,9 @@
 
 #include <Arduino.h>
 
+/**
+ * @brief The different phases of the main loop. Modules can hook into these phases to perform actions at specific points in the loop.
+ */
 enum class Phase
 {
 	Early,

@@ -415,10 +415,10 @@ bool SdCardSource::fillBufferChunk()
 
 bool SdCardSource::tryConsumeData(char** out)
 {
-	if (validDataAvailable)
+	if (_validDataAvailable)
 	{
 		*out = commandBuffer;
-		validDataAvailable = false;
+		_validDataAvailable = false;
 		return true;
 	}
 
@@ -439,7 +439,7 @@ void SdCardSource::getNextCommand(char* buffer, bool peek)
 		}
 		else
 		{
-			validDataAvailable = true;
+			_validDataAvailable = true;
 		}
 #ifdef ESP32
 		if (fillTaskHandle)

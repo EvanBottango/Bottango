@@ -7,16 +7,16 @@
 
 bool CommandDecoder::hasCommand()
 {
-	return validCommandAvailable;
+	return _validCommandAvailable;
 }
 
 char** CommandDecoder::tryConsumeCommand()
 {
 	// ToDo: Hier ist irgendwas seltsam? Wo ist splitCommandBuffer?
-	if (validCommandAvailable)
+	if (_validCommandAvailable)
 	{
-		validCommandAvailable = false;
-		return splitCommandData.splitCommandBuffer;
+		_validCommandAvailable = false;
+		return _splitData.splitCommandBuffer;
 	}
 
 	return nullptr;
@@ -24,5 +24,5 @@ char** CommandDecoder::tryConsumeCommand()
 
 void CommandDecoder::setDataSource(DataSource* src)
 {
-	source = src;
+	_source = src;
 }

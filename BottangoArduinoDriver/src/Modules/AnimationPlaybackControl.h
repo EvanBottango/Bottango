@@ -27,18 +27,17 @@ public:
 	};
 
 	void onPhase(Phase p) override;
-
 	void init() override {};
 
 	bool readyForNextCommand();
 
 private:
-	CircularArray<AnimationConfiguration> animationConfigs = CircularArray<AnimationConfiguration>(MAX_EXPORTED_ANIMATIONS);
-	int currentPlayingIndex = -1;
-	int idleAnimIndex = -1;
-	int startingAnim = -1;
-	unsigned long timeOfNextCommand = 0;
-	unsigned long msEndOfLatestCommand = 0;
+	CircularArray<AnimationConfiguration> _animationConfigs = CircularArray<AnimationConfiguration>(MAX_EXPORTED_ANIMATIONS);
+	int _currentPlayingIndex = -1;
+	int _idleAnimIndex = -1;
+	int _startingAnim = -1;
+	unsigned long _timeOfNextCommand = 0;
+	unsigned long _msEndOfLatestCommand = 0;
 
 #ifdef USE_SD_CARD_COMMAND_STREAM
 	void loadConfig_SDCard();

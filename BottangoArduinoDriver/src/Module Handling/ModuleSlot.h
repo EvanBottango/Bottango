@@ -33,7 +33,8 @@ template <Modules slot>
 struct SlotSize;
 
 // Note: the sizeof() calls can be guarded with #ifdef, as the max() function takes any amount of arguments
-// A new DataSource needs to be added here, in order to make sure its size is taken into account
+// Any new DataSource needs to be added here, in order to make sure its size is taken into account
+// This is needed, to get the correct size for the buffer in the ModuleSlot, to make sure any of the possible modules that can be placed in the slot will fit.
 template <> struct SlotSize<Modules::DataSource_Secondary>
 {
 	static constexpr size_t value = std::max({

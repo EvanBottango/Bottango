@@ -7,6 +7,10 @@
 #include "CommandDecoder.h"
 #include "../Module Handling/ModuleLoop.h"
 
+/**
+ * @brief The Parser class is responsible for parsing commands provided by the CommandDecoder and executing the corresponding actions.
+ * It operates during the Logic phase of the main loop, consuming commands from the decoder and invoking the appropriate handlers based on the command name and parameters.
+ */
 class Parser : public LoopModule
 {
 public:
@@ -23,18 +27,28 @@ public:
 	 * @param splitCommandBuffer Pointer to an array of strings representing the split command and its parameters.
 	 * @return true if the command was successfully parsed and executed, false otherwise.
 	 */
-	bool parseCommand(char** splitCommandBuffer);
+	bool parseCommand(char** splitCommandBuffer) const;
 
-	unsigned long getStartTime(char* command);
+	unsigned long getStartTime(char* command) const;
 
-	unsigned long getEndTime(char* command);
+	unsigned long getEndTime(char* command) const;
 
+	/**
+	 * @brief Helper function to determine if a given command name corresponds to a command that has a start time parameter.
+	 * @param commandName The name of the command to check.
+	 * @return True if the command has a start time parameter, false otherwise.
+	 */
 	bool commandHasStartTime(char* commandName) const;
 
+	/**
+	 * @brief Helper function to determine if a given command name corresponds to a command that has an end time parameter.
+	 * @param commandName The name of the command to check.
+	 * @return True if the command has an end time parameter, false otherwise.
+	 */
 	bool commandHasEndTime(char* commandName) const;
 
 private:
-	CommandDecoder* decoder;
+	CommandDecoder* _decoder;
 };
 
 #endif

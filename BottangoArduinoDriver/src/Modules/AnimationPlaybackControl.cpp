@@ -10,7 +10,7 @@
 #include "../DataSource/SdCardSource.h"
 #include "../Module Handling/ModuleMaster.h"
 #include "../Outgoing.h"
-#include "../Communication/CommandDecoder.h"
+#include "../Communication/Parser.h"
 
 void AnimationPlaybackControl::onPhase(Phase p)
 {
@@ -29,13 +29,13 @@ void AnimationPlaybackControl::onPhase(Phase p)
 			// This way, calls that are more specific to a secondary data source don't need a #ifdef guard
 #ifdef USE_SD_CARD_COMMAND_STREAM
 			SdCardSource* secondarySource = BottangoCore::mMaster.getModule<SdCardSource>(Modules::DataSource_Secondary);
-			CommandDecoder* decoder = BottangoCore::mMaster.getModule<CommandDecoder>(Modules::Decoder);
+			Parser* parser = BottangoCore::mMaster.getModule<Parser>(Modules::Decoder);
 
 			// Peek the upcoming command to retrieve the endTime
 			char nextCommand[MAX_COMMAND_LENGTH];
 			nextCommand[0] = '\0';
 			secondarySource->peekNextCommand(nextCommand);
-			msEndOfLatestCommand = decoder->getEndTime(nextCommand);
+			_msEndOfLatestCommand = parser->getEndTime(nextCommand);
 
 			// Prepare the next command for the parser
 			secondarySource->prepareNextCommand();
@@ -43,7 +43,7 @@ void AnimationPlaybackControl::onPhase(Phase p)
 			// Peek the command after the upcoming command, to retrieve its startTime
 			nextCommand[0] = '\0';
 			secondarySource->peekNextCommand(nextCommand);
-			timeOfNextCommand = decoder->getStartTime(nextCommand);
+			_timeOfNextCommand = parser->getStartTime(nextCommand);
 #endif // USE_SD_CARD_COMMAND_STREAM
 		}
 	}
@@ -128,7 +128,7 @@ void AnimationPlaybackControl::loadConfig_SDCard()
 #endif
 		}
 
-		animationConfigs.pushBack(config);
+		_animationConfigs.pushBack(config);
 	}
 }
 
@@ -245,7 +245,7 @@ bool AnimationPlaybackControl::readyForNextCommand()
 	bool dataComplete = false;
 
 	// at end of loop
-	if (shouldLoop /* && dataSource->dataComplete*/ && Time::getCurrentTimeInMs() >= msEndOfLatestCommand)
+	if (shouldLoop /* && dataSource->dataComplete*/ && Time::getCurrentTimeInMs() >= _msEndOfLatestCommand)
 	{
 		// reset to beginning
 		BottangoCore::effectorPool.clearAllCurves();
@@ -259,8 +259,8 @@ bool AnimationPlaybackControl::readyForNextCommand()
 		}
 #endif*/
 		//dataSource->reset(); // ToDo: dataSource zurücksetzen
-		timeOfNextCommand = 0;
-		msEndOfLatestCommand = 0;
+		_timeOfNextCommand = 0;
+		_msEndOfLatestCommand = 0;
 
 		Time::syncTime(0);
 		return true;
@@ -287,21 +287,21 @@ bool AnimationPlaybackControl::readyForNextCommand()
 		return Time::getCurrentTimeInMs() >= timeOfNextCommand - SD_ANIM_PREREAD_MS;
 	}
 #else*/
-	if (timeOfNextCommand > SD_ANIM_PREREAD_MS)
+	if (_timeOfNextCommand > SD_ANIM_PREREAD_MS)
 	{
-		return Time::getCurrentTimeInMs() >= timeOfNextCommand - SD_ANIM_PREREAD_MS;
+		return Time::getCurrentTimeInMs() >= _timeOfNextCommand - SD_ANIM_PREREAD_MS;
 	}
 #endif // USE_SD_CARD_COMMAND_STREAM
 
 	// otherwise all commands before pre-read are valid
-	else if (timeOfNextCommand > 0)
+	else if (_timeOfNextCommand > 0)
 	{
 		return true;
 	}
 	// fallback if we're at or past time of next
 	else
 	{
-		return Time::getCurrentTimeInMs() >= timeOfNextCommand;
+		return Time::getCurrentTimeInMs() >= _timeOfNextCommand;
 	}
 /*#elif defined(USE_CODE_COMMAND_STREAM)
 #ifdef RELAY_SUPPORTED
@@ -320,7 +320,7 @@ bool AnimationPlaybackControl::readyForNextCommand()
 #ifdef EXPORTED_ANIM_LOGGING
 void AnimationPlaybackControl::logConfig(AnimationConfiguration* config)
 {
-	// ToDo: This is dobule guarded (see end of parseConfiguration)
+	// ToDo: This is double guarded (see end of parseConfiguration)
 #ifdef TOGGLE_DEBUG
 	if (PersistentConfigUtil::debugEnabled())
 #endif

@@ -13,22 +13,20 @@ void Parser::onPhase(Phase p)
 		return;
 	}
 
-	/*char** splitCommandBuffer = decoder->tryConsumeCommand();
-
-	if (parseCommand(splitCommandBuffer))
+	/*if (parseCommand(splitCommandBuffer))
 	{
 		// Workaround for handshake bug - see SerialSource.cpp readData() for details
 		Outgoing::printOutputStringPROGMEM(BasicCommands::READY);
 	}*/
 
-	char** splitCommandBuffer = decoder->tryConsumeCommand();
+	char** splitCommandBuffer = _decoder->tryConsumeCommand();
 
 	if (splitCommandBuffer != nullptr)
 	{
 		while (splitCommandBuffer)
 		{
 			parseCommand(splitCommandBuffer);
-			splitCommandBuffer = decoder->tryConsumeCommand();
+			splitCommandBuffer = _decoder->tryConsumeCommand();
 		}
 
 		// Workaround for handshake bug - see SerialSource.cpp readData() for details
@@ -39,10 +37,10 @@ void Parser::onPhase(Phase p)
 
 void Parser::setCommandDecoder(CommandDecoder* cmdDecoder)
 {
-	decoder = cmdDecoder;
+	_decoder = cmdDecoder;
 }
 
-bool Parser::parseCommand(char** splitCommandBuffer)
+bool Parser::parseCommand(char** splitCommandBuffer) const
 {
 	if (splitCommandBuffer == nullptr)
 	{
@@ -174,7 +172,7 @@ bool Parser::parseCommand(char** splitCommandBuffer)
 	return true;
 }
 
-unsigned long Parser::getStartTime(char* command)
+unsigned long Parser::getStartTime(char* command) const
 {
 	CommandDecoder::SplitCommandData data;
 	data.stringToSplit = command;
@@ -184,19 +182,19 @@ unsigned long Parser::getStartTime(char* command)
 
 	// Split the incoming command
 	// The splitCommand functions handles both regular and sync commands
-	if (decoder->splitCommand(&data))
+	if (_decoder->splitCommand(&data))
 	{
 #ifdef ALLOW_SYNC_COMMANDS
 		// Sync command handling
 		if (data.syncCommandInProgress)
 		{
 			// With multi-frame sync commands, we need to check all frames for the earliest start time
-			while (decoder->hasMoreFrames(&data))
+			while (_decoder->hasMoreFrames(&data))
 			{
-				decoder->getNextFrame(&data);
+				_decoder->getNextFrame(&data);
 
 				// Split command and test if this sub-command has a start time
-				if (decoder->splitCommand(&data) && commandHasStartTime(data.splitCommandBuffer[0]) && data.splitCommandBuffer[2] != nullptr)
+				if (_decoder->splitCommand(&data) && commandHasStartTime(data.splitCommandBuffer[0]) && data.splitCommandBuffer[2] != nullptr)
 				{
 					unsigned long subCmdTime = strtoul(data.splitCommandBuffer[2], nullptr, 10);
 					commandWithTimeFound = true;					
@@ -231,12 +229,14 @@ unsigned long Parser::getStartTime(char* command)
 	return startTime;
 }
 
-unsigned long Parser::getEndTime(char* command)
+unsigned long Parser::getEndTime(char* command) const
 {
 	CommandDecoder::SplitCommandData data;
-	data.splitCommandBuffer = splitCommandBuffer;
+	data.stringToSplit = command;
 
-	if (splitCommand(&data))
+	// Split the incoming command
+	// The splitCommand functions handles both regular and sync commands
+	if (_decoder->splitCommand(&data))
 	{
 		unsigned long endTime = 0;
 
@@ -247,9 +247,9 @@ unsigned long Parser::getEndTime(char* command)
 
 #ifdef ALLOW_SYNC_COMMANDS
 			// With multi-frame sync commands, we need to check all frames for the latest end time
-			while (hasMoreFrames(&data))
+			while (_decoder->hasMoreFrames(&data))
 			{
-				getNextFrame(&data);
+				_decoder->getNextFrame(&data);
 				unsigned long subCmdTime = strtoul(data.splitCommandBuffer[3], nullptr, 10);
 				if (subCmdTime > endTime)
 				{

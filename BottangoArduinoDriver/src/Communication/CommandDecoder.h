@@ -7,6 +7,10 @@
 #include "../DataSource/DataSource.h"
 #include "../Module Handling/ModuleLoop.h"
 
+/**
+ * @brief Decodes commands from a data source and provides them to the parser. The CommandDecoder is responsible for reading raw command strings from the data source,
+*  splitting them into components, and making them available for consumption by the parser.
+ */
 class CommandDecoder : public LoopModule
 {
 public:
@@ -80,9 +84,9 @@ public:
 #endif // ALLOW_SYNC_COMMANDS
 
 protected:
-	bool validCommandAvailable = false;
-	DataSource* source;
-	SplitCommandData splitCommandData;
+	bool _validCommandAvailable = false;
+	DataSource* _source;
+	SplitCommandData _splitData;
 };
 
 #endif

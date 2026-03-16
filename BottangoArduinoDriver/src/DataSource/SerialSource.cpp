@@ -18,7 +18,7 @@ void SerialSource::onPhase(Phase p)
 
 void SerialSource::init()
 {
-	serialCommandBuffer[serialCommandIdx] = '\0';
+	_serialCommandBuffer[_serialCommandIdx] = '\0';
 
 	Serial.begin(BAUD_RATE);
 
@@ -31,24 +31,24 @@ void SerialSource::readData()
 {
 	while (Serial.available() > 0)
 	{
-		commandInProgress = true;
+		_commandInProgress = true;
 
 		char incomingChar = Serial.read();
-		timeOfLastChar = millis();
+		_timeOfLastChar = millis();
 
 		// Look for end of string
 		if (incomingChar == '\n')
 		{
-			commandInProgress = false;
-			timeOfLastChar = 0;
+			_commandInProgress = false;
+			_timeOfLastChar = 0;
 
-			if (checkHash(serialCommandBuffer))
+			if (checkHash(_serialCommandBuffer))
 			{
 				// ToDo: There is a bug in Bottagno Desktop app during the handshake.
 				// If the READY response is sent before the Handshake Response, the Handshake is processed, but it hangs in a weird state between "Handshake OK" and "Not OK"
 				// Command is moved for the time being at the end of Parser.cpp onPhase() function.
 				//Outgoing::printOutputStringPROGMEM(BasicCommands::READY);
-				validDataAvailable = true;
+				_validDataAvailable = true;
 
 				//Serial.printf("Got: %s\n", serialCommandBuffer);
 			}
@@ -63,45 +63,45 @@ void SerialSource::readData()
 			// Do Nothing
 		}		
 		// Add char to receive buffer
-		else if (serialCommandIdx <= MAX_COMMAND_LENGTH - 2)
+		else if (_serialCommandIdx <= MAX_COMMAND_LENGTH - 2)
 		{
-			serialCommandBuffer[serialCommandIdx++] = incomingChar;
-			serialCommandBuffer[serialCommandIdx] = '\0';
+			_serialCommandBuffer[_serialCommandIdx++] = incomingChar;
+			_serialCommandBuffer[_serialCommandIdx] = '\0';
 		}
 		// Command to long
 		else
 		{
-			Error::reportError_CmdTooLong(serialCommandIdx);
-			serialCommandIdx = 0;
-			serialCommandBuffer[serialCommandIdx] = '\0';
+			Error::reportError_CmdTooLong(_serialCommandIdx);
+			_serialCommandIdx = 0;
+			_serialCommandBuffer[_serialCommandIdx] = '\0';
 
-			commandInProgress = false;
-			timeOfLastChar = 0;
+			_commandInProgress = false;
+			_timeOfLastChar = 0;
 
 			Outgoing::printOutputStringPROGMEM(BasicCommands::READY);
 		}
 	}
 
 	// Check for command timeout
-	if (commandInProgress && (millis() - timeOfLastChar > READ_TIMEOUT))
+	if (_commandInProgress && (millis() - _timeOfLastChar > READ_TIMEOUT))
 	{
 		Outgoing::printOutputStringPROGMEM(BasicCommands::TIMEOUT);
 
-		serialCommandIdx = 0;
-		serialCommandBuffer[serialCommandIdx] = '\0';
+		_serialCommandIdx = 0;
+		_serialCommandBuffer[_serialCommandIdx] = '\0';
 
-		commandInProgress = false;
-		timeOfLastChar = 0;
+		_commandInProgress = false;
+		_timeOfLastChar = 0;
 	}
 }
 
 bool SerialSource::tryConsumeData(char** out)
 {
-	if (validDataAvailable)
+	if (_validDataAvailable)
 	{
-		*out = serialCommandBuffer;
-		validDataAvailable = false;
-		serialCommandIdx = 0;
+		*out = _serialCommandBuffer;
+		_validDataAvailable = false;
+		_serialCommandIdx = 0;
 		return true;
 	}
 
@@ -110,12 +110,12 @@ bool SerialSource::tryConsumeData(char** out)
 
 void SerialSource::resetBuffer()
 {
-	serialCommandIdx = 0;
-	serialCommandBuffer[serialCommandIdx] = '\0';
-	validDataAvailable = false;
-	commandInProgress = false;
+	_serialCommandIdx = 0;
+	_serialCommandBuffer[_serialCommandIdx] = '\0';
+	_validDataAvailable = false;
+	_commandInProgress = false;
 	//bufferLocked = false;
-	timeOfLastChar = 0;
+	_timeOfLastChar = 0;
 }
 
 bool SerialSource::checkHash(const char* cmdString)
