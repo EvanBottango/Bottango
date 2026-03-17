@@ -205,7 +205,7 @@ void CommandStreamProvider::runInProgressCommand()
             char commandBuffer[MAX_COMMAND_LENGTH];
             commandBuffer[0] = '\0';
 
-            commandStream->getNextCommand(commandBuffer); // <-- Next: hier gehts weiter. getNextCommand sollte funktionieren, aber nochmal überprüfen ob das auch wirklich so ist.
+            commandStream->getNextCommand(commandBuffer);
             if (commandBuffer[0] != '\0')
             {
 

@@ -46,15 +46,16 @@ namespace BottangoCore
 
     void bottangoSetup()
     {
+		PersistentConfigUtil::setUseExportedCommandStream(true);
+
 		// Set the initial connection status. This can be overwritten by a module during initModules()
+		SystemStatus::systemStatus.PowerStatus = SystemStatus::ePowerStatus::Ok;
 		SystemStatus::systemStatus.ConnectionStatus = SystemStatus::eConnectionStatus::No_Connection_Serial;
+		SystemStatus::systemStatus.Signal = SystemStatus::eSignal::SDError;
 
 		mMaster.setupModules();
 		mMaster.initModules();
-
-		SystemStatus::systemStatus.PowerStatus = SystemStatus::ePowerStatus::Ok;
-		SystemStatus::systemStatus.ConnectionStatus = SystemStatus::eConnectionStatus::Red;
-		SystemStatus::systemStatus.Signal = SystemStatus::eSignal::SDError;
+		
 
 #ifdef NAMED_BOARD_STARTUP
         NamedBoardStartup::runNamedBoardStartup();

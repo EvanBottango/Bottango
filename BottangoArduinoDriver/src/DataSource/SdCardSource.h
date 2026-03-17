@@ -9,7 +9,7 @@
 #include <Arduino.h>
 //#include <FS.h>
 
-#include "DataSource.h"
+#include "StaticSecondaryDataSource.h"
 #include "../../BottangoArduinoConfig.h"
 #include "TxtBuffer.h"
 #include "../Modules/AnimationPlaybackControl.h"
@@ -25,7 +25,7 @@ enum class SdCmdType : uint8_t
 	Stop,
 };
 
-class SdCardSource : public DataSource
+class SdCardSource : public StaticSecondaryDataSource
 {
 public:
 	struct SdCommand
@@ -40,28 +40,24 @@ public:
 
 	void init() override;
 
-	bool openFile(const char* path);
+	//bool openFile(const char* path) override;
 
-	bool openSetup();
+	bool openSetup() override;
 
-	bool openAnimation(uint8_t animIndex, bool loop);
+	bool openAnimation(uint8_t animIndex, bool loop) override;
 
-	void prepareNextCommand();
+	void prepareNextCommand() override;
 
-	void peekNextCommand(char* out);
+	void peekNextCommand(char* out) override;
 
 	bool tryConsumeData(char** out) override;
 
 	void resetBuffer() override;
 
-	bool getConfigurationForAnimation(uint8_t animIndex, AnimationConfiguration* config) const;
-
-	void parseConfiguration(File configFile, AnimationConfiguration* config) const;
-
-	bool dataComplete() const { return _dataComplete; };
+	bool getConfigurationForAnimation(uint8_t animIndex, AnimationConfiguration* config) const override;
 
 private:
-	QueueHandle_t _commandQueue;
+	//QueueHandle_t _commandQueue;
 	char _commandBuffer[MAX_COMMAND_LENGTH];
 	TxtBuffer<TXT_BUFFER_SIZE_SD> _cardReadBuffer;
 	File _currentFile;
@@ -70,11 +66,13 @@ private:
 	bool _onLoop = false;
 	volatile bool _fileReadComplete = false;
 	bool _shouldLoop = false;
-	bool _dataComplete = false;
+
+	void parseConfiguration(File configFile, AnimationConfiguration* config) const;
 
 #ifdef ESP32
 	volatile TaskHandle_t _fillTaskHandle = nullptr;
 	void startFillTask();
+	void stopFillTask();
 	static void fillTask(void* param);
 #else
 	void updateOnLoop();

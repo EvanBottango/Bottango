@@ -29,8 +29,20 @@ public:
 	 */
 	bool parseCommand(char** splitCommandBuffer) const;
 
+	/**
+	 * @brief Helper to get the earliest start time from a command string. Will also find the earliest start time across all frames of a multi-frame sync command, if applicable.
+	 * @Note: For Multi-Frame: The command with the earliest start time may not be the same as the command with the latest end time
+	 * @param command Pointer to the command string to parse. Must be a writable, null-terminated string, The string will be modified during parsing.
+	 * @return The earliest start time in milliseconds for the command, or the current time if no valid start time is found.
+	 */
 	unsigned long getStartTime(char* command) const;
 
+	/**
+	 * @brief Helper to get the latest end time from a command string. Will also find the latest end time across all frames of a multi-frame sync command, if applicable.
+	 * @Note: For Multi-Frame: The command with the latest end time may not be the same as the command with the earliest start time
+	 * @param command Pointer to the command string to parse. Must be a writable, null-terminated string, The string will be modified during parsing.
+	 * @return The latest end time in milliseconds for the command, or the current time if no valid end time is found.
+	 */
 	unsigned long getEndTime(char* command) const;
 
 	/**
@@ -45,7 +57,7 @@ public:
 	 * @param commandName The name of the command to check.
 	 * @return True if the command has an end time parameter, false otherwise.
 	 */
-	bool commandHasEndTime(char* commandName) const;
+	bool commandHasDuration(char* commandName) const;
 
 private:
 	CommandDecoder* _decoder;

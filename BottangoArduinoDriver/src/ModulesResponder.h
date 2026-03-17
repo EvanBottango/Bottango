@@ -1,4 +1,3 @@
-
 #ifndef BOTTANGOARDUINO_MODULESRESPONDER_H
 #define BOTTANGOARDUINO_MODULESRESPONDER_H
 #include <Arduino.h>
@@ -15,39 +14,39 @@
 
 #define MODULES_COUNT 8 // number of possible modules to report
 
-const char MODULES_RESPONSE_PREFIX[] PROGMEM = "MOD";
-const char MODULES_PARAM_DELINIATOR[] PROGMEM = ",";
-const char END_OF_MODULES[] PROGMEM = "EoM";
+inline const char MODULES_RESPONSE_PREFIX[] PROGMEM = "MOD";
+inline const char MODULES_PARAM_DELINIATOR[] PROGMEM = ",";
+inline const char END_OF_MODULES[] PROGMEM = "EoM";
 
 // Module 0, UID
 #ifdef REPORT_UID
-const char UID_PREFIX[] PROGMEM = "UID";
+inline const char UID_PREFIX[] PROGMEM = "UID";
 #endif
 
 // module 1, named board
 #ifdef NAMED_BOARD
-const char NAMED_BOARD_PREFIX[] PROGMEM = "BOARD";
+inline const char NAMED_BOARD_PREFIX[] PROGMEM = "BOARD";
 #endif
 
 // module 2, command source
 // param, 0 == accepting commands, 1 == listen only mode
-const char COMMAND_SOURCE_PREFIX[] PROGMEM = "CMD_SRC";
+inline const char COMMAND_SOURCE_PREFIX[] PROGMEM = "CMD_SRC";
 
 // module 3, command configuration
 // param, max message length as int
 // param, curve buffer count as int
 // param, sync curve supported (0 == false, 1 == true)
 // param, motor signal max (16bit,32bit)
-const char COMMAND_CONFIG_PREFIX[] PROGMEM = "CMD_CFG";
+inline const char COMMAND_CONFIG_PREFIX[] PROGMEM = "CMD_CFG";
 
 // module 4, Relay support
 #ifdef RELAY_SUPPORTED
-const char RELAY_PREFIX[] PROGMEM = "RLY";
+inline const char RELAY_PREFIX[] PROGMEM = "RLY";
 #endif
 
 // module 5, PCA driver
 #ifdef USE_ADAFRUIT_PWM_LIBRARY
-const char PCA_PREFIX[] PROGMEM = "9685";
+inline const char PCA_PREFIX[] PROGMEM = "9685";
 #endif
 
 // module 6, I2S Audio
@@ -63,7 +62,7 @@ inline constexpr const char* I2S_AudioPrefix()
 // param, Stop behavior (0 == pause only, 1 == shut down)
 // param, dynamic (0 == static, 1 == switchable)
 #ifdef STOP_BUTTON_SUPPORTED
-const char STOP_BTN_PREFIX[] PROGMEM = "STP_BTN";
+inline const char STOP_BTN_PREFIX[] PROGMEM = "STP_BTN";
 #endif
 
 // end of line for now
@@ -95,4 +94,4 @@ private:
 
 }; // namespace ModulesResponder
 
-#endif // BOTTANGOARDUINO_MODULESRESPONDER_H
+#endif // BOTTANGOARDUINO_MODULESRESPONDER_H#endif // BOTTANGOARDUINO_MODULESRESPONDER_H

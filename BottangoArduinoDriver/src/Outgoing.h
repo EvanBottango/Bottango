@@ -1,4 +1,3 @@
-
 #ifndef BOTTANGO_OUTGOING_H
 #define BOTTANGO_OUTGOING_H
 
@@ -8,20 +7,20 @@
 namespace Outgoing
 {
     /** Request E Stop */
-    const char ESTOP[] PROGMEM = "reqStop\n";
+    inline const char ESTOP[] PROGMEM = "reqStop\n";
 
     /** Request pause anim */
-    const char STOP_PLAY[] PROGMEM = "reqPause\n";
+    inline const char STOP_PLAY[] PROGMEM = "reqPause\n";
 
     /** Request start anim */
-    const char START_PLAY[] PROGMEM = "reqPlay,";
+    inline const char START_PLAY[] PROGMEM = "reqPlay,";
 
 #ifdef ONLINE_BUTTON_ACTIONS
-    const char START_PLAY_BUTTON[] PROGMEM = "reqPlayBtn,";
+    inline const char START_PLAY_BUTTON[] PROGMEM = "reqPlayBtn,";
 #endif
 
     /** Stepper/Custom Motor Auto Sync is Complete */
-    const char SYNC_COMPLETE[] PROGMEM = "sycMDone,";
+    inline const char SYNC_COMPLETE[] PROGMEM = "sycMDone,";
 
     /** User request to e stop */
     void outgoing_requestEStop();

@@ -10,19 +10,11 @@
 #include "../../BottangoArduinoConfig.h"
 #include "../Module Handling/ModuleLoop.h"
 #include "../CircularArray.h"
+#include "../DataSource/StaticSecondaryDataSource.h"
+#include "../Communication/Parser.h"
+#include "AnimationConfiguration.h"
 
-struct AnimationConfiguration
-{
-public:
-	uint8_t playOnStart = 0;      // play on start (0 = false) (1 = true)
-	uint8_t loopOnStart = 0;      // loop when playing on start (0 = false) (1 = true)
-	uint8_t idleAnim = 0;         // Play as an idle animation when nothing else is playing (0 = false) (1 = true)
-	uint8_t playOnPin = 0;        // (0 = false) (anything above 0 up to 255 will monitor the pin given)
-	uint8_t loop = 0;             // loop when playing while triggered by pins (0 = false) (1 = true)
-	uint16_t playOnPinHigh = 0;   // pin change value (0 = play on pin LOW) (1 = play on pin HIGH) (2 = play on analog read range)
-	uint16_t buttonLadderMin = 0; // min for button ladder
-	uint16_t buttonLadderMax = 0; // max for button ladder
-};
+
 
 class AnimationPlaybackControl : public LoopModule
 {
@@ -32,6 +24,8 @@ public:
 
 	void stop();
 
+	void updatePlaybackStatus();
+
 	bool readyForNextCommand();
 
 	bool complete();
@@ -39,14 +33,21 @@ public:
 private:
 	CircularArray<AnimationConfiguration> _animationConfigs = CircularArray<AnimationConfiguration>(MAX_EXPORTED_ANIMATIONS);
 	unsigned long _timeStartOfNextCommand = 0;
-	unsigned long _timeEndOfCurrentCommand = 0;
+	unsigned long _timeEndOfLongestCommand = 0;
 	int _currentPlayingIndex = -1;
 	int _idleAnimIndex = -1;
 	int _startingAnim = -1;
 	bool _setupIsRunning = false;
 
+	Parser* _parser = nullptr;
+	StaticSecondaryDataSource* _secondarySource = nullptr;
+
+	int getIndexOfAnimationToTrigger() const;
+
+	void playAnimation(int index, bool loop);
+
 #ifdef USE_SD_CARD_COMMAND_STREAM
-	void loadConfig_SDCard();
+	void loadConfig();
 #endif // USE_SD_CARD_COMMAND_STREAM
 
 #ifdef EXPORTED_ANIM_LOGGING

@@ -151,6 +151,7 @@ namespace ExportedAnimationPlaybackControl
                 }
             }
             // starting hasn't been triggered yet?
+			// Note: currentPlayingIndex will never be anything other than -1 at this point
             else if (startingAnim >= 0 && currentPlayingIndex != startingAnim)
             {
                 AnimationConfiguration *nextConfig = animationConfigs.get(startingAnim);
@@ -171,6 +172,7 @@ namespace ExportedAnimationPlaybackControl
                 }
             }
             // default to play when nothing should play?
+			// Note: currentPlayingIndex will never be anything other than -1 at this point
             else if (idleAnimIndex >= 0 && currentPlayingIndex != idleAnimIndex)
             {
                 AnimationConfiguration *nextConfig = animationConfigs.get(idleAnimIndex);

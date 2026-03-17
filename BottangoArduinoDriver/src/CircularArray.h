@@ -19,9 +19,9 @@ public:
 
     void remove(T *toRemove);
 
-    T *get(int index);
+    T *get(int index) const;
 
-    byte size();
+    byte size() const;
 
     void clear();
 };
@@ -94,14 +94,14 @@ void CircularArray<T>::remove(T *toRemove)
 
 // ToDo: const!
 template <class T>
-T *CircularArray<T>::get(int index)
+T *CircularArray<T>::get(int index) const
 {
     return array[index];
 }
 
 // ToDo: const!
 template <class T>
-byte CircularArray<T>::size()
+byte CircularArray<T>::size() const
 {
     return idx;
 }

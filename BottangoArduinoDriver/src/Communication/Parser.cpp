@@ -184,6 +184,7 @@ unsigned long Parser::getStartTime(char* command) const
 				_decoder->getNextFrame(&data);
 
 				// Split command and test if this sub-command has a start time
+				// First parameter is command name, second start time, third is duration
 				if (_decoder->splitCommand(&data) && commandHasStartTime(data.splitCommandBuffer[0]) && data.splitCommandBuffer[2] != nullptr)
 				{
 					unsigned long subCmdTime = strtoul(data.splitCommandBuffer[2], nullptr, 10);
@@ -216,7 +217,7 @@ unsigned long Parser::getStartTime(char* command) const
 		return Time::getLastSyncedTimeInMs() + startTime;
 	}
 	// Even if no command with time was found, return at least the current time
-	return startTime;
+	return Time::getCurrentTimeInMs();
 }
 
 unsigned long Parser::getEndTime(char* command) const
@@ -224,35 +225,68 @@ unsigned long Parser::getEndTime(char* command) const
 	CommandDecoder::SplitCommandData data;
 	data.stringToSplit = command;
 
+	bool commandWithTimeFound = false;
+	unsigned long endTime = 0;
+
 	// Split the incoming command
 	// The splitCommand functions handles both regular and sync commands
 	if (_decoder->splitCommand(&data))
 	{
-		unsigned long endTime = 0;
-
-		// First parameter is command name, third is end time
-		if (data.splitCommandBuffer[3] != nullptr)
-		{
-			endTime = strtoul(data.splitCommandBuffer[3], nullptr, 10);
-
 #ifdef ALLOW_SYNC_COMMANDS
-			// With multi-frame sync commands, we need to check all frames for the latest end time
+		// Sync command handling
+		if (data.syncCommandInProgress)
+		{
+			// With multi-frame sync commands, we need to check all frames for the earliest start time
 			while (_decoder->hasMoreFrames(&data))
 			{
 				_decoder->getNextFrame(&data);
-				unsigned long subCmdTime = strtoul(data.splitCommandBuffer[3], nullptr, 10);
-				if (subCmdTime > endTime)
+
+				// Split command and test if this sub-command has a duration
+				// First parameter is command name, second start time, third is duration
+				if (_decoder->splitCommand(&data)
+					&& commandHasDuration(data.splitCommandBuffer[0])
+					&& data.splitCommandBuffer[2] != nullptr
+					&& data.splitCommandBuffer[3] != nullptr)
 				{
-					endTime = subCmdTime;
+					// We can assume, that every command with a duration, also has a start time
+					unsigned long subCmdStartTime = strtoul(data.splitCommandBuffer[2], nullptr, 10);
+					unsigned long subCmdDuration = strtoul(data.splitCommandBuffer[3], nullptr, 10);
+					commandWithTimeFound = true;
+
+					// Find the latest end time
+					if (subCmdStartTime + subCmdDuration > endTime)
+					{
+						endTime = subCmdStartTime + subCmdDuration;
+					}
 				}
 			}
-#endif // ALLOW_SYNC_COMMANDS
 
-			return Time::getLastSyncedTimeInMs() + endTime;
+			*data.splitCommandBuffer[0] = '\0';	// Clear command to avoid re-processing
+		}
+#endif // ALLOW_SYNC_COMMANDS
+	
+
+		// To avoid re-processing when ALLOW_SYNC_COMMANDS is defined, splitCommandBuffer[0] is cleared above.
+		// commandHasStartTime will return false if so.
+		if (commandHasDuration(data.splitCommandBuffer[0])
+			&& commandHasDuration(data.splitCommandBuffer[0])
+			&& data.splitCommandBuffer[2] != nullptr
+			&& data.splitCommandBuffer[3] != nullptr)
+		{
+			commandWithTimeFound = true;
+			// We can assume, that every command with a duration, also has a start time
+			unsigned long startTime = Time::getLastSyncedTimeInMs() + strtoul(data.splitCommandBuffer[2], nullptr, 10);
+			endTime = startTime + strtoul(data.splitCommandBuffer[3], nullptr, 10);
 		}
 	}
 
-	return 0;
+	// Command with end time found, return the calculated absolute time
+	if (commandWithTimeFound)
+	{
+		return Time::getLastSyncedTimeInMs() + endTime;
+	}
+	// Even if no command with time was found, return at least the current time
+	return Time::getCurrentTimeInMs();
 }
 
 bool Parser::commandHasStartTime(char* commandName) const
@@ -273,7 +307,7 @@ bool Parser::commandHasStartTime(char* commandName) const
 	return false;
 }
 
-bool Parser::commandHasEndTime(char* commandName) const
+bool Parser::commandHasDuration(char* commandName) const
 {
 	if (commandName == nullptr || *commandName == '\0')
 	{

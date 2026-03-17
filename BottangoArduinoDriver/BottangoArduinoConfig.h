@@ -125,15 +125,15 @@
 // sd card configuration
 #if defined(USE_SD_CARD_COMMAND_STREAM) || defined(AUDIO_SD_I2S)
 #define MAX_FILE_PATH_SIZE 30                               // max character count of a file path
-const char SD_ANIMATION_PATH[] PROGMEM = "/anim/";          // file path to look for animation directories on sd card.
-const char SD_AUDIO_PATH[] PROGMEM = "/audio/";             // file path to look for audio files
-const char SD_SETUP_PATH[] PROGMEM = "setup/";              // file path to look for initial set up data
-const char SD_DATA_ANIMDATA[] PROGMEM = "data.txt";         // file name of animation data
-const char SD_DATA_LOOPDATA[] PROGMEM = "loop.txt";         // file name of loop data
-const char SD_HASH_FORMAT[] PROGMEM = "hash.txt";           // file format name of hash file name
+inline const char SD_ANIMATION_PATH[] PROGMEM = "/anim/";          // file path to look for animation directories on sd card.
+inline const char SD_AUDIO_PATH[] PROGMEM = "/audio/";             // file path to look for audio files
+inline const char SD_SETUP_PATH[] PROGMEM = "setup/";              // file path to look for initial set up data
+inline const char SD_DATA_ANIMDATA[] PROGMEM = "data.txt";         // file name of animation data
+inline const char SD_DATA_LOOPDATA[] PROGMEM = "loop.txt";         // file name of loop data
+inline const char SD_HASH_FORMAT[] PROGMEM = "hash.txt";           // file format name of hash file name
 #define FILE_HASH_LENGTH 32                                 // character count of a file hash code
-const char SD_DATA_CONFIGDATA[] PROGMEM = "config.txt";     // file name of config data
-const char SD_AUDIO_FORMAT[] PROGMEM = ".wav";              // file format name of audio file
+inline const char SD_DATA_CONFIGDATA[] PROGMEM = "config.txt";     // file name of config data
+inline const char SD_AUDIO_FORMAT[] PROGMEM = ".wav";              // file format name of audio file
 #define SD_CARD_REMOUNT_TIME 2000                           // time to wait in MS before next attempt to remount
 #define SD_ANIM_PREREAD_MS 25                               // ms early to cache execute curves from sd card
 #define SD_ANIM_PREREAD_MS_RELAY 250                        // ms early to cache execute curves from sd card when relay bridge

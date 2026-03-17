@@ -43,6 +43,14 @@ namespace SystemStatus
 		NewCommand
 	};
 
+	enum class ePlaybackStatus
+	{
+		NotPlaying,
+		PlayingStartAnimation,
+		PlayingIdleAnimation,
+		PlayingOtherAnimation
+	};
+
 	/*enum eLightMode
 	{
 		MODE_PULSE,
@@ -55,6 +63,7 @@ namespace SystemStatus
 		ePowerStatus PowerStatus = ePowerStatus::Off;
 		eUserLED UserLED = eUserLED::Off;
 		eCommandStatus CommandStatus = eCommandStatus::Idle;
+		ePlaybackStatus PlaybackStatus = ePlaybackStatus::NotPlaying;
 		bool initialized = false;
 		//bool resetPreferences = false;
 	};

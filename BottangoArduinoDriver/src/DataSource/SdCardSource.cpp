@@ -30,27 +30,7 @@ SdCardSource::~SdCardSource()
 	// Graceful task shutdown with timeout to prevent hangs
 
 #ifdef ESP32
-	_fileReadComplete = true;
-	if (_fillTaskHandle)
-	{
-		// Notify the task to wake up and see the cardReadComplete flag
-		xTaskNotifyGive(_fillTaskHandle);
-
-		// Wait for the task to clean itself up (with timeout)
-		int timeout = 1000; // 1 second timeout
-		while (_fillTaskHandle != nullptr && timeout > 0)
-		{
-			vTaskDelay(1);
-			timeout--;
-		}
-
-		// Force delete if task didn't exit gracefully
-		if (_fillTaskHandle != nullptr)
-		{
-			vTaskDelete(_fillTaskHandle);
-			_fillTaskHandle = nullptr;
-		}
-	}
+	stopFillTask();
 #endif
 }
 
@@ -72,7 +52,7 @@ void SdCardSource::init()
 	_commandBuffer[0] = '\0';
 }
 
-bool SdCardSource::openFile(const char* path)
+/*bool SdCardSource::openFile(const char* path)
 {
 	if (!_commandQueue)
 	{
@@ -85,7 +65,7 @@ bool SdCardSource::openFile(const char* path)
 
 	// ToDo: Das läuft natürlich nur auf dem ESP32 - für alle anderen Controller, muss der Code entsprechend angepasst werden, um die richtige Datei zu öffnen
 	return xQueueSend(_commandQueue, &cmd, portMAX_DELAY) == pdTRUE;
-}
+}*/
 
 bool SdCardSource::openSetup()
 {
@@ -152,6 +132,7 @@ bool SdCardSource::openAnimation(uint8_t animIndex, bool loop)
 #else
 		updateOnLoop(); // Non-ESP32: Buffer filled during main loop via updateOnLoop(), but needs to be primed
 #endif
+		return true;
 	}
 
 	return false;
@@ -226,7 +207,7 @@ void SdCardSource::peekNextCommand(char* out)
 #ifdef ESP32
 void SdCardSource::startFillTask()
 {
-	_commandQueue = xQueueCreate(4, sizeof(SdCommand));
+	//_commandQueue = xQueueCreate(4, sizeof(SdCommand));
 
 	xTaskCreate(
 		fillTask,
@@ -235,6 +216,36 @@ void SdCardSource::startFillTask()
 		this,
 		1,
 		(TaskHandle_t*)&_fillTaskHandle);
+}
+
+void SdCardSource::stopFillTask()
+{
+	_fileReadComplete = true;
+	if (_fillTaskHandle)
+	{
+		// Notify the task to wake up and see the cardReadComplete flag
+		xTaskNotifyGive(_fillTaskHandle);
+
+		// Wait for the task to clean itself up (with timeout)
+		int timeout = 250;
+		while (_fillTaskHandle != nullptr && timeout > 0)
+		{
+			vTaskDelay(1);
+			timeout--;
+		}
+
+		// Force delete if task didn't exit gracefully
+		if (_fillTaskHandle != nullptr)
+		{
+			vTaskDelete(_fillTaskHandle);
+			_fillTaskHandle = nullptr;
+
+			if (_currentFile)
+			{
+				SDCardUtil::closeFile(_currentFile);
+			}
+		}
+	}
 }
 
 // static so signature matches FreeRTOS xTaskCreate
@@ -260,7 +271,7 @@ void SdCardSource::fillTask(void* param)
 
 	if (self->_currentFile)
 	{
-		Outgoing::printLine();
+		//Outgoing::printLine();
 		SDCardUtil::closeFile(self->_currentFile);
 	}
 	self->_fillTaskHandle = nullptr;
@@ -426,16 +437,8 @@ void SdCardSource::resetBuffer()
 {
 #ifdef ESP32
 	// Gracefully stop background task before reset
-	if (_fillTaskHandle)
-	{
-		_fileReadComplete = true;
-		xTaskNotifyGive((TaskHandle_t)_fillTaskHandle);
-		while (_fillTaskHandle != nullptr)
-		{
-			vTaskDelay(1);
-		}
-	}
-#endif
+	stopFillTask();
+#endif // ESP32
 
 	_onLoop = false;
 	_dataComplete = false;
@@ -443,9 +446,9 @@ void SdCardSource::resetBuffer()
 	_cardReadBuffer.clear();
 	_commandBuffer[0] = '\0';
 
-#ifdef ESP32
+/*#ifdef ESP32
 	startFillTask(); // Restart background filling
-#endif
+#endif*/
 }
 
 bool SdCardSource::getConfigurationForAnimation(uint8_t animIndex, AnimationConfiguration* config) const
@@ -545,22 +548,33 @@ void SdCardSource::parseConfiguration(File configFile, AnimationConfiguration* c
 		switch (lineIndex)
 		{
 		case 0:
-			config->playOnStart = parsedValue;
+			config->flags |= ANIM_PLAY_ON_START_FLAG;
 			break;
 		case 1:
-			config->loopOnStart = parsedValue;
+			config->flags |= ANIM_LOOP_ON_START_FLAG;
 			break;
 		case 2:
-			config->idleAnim = parsedValue;
+			config->flags |= ANIM_IDLE_FLAG;
 			break;
 		case 3:
 			config->playOnPin = parsedValue;
 			break;
 		case 4:
-			config->loop = parsedValue;
+			config->flags |= ANIM_LOOPING_FLAG;
 			break;
 		case 5:
-			config->playOnPinHigh = parsedValue;
+			if (parsedValue == 0)
+			{
+				config->flags |= ANIM_PLAY_ON_PIN_LOW_FLAG;
+			}
+			else if (parsedValue == 1)
+			{
+				config->flags |= ANIM_PLAY_ON_PIN_HIGH_FLAG;
+			}
+			else if (parsedValue == 2)
+			{
+				config->flags |= ANIM_PLAY_ON_PIN_ANALOG_FLAG;
+			}
 			break;
 		case 6:
 			config->buttonLadderMin = parsedValue;
