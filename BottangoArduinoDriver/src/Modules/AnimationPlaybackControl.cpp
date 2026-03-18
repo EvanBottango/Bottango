@@ -10,8 +10,11 @@
 #include "../DataSource/SdCardSource.h"
 #include "../Module Handling/ModuleMaster.h"
 #include "../Outgoing.h"
+#include "../Communication/CommandDecoder.h"
 
 #include "../System/SystemStatus.h"
+
+#include "Logger/Logger.h"
 
 void AnimationPlaybackControl::onPhase(Phase p)
 {
@@ -20,13 +23,14 @@ void AnimationPlaybackControl::onPhase(Phase p)
 		return;
 	}
 
+	// Note: Das sollte eigtl. auch mit EXPORTED_ANIM funktionieren
+
 	// Check, if we are playing from PC or from a secondary data source
 	if (_secondarySource && _secondarySource->isActiveSource())
 	{
 		// Ready for next command: prepare the next command
 		if (readyForNextCommand())
-		{
-			// Note: Das sollte eigtl. auch mit EXPORTED_ANIM funktionieren
+		{			
 #ifdef USE_SD_CARD_COMMAND_STREAM
 			if (complete())
 			{
@@ -40,6 +44,7 @@ void AnimationPlaybackControl::onPhase(Phase p)
 				}
 #endif // EXPORTED_ANIM_LOGGING
 
+				LOG_DEBUG("APC", "onPhase()", "Command stream complete, stopping playback");
 				_setupIsRunning = false;
 				stop();
 				return;
@@ -48,25 +53,26 @@ void AnimationPlaybackControl::onPhase(Phase p)
 			// Peek the upcoming command to retrieve the endTime
 			char nextCommand[MAX_COMMAND_LENGTH];
 			nextCommand[0] = '\0';
-			_secondarySource->peekNextCommand(nextCommand);
 
-			// If the next commands runs longer than the current longest command, update the longest command end time
-			unsigned long longestEndTime = _parser->getEndTime(nextCommand);
-			if (longestEndTime > _timeEndOfLongestCommand)
+			if (_secondarySource->peekNextCommand(nextCommand))
 			{
-				_timeEndOfLongestCommand = longestEndTime;
-			}
+				LOG_DEBUG("APC", "onPhase()", "Next Command: %s", nextCommand);
+				// If the next commands runs longer than the current longest command, update the longest command end time
+				unsigned long longestEndTime = _parser->getEndTime(nextCommand);
+				if (longestEndTime > _timeEndOfLongestCommand)
+				{
+					_timeEndOfLongestCommand = longestEndTime;
+				}
 
-			// Prepare the next command for the parser
-			_secondarySource->prepareNextCommand();
-			
-			// Peek the command after the upcoming command, to retrieve its startTime
-			nextCommand[0] = '\0';
-			_secondarySource->peekNextCommand(nextCommand);
+				// Prepare the next command for the parser
+				_secondarySource->prepareNextCommand();
 
-			if (nextCommand[0] != '\0')
-			{
-				_timeStartOfNextCommand = _parser->getStartTime(nextCommand);
+				// Peek the command after the upcoming command, to retrieve its startTime
+				nextCommand[0] = '\0';
+				if (_secondarySource->peekNextCommand(nextCommand))
+				{
+					_timeStartOfNextCommand = _parser->getStartTime(nextCommand);
+				}
 			}
 #endif // USE_SD_CARD_COMMAND_STREAM
 		}
@@ -76,13 +82,18 @@ void AnimationPlaybackControl::onPhase(Phase p)
 }
 
 void AnimationPlaybackControl::init()
-{
+{	
+	// Note: Unsure about the best place for this. Normaly it should live in the ModuleMaster.
+	// But it also feels like it would fit here perfectly
+
 	// Setup the secondary data source module, if any
 #ifdef USE_SD_CARD_COMMAND_STREAM
 	_secondarySource = static_cast<StaticSecondaryDataSource*>(BottangoCore::mMaster.registerModuleInSecondaryDataSlot<SdCardSource>());
 	loadConfig();
 	_secondarySource->openSetup();
 	_setupIsRunning = true;
+
+	BottangoCore::mMaster.getModule<CommandDecoder>(Modules::Decoder)->setSecondaryDataSource(_secondarySource);
 #elif USE_CODE_COMMAND_STREAM
 	// ToDo for USE_CODE_COMMAND_STREAM
 	// BottangoCore::mMaster.registerModuleInSecondaryDataSlot<ExportedCodeSource>();
@@ -132,6 +143,9 @@ void AnimationPlaybackControl::stop()
 	}
 
 	BottangoCore::effectorPool.clearAllCurves();
+	_timeStartOfNextCommand = 0;
+	_timeEndOfLongestCommand = 0;
+
 
 	if (_secondarySource)
 	{
@@ -145,6 +159,7 @@ void AnimationPlaybackControl::stop()
 	}
 #endif
 
+	SystemStatus::systemStatus.PlaybackStatus = SystemStatus::ePlaybackStatus::NotPlaying;
 	SystemStatus::systemStatus.Signal = SystemStatus::eSignal::OfflineReady;
 }
 
@@ -168,13 +183,14 @@ void AnimationPlaybackControl::updatePlaybackStatus()
 			if (nextConfig != nullptr)
 			{
 				playAnimation(index, ANIM_IS_LOOPING(nextConfig->flags));
+				SystemStatus::systemStatus.PlaybackStatus = SystemStatus::ePlaybackStatus::PlayingOtherAnimation;
 				_currentPlayingIndex = index;
 			}
 		}
 	}
 	// Nothing is playing
 	else
-	{	
+	{
 		if (_currentPlayingIndex >= 0)
 		{
 			_currentPlayingIndex = -1;
@@ -187,6 +203,7 @@ void AnimationPlaybackControl::updatePlaybackStatus()
 			if (nextConfig != nullptr)
 			{
 				playAnimation(index, ANIM_IS_LOOPING(nextConfig->flags));
+				SystemStatus::systemStatus.PlaybackStatus = SystemStatus::ePlaybackStatus::PlayingOtherAnimation;
 				_currentPlayingIndex = index;
 			}
 		}
@@ -206,6 +223,7 @@ void AnimationPlaybackControl::updatePlaybackStatus()
 				}
 #endif // EXPORTED_ANIM_LOGGING
 				playAnimation(_startingAnim, ANIM_LOOP_ON_START(nextConfig->flags));
+				SystemStatus::systemStatus.PlaybackStatus = SystemStatus::ePlaybackStatus::PlayingStartAnimation;
 				_currentPlayingIndex = _startingAnim;
 				_startingAnim = -1;
 			}
@@ -226,6 +244,7 @@ void AnimationPlaybackControl::updatePlaybackStatus()
 				}
 #endif // EXPORTED_ANIM_LOGGING
 				_secondarySource->openAnimation(_idleAnimIndex, true);
+				SystemStatus::systemStatus.PlaybackStatus = SystemStatus::ePlaybackStatus::PlayingIdleAnimation;
 				_currentPlayingIndex = _idleAnimIndex;
 			}
 		}
@@ -285,6 +304,11 @@ bool AnimationPlaybackControl::readyForNextCommand()
 		return true;
 	}
 
+	if (SystemStatus::systemStatus.PlaybackStatus == SystemStatus::ePlaybackStatus::NotPlaying)
+	{
+		return false;
+	}
+
 	bool shouldLoop = false;
 	bool dataComplete = false;
 
@@ -296,7 +320,7 @@ bool AnimationPlaybackControl::readyForNextCommand()
 			shouldLoop = ANIM_IS_LOOPING(currentConfig->flags);
 			dataComplete = _secondarySource->dataComplete();
 		}
-	}	
+	}
 
 	// at end of loop
 	if (shouldLoop && dataComplete && Time::getCurrentTimeInMs() >= _timeEndOfLongestCommand)
@@ -304,14 +328,14 @@ bool AnimationPlaybackControl::readyForNextCommand()
 		// reset to beginning
 		BottangoCore::effectorPool.clearAllCurves();
 
-/*#ifdef RELAY_SUPPORTED
-		if (BottangoCore::isRelayBridge)
-		{
-			// Reset curves and time at end of loop before reset
-			BottangoCore::relayPool->clearCurvesOnConnectedPeers();
-			BottangoCore::relayPool->resumeTimeConnectedPeers(true);
-		}
-#endif*/
+		/*#ifdef RELAY_SUPPORTED
+				if (BottangoCore::isRelayBridge)
+				{
+					// Reset curves and time at end of loop before reset
+					BottangoCore::relayPool->clearCurvesOnConnectedPeers();
+					BottangoCore::relayPool->resumeTimeConnectedPeers(true);
+				}
+		#endif*/
 		//dataSource->reset(); // ToDo: dataSource zurücksetzen
 		_timeStartOfNextCommand = 0;
 		_timeEndOfLongestCommand = 0;
@@ -321,25 +345,25 @@ bool AnimationPlaybackControl::readyForNextCommand()
 	}
 
 	// at end of animation and not looping
-	if (dataComplete)
+	/*if (dataComplete)
 	{
 		return false;
-	}
+	}*/
 
 #ifdef USE_SD_CARD_COMMAND_STREAM
-/*#ifdef RELAY_SUPPORTED
-	// not ready for next if esp comms pool is full
-	if (BottangoCore::isRelayBridge && BottangoCore::relayPool->toPeerQueueFull())
-	{
-		return false;
-	}
+	/*#ifdef RELAY_SUPPORTED
+		// not ready for next if esp comms pool is full
+		if (BottangoCore::isRelayBridge && BottangoCore::relayPool->toPeerQueueFull())
+		{
+			return false;
+		}
 
-	// check pre read time?
-	if (timeOfNextCommand > SD_ANIM_PREREAD_MS_RELAY)
-	{
-		return Time::getCurrentTimeInMs() >= timeOfNextCommand - SD_ANIM_PREREAD_MS;
-	}
-#else*/
+		// check pre read time?
+		if (timeOfNextCommand > SD_ANIM_PREREAD_MS_RELAY)
+		{
+			return Time::getCurrentTimeInMs() >= timeOfNextCommand - SD_ANIM_PREREAD_MS;
+		}
+	#else*/
 	if (_timeStartOfNextCommand > SD_ANIM_PREREAD_MS)
 	{
 		return Time::getCurrentTimeInMs() >= _timeStartOfNextCommand - SD_ANIM_PREREAD_MS;
@@ -356,16 +380,16 @@ bool AnimationPlaybackControl::readyForNextCommand()
 	{
 		return Time::getCurrentTimeInMs() >= _timeStartOfNextCommand;
 	}
-/*#elif defined(USE_CODE_COMMAND_STREAM)
-#ifdef RELAY_SUPPORTED
-	// not ready for next if esp comms pool is full
-	if (BottangoCore::isRelayBridge && BottangoCore::relayPool->toPeerQueueFull())
-	{
-		return false;
-	}
-#endif
-	return Time::getCurrentTimeInMs() >= timeOfNextCommand;
-#endif*/
+	/*#elif defined(USE_CODE_COMMAND_STREAM)
+	#ifdef RELAY_SUPPORTED
+		// not ready for next if esp comms pool is full
+		if (BottangoCore::isRelayBridge && BottangoCore::relayPool->toPeerQueueFull())
+		{
+			return false;
+		}
+	#endif
+		return Time::getCurrentTimeInMs() >= timeOfNextCommand;
+	#endif*/
 
 	return false;
 }
@@ -376,6 +400,13 @@ bool AnimationPlaybackControl::complete()
 	if (_currentPlayingIndex >= 0 && ANIM_IS_LOOPING(_animationConfigs.get(_currentPlayingIndex)->flags))
 	{
 		return false;
+	}
+
+	auto debugTime = 0;
+	bool complete = _secondarySource->dataComplete();
+	if (_secondarySource->dataComplete() && Time::getCurrentTimeInMs() >= _timeEndOfLongestCommand)
+	{
+		return true;
 	}
 
 	return _secondarySource->dataComplete() && Time::getCurrentTimeInMs() >= _timeEndOfLongestCommand;
@@ -407,7 +438,7 @@ int AnimationPlaybackControl::getIndexOfAnimationToTrigger() const
 				}
 			}
 			// Play on pin HIGH
-			else if (ANIM_PLAY_ON_PIN_HIGH(checkConfig->playOnPin))
+			else if (ANIM_PLAY_ON_PIN_HIGH(checkConfig->flags))
 			{
 				if (digitalRead(checkConfig->playOnPin) == HIGH)
 				{
@@ -469,12 +500,10 @@ void AnimationPlaybackControl::playAnimation(int index, bool loop)
 	}
 #endif
 
-	stop();	
-
+	stop();
+	LOG_DEBUG("APC", "playAnimation()", "Playing animation index %d, loop: %d", index, loop);
 	SystemStatus::systemStatus.Signal = SystemStatus::eSignal::OfflinePlayback;
-
 	_secondarySource->openAnimation(index, loop);
-
 	Time::syncTime(0);
 }
 

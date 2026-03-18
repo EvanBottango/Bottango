@@ -30,18 +30,13 @@ public:
 	};
 
 	/**
-	 * @brief Decode data from the data source.
-	 */
-	virtual void decode() {};
-
-	/**
-	 * @brief Returns true if there is a valid command available to consume.
+	 * @brief Returns true if there is a valid command available to consume. Includes both primary and secondary data sources.
 	 * @return true if a command is available, false otherwise.
 	 */
 	virtual bool hasCommand();
 
 	/**
-	 * @brief Try to consume a command from the decoder.
+	 * @brief Try to consume a command from the decoder. Includes both primary and secondary data sources.
 	 * @return Pointer to the command parameters array if a command is available, nullptr otherwise.
 	 */
 	virtual char** tryConsumeCommand();
@@ -51,6 +46,12 @@ public:
 	 * @param src Pointer to the data source.
 	 */
 	virtual void setDataSource(DataSource* src);
+
+	/**
+	 * @brief Set the secondary data source for the command decoder.
+	 * @param src Pointer to the secondary data source.
+	 */
+	virtual void setSecondaryDataSource(DataSource* src);
 
 	/**
 	 * @brief Splits a command string into components in-place.
@@ -85,7 +86,22 @@ public:
 
 protected:
 	bool _validCommandAvailable = false;
+
+	/**
+	 * @brief Decode data from the data source.
+	 */
+	virtual void decode() {};
+
+	/**
+	 * @brief The primary source of data. Usally the default Arduino Serial connection. Is ALWAYS active, to give
+	 * the user the chance, to connect Bottango and change the config
+	 */
 	DataSource* _source;
+
+	/**
+	 * @brief The secondary source of data. Like SD-Card, RS485 or something else
+	 */
+	DataSource* _secondarySource;
 	SplitCommandData _splitData;
 };
 

@@ -37,27 +37,17 @@ public:
 	~SdCardSource();
 
 	void onPhase(Phase p) override;
-
 	void init() override;
-
-	//bool openFile(const char* path) override;
-
 	bool openSetup() override;
-
 	bool openAnimation(uint8_t animIndex, bool loop) override;
-
 	void prepareNextCommand() override;
-
-	void peekNextCommand(char* out) override;
-
+	bool peekNextCommand(char* out) override;
 	bool tryConsumeData(char** out) override;
-
 	void resetBuffer() override;
-
 	bool getConfigurationForAnimation(uint8_t animIndex, AnimationConfiguration* config) const override;
 
 private:
-	//QueueHandle_t _commandQueue;
+	// ==== Buffer and file management ====
 	char _commandBuffer[MAX_COMMAND_LENGTH];
 	TxtBuffer<TXT_BUFFER_SIZE_SD> _cardReadBuffer;
 	File _currentFile;
@@ -65,9 +55,7 @@ private:
 	uint8_t _index = 0;
 	bool _onLoop = false;
 	volatile bool _fileReadComplete = false;
-	bool _shouldLoop = false;
-
-	void parseConfiguration(File configFile, AnimationConfiguration* config) const;
+	bool _shouldLoop = false;	
 
 #ifdef ESP32
 	volatile TaskHandle_t _fillTaskHandle = nullptr;
@@ -80,7 +68,9 @@ private:
 
 	bool fillBufferChunk();
 
-	void getNextCommand(char* buffer, bool peek = false);
+	bool getNextCommand(char* buffer, bool peek = false);
+
+	void parseConfiguration(File configFile, AnimationConfiguration* config) const;
 };
 
 

@@ -26,3 +26,8 @@ void CommandDecoder::setDataSource(DataSource* src)
 {
 	_source = src;
 }
+
+void CommandDecoder::setSecondaryDataSource(DataSource* src)
+{
+	_secondarySource = src;
+}

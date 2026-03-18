@@ -10,6 +10,8 @@
 #include "../../BottangoArduinoCallbacks.h"
 #include "../PersistentConfigUtil.h"
 
+#include "Logger/Logger.h"
+
 /*
  * SDCardCommandStreamDataSource: Streams animation commands from SD card files
  *
@@ -52,21 +54,6 @@ void SdCardSource::init()
 	_commandBuffer[0] = '\0';
 }
 
-/*bool SdCardSource::openFile(const char* path)
-{
-	if (!_commandQueue)
-	{
-		return false;
-	}
-
-	SdCommand cmd{};
-	cmd.type = SdCmdType::OpenFile;
-	strncpy(cmd.filePath, path, MAX_FILE_PATH_SIZE);
-
-	// ToDo: Das läuft natürlich nur auf dem ESP32 - für alle anderen Controller, muss der Code entsprechend angepasst werden, um die richtige Datei zu öffnen
-	return xQueueSend(_commandQueue, &cmd, portMAX_DELAY) == pdTRUE;
-}*/
-
 bool SdCardSource::openSetup()
 {
 	// Open setup file, only if another file is not already open
@@ -74,6 +61,8 @@ bool SdCardSource::openSetup()
 	{
 		_dataComplete = false;
 		_fileReadComplete = false;
+		LOG_DEBUG("SdCard", "openSetup()", "Opening Setup File");
+		LOG_DEBUG("SdCard", "openSetup()", "Marking _fileReadComplete = false");
 
 		char finalPath[MAX_FILE_PATH_SIZE];
 		finalPath[0] = '\0';
@@ -107,6 +96,8 @@ bool SdCardSource::openAnimation(uint8_t animIndex, bool loop)
 	{
 		_dataComplete = false;
 		_fileReadComplete = false;
+		LOG_DEBUG("SdCard", "openAnimation()", "Opening Animation: %u", animIndex);
+		LOG_DEBUG("SdCard", "openAnimation()", "Marking _fileReadComplete = false");
 		_onLoop = false;
 
 		_index = animIndex;
@@ -153,9 +144,9 @@ void SdCardSource::prepareNextCommand()
 #endif
 }
 
-void SdCardSource::peekNextCommand(char* out)
+bool SdCardSource::peekNextCommand(char* out)
 {
-	getNextCommand(out, true);
+	return getNextCommand(out, true);
 }
 
 /*void SdCardSource::checkIsValid()
@@ -221,6 +212,7 @@ void SdCardSource::startFillTask()
 void SdCardSource::stopFillTask()
 {
 	_fileReadComplete = true;
+	LOG_DEBUG("SdCard", "stopFillTask()", "Marking _fileReadComplete = true");
 	if (_fillTaskHandle)
 	{
 		// Notify the task to wake up and see the cardReadComplete flag
@@ -274,6 +266,7 @@ void SdCardSource::fillTask(void* param)
 		//Outgoing::printLine();
 		SDCardUtil::closeFile(self->_currentFile);
 	}
+	LOG_DEBUG("SdCard", "fillTask()", "File read complete, exiting task");
 	self->_fillTaskHandle = nullptr;
 	vTaskDelete(NULL);
 }
@@ -382,6 +375,7 @@ bool SdCardSource::fillBufferChunk()
 			else
 			{
 				_fileReadComplete = true;
+				LOG_DEBUG("SdCard", "fillBufferChunk()", "Marking _fileReadComplete = true");
 				SDCardUtil::closeFile(_currentFile);
 				return false;
 			}
@@ -404,33 +398,57 @@ bool SdCardSource::tryConsumeData(char** out)
 	return false;
 }
 
-void SdCardSource::getNextCommand(char* buffer, bool peek)
+bool SdCardSource::getNextCommand(char* buffer, bool peek)
 {
+	if (_dataComplete)
+	{
+		return false;
+	}
+
 	// Copy a whole command (sC,12,...\n\0) into the command buffer
 	// ToDo: This funcion can also return \0, if the buffer is empty (Underflow-Error). The following code does not check for that case?
 	_cardReadBuffer.getNextTxt(buffer, peek);
 
-	// If peek, just return the command without modifying buffer state or availability flags
-	if (peek)
-	{
-		return;
-	}
-
-	// Remove the next command from the buffer
-	if (buffer[0] == '\0' && _fileReadComplete)
+	/*if (peek && buffer[0] == '\0' && _fileReadComplete)
 	{
 		_dataComplete = true;
+		return false;
+	}
+	else if (peek)
+	{
+		return true;
+	}*/
+
+	// If we got no data and fillBufferChunk() marked the files as completely read
+	if (buffer[0] == '\0' || buffer[0] == '\r' || buffer[0] == '\n')
+	{
+		// Buffer Underflow-Protection. Only mark data as complete if we actually have read everything from the file
+		if (_fileReadComplete)
+		{
+			_dataComplete = true;
+			LOG_DEBUG("SdCard", "getNextCommand()", "Marking _dataComplete = true");			
+		}
+
+		return false;
 	}
 	else
 	{
-		_validDataAvailable = true;
-	}
+		// Only mark data as available, if not peeking
+		// Also, only notify the read task, if we actually read anything from the buffer, to avoid unnecessary task wakeups
+		if (!peek)
+		{
+			_validDataAvailable = true;
+
 #ifdef ESP32
-	if (_fillTaskHandle)
-	{
-		xTaskNotifyGive(_fillTaskHandle);
-	}
+			if (_fillTaskHandle)
+			{
+				xTaskNotifyGive(_fillTaskHandle);
+			}
 #endif // ESP32
+		}
+	}
+
+	return true;
 }
 
 void SdCardSource::resetBuffer()
@@ -443,6 +461,7 @@ void SdCardSource::resetBuffer()
 	_onLoop = false;
 	_dataComplete = false;
 	_fileReadComplete = false;
+	LOG_DEBUG("SdCard", "resetBuffer()", "Marking _fileReadComplete = false");
 	_cardReadBuffer.clear();
 	_commandBuffer[0] = '\0';
 
@@ -548,19 +567,31 @@ void SdCardSource::parseConfiguration(File configFile, AnimationConfiguration* c
 		switch (lineIndex)
 		{
 		case 0:
-			config->flags |= ANIM_PLAY_ON_START_FLAG;
+			if (parsedValue > 0)
+			{
+				config->flags |= ANIM_PLAY_ON_START_FLAG;
+			}
 			break;
 		case 1:
-			config->flags |= ANIM_LOOP_ON_START_FLAG;
+			if (parsedValue > 0)
+			{
+				config->flags |= ANIM_LOOP_ON_START_FLAG;
+			}
 			break;
 		case 2:
-			config->flags |= ANIM_IDLE_FLAG;
+			if (parsedValue > 0)
+			{
+				config->flags |= ANIM_IDLE_FLAG;
+			}
 			break;
 		case 3:
 			config->playOnPin = parsedValue;
 			break;
 		case 4:
-			config->flags |= ANIM_LOOPING_FLAG;
+			if (parsedValue > 0)
+			{
+				config->flags |= ANIM_LOOPING_FLAG;
+			}
 			break;
 		case 5:
 			if (parsedValue == 0)

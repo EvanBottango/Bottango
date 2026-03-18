@@ -11,8 +11,7 @@ class AsciiCmdDecoder : public CommandDecoder
 {
 public:
 	void onPhase(Phase p) override;
-	void init() override;
-	void decode() override;
+	void init() override;	
 	char** tryConsumeCommand() override;
 
 	/**
@@ -42,7 +41,7 @@ public:
 #endif // ALLOW_SYNC_COMMANDS
 
 private:
-
+	void decode() override;
 };
 
 #endif

@@ -28,16 +28,15 @@ void AsciiCmdDecoder::decode()
 {
 	char* stringToSplit = nullptr;
 
-	if (_source->tryConsumeData(&stringToSplit) == false)
+	// Check both sources, but the primary source always has priority
+	if (_source->tryConsumeData(&stringToSplit) || (_secondarySource && _secondarySource->tryConsumeData(&stringToSplit)))
 	{
-		return;
-	}
-
-	_validCommandAvailable = false;
-	_splitData.stringToSplit = stringToSplit;
-	if (splitCommand(&_splitData))
-	{
-		_validCommandAvailable = true;
+		_validCommandAvailable = false;
+		_splitData.stringToSplit = stringToSplit;
+		if (splitCommand(&_splitData))
+		{
+			_validCommandAvailable = true;
+		};
 	}
 }
 
