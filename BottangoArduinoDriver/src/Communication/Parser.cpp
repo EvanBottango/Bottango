@@ -32,7 +32,7 @@ void Parser::onPhase(Phase p)
 		// Workaround for handshake bug - see SerialSource.cpp readData() for details
 		Outgoing::printOutputStringPROGMEM(BasicCommands::READY);
 	}
-	
+
 }
 
 void Parser::setCommandDecoder(CommandDecoder* cmdDecoder)
@@ -158,6 +158,22 @@ bool Parser::parseCommand(char** splitCommandBuffer) const
 	{
 		BasicCommands::stepperSync(splitCommandBuffer);
 	}
+#ifdef AUDIO_SD_I2S
+	else if (strcmp_P(commandName, BasicCommands::I2S_RegisterAudioEvent()) == 0)
+	{
+		BasicCommands::registerAudioEvent(splitCommandBuffer);
+	}
+	/*else if (strcmp_P(commandName, BasicCommands::AUDIO_BIN) == 0)
+	{
+		BasicCommands::processAudioBinary(splitCommandBuffer);
+	}*/
+#endif
+#if defined(ENABLE_DYNAMIC_ANIMATION_SOURCE_SWITCH) || defined(RELAY_SUPPORTED)
+	else if (strcmp_P(commandName, BasicCommands::SET_CONFIG) == 0)
+	{
+		BasicCommands::setConfiguration(splitCommandBuffer);
+	}
+#endif
 
 	return true;
 }
@@ -188,14 +204,14 @@ unsigned long Parser::getStartTime(char* command) const
 				if (_decoder->splitCommand(&data) && commandHasStartTime(data.splitCommandBuffer[0]) && data.splitCommandBuffer[2] != nullptr)
 				{
 					unsigned long subCmdTime = strtoul(data.splitCommandBuffer[2], nullptr, 10);
-					commandWithTimeFound = true;					
+					commandWithTimeFound = true;
 
 					// Find the earliest start time
 					if (subCmdTime < startTime)
 					{
 						startTime = subCmdTime;
 					}
-				}				
+				}
 			}
 
 			*data.splitCommandBuffer[0] = '\0';	// Clear command to avoid re-processing
@@ -264,7 +280,7 @@ unsigned long Parser::getEndTime(char* command) const
 			*data.splitCommandBuffer[0] = '\0';	// Clear command to avoid re-processing
 		}
 #endif // ALLOW_SYNC_COMMANDS
-	
+
 
 		// To avoid re-processing when ALLOW_SYNC_COMMANDS is defined, splitCommandBuffer[0] is cleared above.
 		// commandHasStartTime will return false if so.
