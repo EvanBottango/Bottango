@@ -32,10 +32,11 @@
 namespace BottangoCore
 {
     void bottangoSetup();
-
     void bottangoLoop();
 
-    void stop(bool doUninitialize);
+	void request_Stop();
+	void request_eStop();
+    void stop();
 
     void uninitialize();
 

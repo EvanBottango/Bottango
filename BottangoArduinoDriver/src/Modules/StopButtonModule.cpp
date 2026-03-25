@@ -53,29 +53,13 @@ void StopButtonModule::handleStopAction()
 	bool stopIsShutdown = PersistentConfigUtil::stopIsShutdown();
 #endif
 
-	if (BottangoCore::isOffline())
+	if (stopIsShutdown)
 	{
-#if defined(USE_CODE_COMMAND_STREAM) || defined(USE_SD_CARD_COMMAND_STREAM)
-		if (stopIsShutdown)
-		{
-			BottangoCore::stop(true);
-		}
-		else if (BottangoCore::commandStreamProvider != nullptr)
-		{
-			BottangoCore::commandStreamProvider->stop();
-		}
-#endif
+		BottangoCore::request_eStop();
 	}
 	else
 	{
-		if (stopIsShutdown)
-		{
-			Outgoing::outgoing_requestEStop();
-		}
-		else
-		{
-			Outgoing::outgoing_requestStopPlay();
-		}
+		BottangoCore::request_Stop();
 	}
 }
 
