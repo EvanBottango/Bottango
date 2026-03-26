@@ -8,6 +8,7 @@
 #include "../DataSource/SerialSource.h"
 #include "../DataSource/SdCardSource.h"
 #include "../DataSource/RS485Source.h"
+#include "../DataSource/EspNowSource.h"
 
 /**
  * @brief Enumeration of available modules.
@@ -26,6 +27,7 @@ enum class Modules : uint8_t
 	StopButton,					// [Optinal] Stop button module, if supported
 	StatusLights,				// [Optinal] Status lights module, if supported
 	AudioI2S,					// [Optinal] I2S audio module, if supported
+	RelayComs,					// [Optinal] Relay communication module, if supported
 	AnimPlaybackCntrl,			// [Mandatory] [Has to be second to last] Animation playback control module, is used automatically, depending on the active BottangoArduinoModules
 	Max							// [Mandatory] [Has to be the last] Sentinel value to indicate the number of modules, must always be last
 };
@@ -40,7 +42,8 @@ template <> struct SlotSize<Modules::DataSource_Secondary>
 {
 	static constexpr size_t value = std::max({
 		sizeof(SdCardSource),
-		sizeof(RS485Source)
+		sizeof(RS485Source),
+		sizeof(EspNowSource)
 		});
 };
 

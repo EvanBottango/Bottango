@@ -61,6 +61,12 @@ public:
 	{
 		return false;
 	}
+
+	bool isSourceUsbSerial() const
+	{
+		return _sourceIsUsbSerial;
+	}
+
 #ifdef ALLOW_SYNC_COMMANDS
 	/**
 	 * @brief Initializes the sync command parsing state with a new command string.
@@ -86,6 +92,7 @@ public:
 
 protected:
 	bool _validCommandAvailable = false;
+	bool _sourceIsUsbSerial = false;
 
 	/**
 	 * @brief Decode data from the data source.

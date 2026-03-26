@@ -4,6 +4,13 @@
 
 #include "Parser.h"
 #include "../BasicCommands.h"
+#include "../System/SystemStatus.h"
+
+#ifdef RELAY_SUPPORTED
+#include "../BottangoCore.h"
+#include "../Modules/RelayComs/Relay.h"
+#include "../Module Handling/ModuleMaster.h"
+#endif
 
 void Parser::onPhase(Phase p)
 {
@@ -20,13 +27,17 @@ void Parser::onPhase(Phase p)
 	}*/
 
 	char** splitCommandBuffer = _decoder->tryConsumeCommand();
+	bool sourceIsUsbSerial = _decoder->isSourceUsbSerial();
 
 	if (splitCommandBuffer != nullptr)
 	{
 		while (splitCommandBuffer)
 		{
-			parseCommand(splitCommandBuffer);
-			splitCommandBuffer = _decoder->tryConsumeCommand();
+			if (commandIsAllowed(splitCommandBuffer[0], sourceIsUsbSerial))
+			{
+				parseCommand(splitCommandBuffer); // Hier geht weiter: Müssen wir das sendReady hier beachten? Nochmal mit Evan abklären wegen der Reihenfolge, wann das OK\n wirklich kommen soll
+				splitCommandBuffer = _decoder->tryConsumeCommand();
+			}
 		}
 
 		// Workaround for handshake bug - see SerialSource.cpp readData() for details
@@ -75,7 +86,7 @@ bool Parser::parseCommand(char** splitCommandBuffer) const
 	}
 	else if (strcmp_P(commandName, BasicCommands::HANDSHAKE_REQUEST) == 0)
 	{
-		// ToDo: secondary temporary replaced with false
+		// ToDo: "secondary" temporary replaced with false
 		BasicCommands::sendHandshakeResponse(splitCommandBuffer, false);
 	}
 	else if (strcmp_P(commandName, BasicCommands::MODULES_REQUEST) == 0)
@@ -167,13 +178,42 @@ bool Parser::parseCommand(char** splitCommandBuffer) const
 	{
 		BasicCommands::processAudioBinary(splitCommandBuffer);
 	}*/
-#endif
+#endif // AUDIO_SD_I2S
+#ifdef RELAY_SUPPORTED
+	else if (strcmp_P(commandName, BasicCommands::REGISTER_RELAY) == 0)
+	{
+		BasicCommands::registerRelayController(splitCommandBuffer);
+	}
+	else if (strcmp_P(commandName, BasicCommands::DEREGISTER_RELAY) == 0)
+	{
+		BasicCommands::deregisterRelayController(splitCommandBuffer);
+	}
+	else if (strcmp_P(commandName, BasicCommands::DEREGISTER_ALL_RELAY) == 0)
+	{
+		BasicCommands::deregisterAllRelayControllers(splitCommandBuffer);
+	}
+	else if (strcmp_P(commandName, BasicCommands::RELAY_HEARTBEAT_REQUEST) == 0)
+	{
+		BasicCommands::requestHeartbeat(splitCommandBuffer);
+		sendReady = false;
+	}
+	else if (strcmp_P(commandName, BasicCommands::REQUEST_PEER_BOOT) == 0)
+	{
+		BasicCommands::requestBoot(splitCommandBuffer);
+	}
+#ifdef RELAY_COMS_ESPNOW
+	else if (strcmp_P(commandName, BasicCommands::GET_MAC_ADDRESS) == 0)
+	{
+		BasicCommands::getMACAddress(splitCommandBuffer);
+	}
+#endif // RELAY_COMS_ESPNOW
+#endif // RELAY_SUPPORTED
 #if defined(ENABLE_DYNAMIC_ANIMATION_SOURCE_SWITCH) || defined(RELAY_SUPPORTED)
 	else if (strcmp_P(commandName, BasicCommands::SET_CONFIG) == 0)
 	{
 		BasicCommands::setConfiguration(splitCommandBuffer);
 	}
-#endif
+#endif // ENABLE_DYNAMIC_ANIMATION_SOURCE_SWITCH || RELAY_SUPPORTED
 
 	return true;
 }
@@ -337,4 +377,71 @@ bool Parser::commandHasDuration(char* commandName) const
 	}
 
 	return false;
+}
+
+bool Parser::commandIsAllowed(char* commandName, bool sourceIsUsbSerial) const
+{
+	bool limitiedCmdSet = false;
+
+#if defined(USE_CODE_COMMAND_STREAM) || defined(USE_SD_CARD_COMMAND_STREAM)
+	if (SystemStatus::systemStatus.ConnectionStatus == SystemStatus::eConnectionStatus::Export_Playback)
+	{
+		limitiedCmdSet = true;
+	}
+#endif
+
+#ifdef RELAY_SUPPORTED
+	if (sourceIsUsbSerial && BottangoCore::mMaster.getModule<Relay>(Modules::RelayComs)->getRole() == Relay::RelayRole::Peer)
+	{
+		limitiedCmdSet = true;
+	} 
+#endif // RELAY_SUPPORTED
+
+#if defined(USE_CODE_COMMAND_STREAM) || defined(USE_SD_CARD_COMMAND_STREAM) || defined(RELAY_SUPPORTED)
+	if (limitiedCmdSet)
+	{
+		// Handshake request is allowed
+		if (strcmp_P(commandName, BasicCommands::HANDSHAKE_REQUEST) == 0)
+		{
+			return true;
+		}
+		// Modules request is allowed
+		else if (strcmp_P(commandName, BasicCommands::MODULES_REQUEST) == 0)
+		{
+			return true;
+		}
+		// Continue modules request is allowed
+		else if (strcmp_P(commandName, BasicCommands::READY_FOR_NEXT_RESPONSE) == 0)
+		{
+			return true;
+		}
+#ifdef ENABLE_ESP_OTA_UPDATE
+		// ESP32 ota update is allowed
+		else if (strcmp_P(commandName, BasicCommands::OTA_UPDATE) == 0)
+		{
+			return true;
+		}
+#endif // ENABLE_ESP_OTA_UPDATE
+#ifdef ENABLE_DYNAMIC_ANIMATION_SOURCE_SWITCH
+		// Switch configuration is allowed
+		else if (strcmp_P(commandName, BasicCommands::SET_CONFIG) == 0)
+		{
+			return true;
+		}
+#endif // ENABLE_DYNAMIC_ANIMATION_SOURCE_SWITCH
+#ifdef RELAY_COMS_ESPNOW
+		// Get MAC address is allowed
+		else if (strcmp_P(commandName, BasicCommands::GET_MAC_ADDRESS) == 0)
+		{
+			return true;
+		}
+#endif
+
+		// Otherwise ignore
+		return false;
+	}
+#endif
+
+	// allowed, no Export_Playback
+	return true;
 }

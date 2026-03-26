@@ -60,6 +60,8 @@ public:
 	bool commandHasDuration(char* commandName) const;
 
 private:
+	bool commandIsAllowed(char* commandName, bool sourceIsUsbSerial) const;
+
 	CommandDecoder* _decoder;
 };
 

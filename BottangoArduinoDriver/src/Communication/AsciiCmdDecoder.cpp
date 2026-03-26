@@ -29,14 +29,24 @@ void AsciiCmdDecoder::decode()
 	char* stringToSplit = nullptr;
 
 	// Check both sources, but the primary source always has priority
-	if (_source->tryConsumeData(&stringToSplit) || (_secondarySource && _secondarySource->tryConsumeData(&stringToSplit)))
+	if (_source->tryConsumeData(&stringToSplit))
 	{
-		_validCommandAvailable = false;
-		_splitData.stringToSplit = stringToSplit;
-		if (splitCommand(&_splitData))
-		{
-			_validCommandAvailable = true;
-		};
+		_sourceIsUsbSerial = true;
+	}
+	else if (_secondarySource && _secondarySource->tryConsumeData(&stringToSplit))
+	{
+		_sourceIsUsbSerial = false;
+	}
+	else
+	{
+		return;
+	}
+
+	_validCommandAvailable = false;
+	_splitData.stringToSplit = stringToSplit;
+	if (splitCommand(&_splitData))
+	{
+		_validCommandAvailable = true;
 	}
 }
 

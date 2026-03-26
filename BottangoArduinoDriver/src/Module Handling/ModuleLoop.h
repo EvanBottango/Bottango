@@ -41,6 +41,4 @@ public:
 	virtual void init() {}
 };
 
-
 #endif
-

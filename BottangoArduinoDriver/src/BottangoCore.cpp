@@ -6,9 +6,9 @@
 #include "System/SystemStatus.h"
 #include "I2SAudioEffector.h"
 
-#if defined(RELAY_SUPPORTED) && defined(RELAY_COMS_ESPNOW)
+/*#if defined(RELAY_SUPPORTED) && defined(RELAY_COMS_ESPNOW)
 #include "ESPNOWUtil.h"
-#endif
+#endif*/
 
 namespace BottangoCore
 {
@@ -16,9 +16,9 @@ namespace BottangoCore
 	AbstractMultiMessageOutgoingSource* activeOutgoingMultimessage = nullptr;
 
 	ModuleMaster mMaster = ModuleMaster();
-	char* splitCommandBuffer[COMMANDS_PARAMS_SIZE];
+	//char* splitCommandBuffer[COMMANDS_PARAMS_SIZE];
 
-#ifdef RELAY_SUPPORTED
+/*#ifdef RELAY_SUPPORTED
 	RelayChildPool* relayPool = nullptr;
 	bool isRelayBridge = false;
 	bool isRelayPeer = false;
@@ -30,7 +30,7 @@ namespace BottangoCore
 #ifdef RELAY_LOGGING
 	unsigned long lastWaitForConnectLog = 0;
 #endif
-#endif
+#endif*/
 
 #if defined(USE_CODE_COMMAND_STREAM) || defined(USE_SD_CARD_COMMAND_STREAM)
 	CommandStreamProvider* commandStreamProvider = nullptr;
@@ -71,17 +71,17 @@ namespace BottangoCore
 
 		// init comms types
 #if defined(RELAY_SUPPORTED)
-		initRelayComs();
-		//#elif defined(USE_USB_SERIAL)
-				// Note: Moved to mMaster.initModules();
-				//initUSBSerialComms();
+		//initRelayComs();
+//#elif defined(USE_USB_SERIAL)
+		// Note: Moved to mMaster.initModules();
+		//initUSBSerialComms();
 #elif defined(USE_ESP32_WIFI)
 		initESP32WifiComs();
 #endif
 
 		// init status lights
 #ifdef ENABLE_STATUS_LIGHTS
-#ifdef RELAY_SUPPORTED
+/*#ifdef RELAY_SUPPORTED
 		if (isRelayPeer)
 		{
 			SystemStatus::systemStatus.ConnectionStatus = SystemStatus::eConnectionStatus::No_Connection_Peer;
@@ -94,10 +94,10 @@ namespace BottangoCore
 			//StatusLights::setDesiredColor(CONNECTION_STATUS_LIGHT, STATUS_COLOR_NO_CONNECTION_SERIAL);
 			//StatusLights::setLightMode(CONNECTION_STATUS_LIGHT, StatusLights::LightMode::MODE_BLINK);
 		}
-#else		
+#else	
 		//StatusLights::setDesiredColor(CONNECTION_STATUS_LIGHT, STATUS_COLOR_NO_CONNECTION_SERIAL);
 		//StatusLights::setLightMode(CONNECTION_STATUS_LIGHT, StatusLights::LightMode::MODE_BLINK);
-#endif
+#endif*/
 		SystemStatus::systemStatus.Signal = SystemStatus::eSignal::Off;
 		SystemStatus::systemStatus.UserLED = SystemStatus::eUserLED::Off;
 		//StatusLights::setDesiredColor(SIGNAL_STATUS_LIGHT, CRGB::Black);
@@ -124,7 +124,7 @@ namespace BottangoCore
 			//       }
 		   //#endif
 
-				   // Setup is done
+		// Setup is done
 		SystemStatus::systemStatus.initialized = true;
 		Callbacks::onThisControllerStarted();
 	}
@@ -149,7 +149,7 @@ namespace BottangoCore
 #endif
 	}
 
-#if defined(RELAY_SUPPORTED)
+/*#if defined(RELAY_SUPPORTED)
 	void initRelayComs()
 	{
 		int relayState = PersistentConfigUtil::getRelayState();
@@ -235,7 +235,7 @@ namespace BottangoCore
 #endif
 		}
 	}
-#endif
+#endif*/
 
 #ifdef USE_ESP32_WIFI
 
@@ -1040,7 +1040,7 @@ namespace BottangoCore
 		#ifdef RELAY_SUPPORTED
 				if (isRelayPeer && secondary)
 				{
-					Outgoing::setSecondaryPeerOutgoing(true);
+					Outgoing::setSecondaryPeerOutgoing(true); // <-- Das muss ich noch irgendwo setzen
 				}
 		#endif
 
