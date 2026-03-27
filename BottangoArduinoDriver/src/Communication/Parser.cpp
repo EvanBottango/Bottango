@@ -195,7 +195,7 @@ bool Parser::parseCommand(char** splitCommandBuffer) const
 	else if (strcmp_P(commandName, BasicCommands::RELAY_HEARTBEAT_REQUEST) == 0)
 	{
 		BasicCommands::requestHeartbeat(splitCommandBuffer);
-		sendReady = false;
+		//sendReady = false;
 	}
 	else if (strcmp_P(commandName, BasicCommands::REQUEST_PEER_BOOT) == 0)
 	{

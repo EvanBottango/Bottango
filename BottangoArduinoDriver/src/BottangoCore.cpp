@@ -16,6 +16,8 @@ namespace BottangoCore
 	AbstractMultiMessageOutgoingSource* activeOutgoingMultimessage = nullptr;
 
 	ModuleMaster mMaster = ModuleMaster();
+
+	char delimiters[] = ",";
 	//char* splitCommandBuffer[COMMANDS_PARAMS_SIZE];
 
 /*#ifdef RELAY_SUPPORTED
@@ -148,94 +150,6 @@ namespace BottangoCore
 		}
 #endif
 	}
-
-/*#if defined(RELAY_SUPPORTED)
-	void initRelayComs()
-	{
-		int relayState = PersistentConfigUtil::getRelayState();
-		if (relayState == VALUE_RELAY_STATE_LIVE_USB)
-		{
-			initUSBSerialComms();
-#ifdef RELAY_LOGGING
-#ifdef TOGGLE_DEBUG
-			if (PersistentConfigUtil::debugEnabled())
-#endif
-			{
-				Outgoing::printOutputStringFlash(F("relay state = usb"));
-				Outgoing::printLine();
-			}
-
-#endif
-		}
-		else if (relayState == VALUE_RELAY_STATE_BRIDGE)
-		{
-			isRelayBridge = true;
-			isRelayPeer = false;
-
-			initUSBSerialComms();
-
-#ifdef RELAY_LOGGING
-#ifdef TOGGLE_DEBUG
-			if (PersistentConfigUtil::debugEnabled())
-#endif
-			{
-				Outgoing::printOutputStringFlash(F("relay state = bridge"));
-				Outgoing::printLine();
-			}
-
-#endif
-
-			relayPool = new RelayChildPool();
-			ESPNowUtil::initializeESPNowAsBridge();
-
-#ifdef RELAY_LOGGING
-#ifdef TOGGLE_DEBUG
-			if (PersistentConfigUtil::debugEnabled())
-#endif
-			{
-				Outgoing::printOutputStringFlash(F("bridge setup complete"));
-				Outgoing::printLine();
-			}
-#endif
-		}
-		else if (relayState == VALUE_RELAY_STATE_PEER)
-		{
-			isRelayBridge = false;
-			isRelayPeer = true;
-
-			secondaryCommandIdx = 0;
-			secondaryCommandInProgress = false;
-			secondaryTimeOfLastChar = 0;
-			if (secondaryPeerCommandBuffer)
-			{
-				free(secondaryPeerCommandBuffer);
-			}
-			secondaryPeerCommandBuffer = (char*)malloc(MAX_COMMAND_LENGTH);
-
-			initUSBSerialComms();
-#ifdef RELAY_LOGGING
-#ifdef TOGGLE_DEBUG
-			if (PersistentConfigUtil::debugEnabled())
-#endif
-			{
-				Outgoing::toggleOnSecondaryOutgoing();
-				Outgoing::printOutputStringFlash(F("relay state = peer. Sending BOOT"));
-				Outgoing::printLine();
-				Outgoing::endToggleOnSecondaryOutgoing();
-				lastWaitForConnectLog = Time::getCurrentTimeInMs();
-			}
-
-#endif
-
-#ifdef RELAY_COMS_ESPNOW
-			ESPNowUtil::initializeESPNowAsPeer();
-			Outgoing::printLine();
-			Outgoing::printOutputStringPROGMEM(BasicCommands::BOOT);
-			Outgoing::printLine();
-#endif
-		}
-	}
-#endif*/
 
 #ifdef USE_ESP32_WIFI
 

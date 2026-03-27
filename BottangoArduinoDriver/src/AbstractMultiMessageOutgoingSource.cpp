@@ -6,12 +6,12 @@
 void AbstractMultiMessageOutgoingSource::setRecievedContinue()
 {
     hasOutgoingMessage = false;
-    lastMessageTime = 0;
+    _lastMessageTime = 0;
 }
 
 bool AbstractMultiMessageOutgoingSource::isTimeout()
 {
-    if (hasOutgoingMessage && Time::getCurrentTimeInMs() - lastMessageTime >= OUTGOING_TIMEOUT_RESPONSE_TIME)
+    if (hasOutgoingMessage && Time::getCurrentTimeInMs() - _lastMessageTime >= OUTGOING_TIMEOUT_RESPONSE_TIME)
     {
         return true;
     }
@@ -21,7 +21,7 @@ bool AbstractMultiMessageOutgoingSource::isTimeout()
 void AbstractMultiMessageOutgoingSource::setTransmitted()
 {
     hasOutgoingMessage = true;
-    lastMessageTime = Time::getCurrentTimeInMs();
+    _lastMessageTime = Time::getCurrentTimeInMs();
 }
 
 #ifdef RELAY_SUPPORTED

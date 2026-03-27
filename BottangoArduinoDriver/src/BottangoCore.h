@@ -25,9 +25,9 @@
 #include "CommandStreamProvider.h"
 #endif
 
-#ifdef RELAY_SUPPORTED
-#include "RelayChildPool.h"
-#endif
+//#ifdef RELAY_SUPPORTED
+//#include "Modules/RelayComs/RelayChildPool.h"
+//#endif
 
 namespace BottangoCore
 {
@@ -53,16 +53,10 @@ namespace BottangoCore
     extern EffectorPool effectorPool;
     extern AbstractMultiMessageOutgoingSource *activeOutgoingMultimessage;
 	extern ModuleMaster mMaster;
-    //extern bool initialized;
-    //extern bool handshake;
-    //extern char delimiters[];
 
-    //extern char serialCommandBuffer[MAX_COMMAND_LENGTH];
-    //extern int serialCommandIdx;
+	extern char delimiters[];
 
-    //extern unsigned long timeOfLastChar;
-    //extern bool commandInProgress;
-    extern char *splitCommandBuffer[COMMANDS_PARAMS_SIZE];
+    //extern char *splitCommandBuffer[COMMANDS_PARAMS_SIZE];
 
     void initUSBSerialComms();
 
@@ -70,17 +64,6 @@ namespace BottangoCore
     char readNextChar(bool secondary);
 
 #if defined(RELAY_SUPPORTED)
-    void initRelayComs();
-    extern RelayChildPool *relayPool;
-    extern bool isRelayBridge;
-    extern bool isRelayPeer;
-
-    extern char *secondaryPeerCommandBuffer;
-    extern int secondaryCommandIdx;
-    extern unsigned long secondaryTimeOfLastChar;
-    extern unsigned long lastHeartbeatTime;
-    extern bool secondaryCommandInProgress;
-
 #ifdef RELAY_LOGGING
     extern unsigned long lastWaitForConnectLog;
 #endif

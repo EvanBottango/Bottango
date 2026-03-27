@@ -123,46 +123,44 @@ namespace BasicCommands
     inline const char STEPPER_SYNC_AUTO_COUNTERCLOCKWISE[] PROGMEM = "aCC";
 
 #ifdef RELAY_SUPPORTED
-    /**
-     * Command to register a relay controller
-     * [0]identifier, [1] relay connection type, additional tokens connection type dependent
-     */
-    inline const char REGISTER_RELAY[] PROGMEM = "rCtrl";
+	/**
+	 * Command to register a relay controller
+	 * [0]identifier, [1] relay connection type, additional tokens connection type dependent
+	 */
+	const char REGISTER_RELAY[] PROGMEM = "rCtrl";
 
-    /**
-     * Command to deregister a relay controller
-     * [0]identifier
-     */
-    inline const char DEREGISTER_RELAY[] PROGMEM = "xUCtrl";
+	/**
+	 * Command to deregister a relay controller
+	 * [0]identifier
+	 */
+	const char DEREGISTER_RELAY[] PROGMEM = "xUCtrl";
 
-    /**
-     * Command to deregister all relay controllers
-     * [0]identifier
-     */
-    inline const char DEREGISTER_ALL_RELAY[] PROGMEM = "xCtrl";
+	/**
+	 * Command to deregister all relay controllers
+	 * [0]identifier
+	 */
+	const char DEREGISTER_ALL_RELAY[] PROGMEM = "xCtrl";
 
-    /**
-     * Command to identify a relay command
-     * [0]identifier of relay controller, the rest of tokens are the command to be passed.
-     */
-    inline const char PASS_TO_RELAY[] PROGMEM = "sR";
+	/**
+	 * Command to identify a relay command
+	 * [0]identifier of relay controller, the rest of tokens are the command to be passed.
+	 */
+	const char PASS_TO_RELAY[] PROGMEM = "sR";
 
-    /**
-     * Command from bridge to peer to check if it's connectable via a BOOT print
-     */
-    inline const char REQUEST_PEER_BOOT[] PROGMEM = "rBOOT";
+	/**
+	 * Command from bridge to peer to check if it's connectable via a BOOT print
+	 */
+	const char REQUEST_PEER_BOOT[] PROGMEM = "rBOOT";
 
-    /**
-     * reply From Peer that is now booted and can connect
-     */
-    inline const char REPLY_PEER_BOOT[] PROGMEM = "sBOOT";
+	/**
+	 * reply From Peer that is now booted and can connect
+	 */
+	const char REPLY_PEER_BOOT[] PROGMEM = "sBOOT";
 
-#ifdef RELAY_COMS_ESPNOW
-    /**
-     * Command to get ESPNOW mac address
-     */
-    inline const char GET_MAC_ADDRESS[] PROGMEM = "rMAC";
-#endif
+	/**
+	 * Command to get ESPNOW mac address
+	 */
+	const char GET_MAC_ADDRESS[] PROGMEM = "rMAC";
 #endif
 
 #ifdef ALLOW_SYNC_COMMANDS
@@ -230,131 +228,128 @@ namespace BasicCommands
     inline const char SET_CONFIG_RELAY_TYPE[] PROGMEM = "RLY"; // set relay type sub param
 
     inline const char RELAY_PEER_STOP_TIME[] PROGMEM = "STOP_TIME";   // set command source sub param
-    inline const char RELAY_HEARTBEAT_REQUEST[] PROGMEM = "RLY_HB";   // Relay heartbeat request
-    inline const char RELAY_HEARTBEAT_RESPONSE[] PROGMEM = "RLY_ACK"; // Relay heartbeat response
+	inline const char RELAY_POLL_REQUEST[] PROGMEM = "RLY_POLL";	// Relay poll request
+	inline const char RELAY_POLL_RESPONSE[] PROGMEM = "RLY_ACK";	// Relay poll response
 
 #endif
 
-    /** !!!!!!!!!! */
-    /** OUTGOING STRINGS */
-    /** !!!!!!!!!! */
-    /** !!!!!!!!!! */
+	/** !!!!!!!!!! */
+	/** OUTGOING STRINGS */
+	/** !!!!!!!!!! */
+	/** !!!!!!!!!! */
 
-    /// outgoing command strings, these will be sent back to Bot Tango from the Arudino
-    /** The arduino has (re-)started */
-    inline const char BOOT[] PROGMEM = "BOOT";
+	/// outgoing command strings, these will be sent back to Bot Tango from the Arudino
+	/** The arduino has (re-)started */
+	const char BOOT[] PROGMEM = "BOOT";
 
-    /** Confirmation that the serial port opened is the correct one */
-    inline const char HANDSHAKE[] PROGMEM = "btngoHSK";
+	/** Confirmation that the serial port opened is the correct one */
+	const char HANDSHAKE[] PROGMEM = "btngoHSK";
 
-    /** The version code of this driver */
-    inline const char DRIVER_VERSION[] PROGMEM = "0.7.1p7a";
+	/** The version code of this driver */
+	const char DRIVER_VERSION[] PROGMEM = "0.7.1p7a";
 
-    /** Arduino is ready for the next command */
-    inline const char READY[] PROGMEM = "OK\n";
+	/** Arduino is ready for the next command */
+	const char READY[] PROGMEM = "OK\n";
 
-    inline const char HASH_FAIL[] PROGMEM = "HASH_FAIL\n";
+	const char HASH_FAIL[] PROGMEM = "HASH_FAIL\n";
 
-    inline const char TIMEOUT[] PROGMEM = "TIMEOUT\n";
+	const char TIMEOUT[] PROGMEM = "TIMEOUT\n";
 
-    inline const char LOST_PEER[] PROGMEM = "LOST_PEER,";
+	const char LOST_PEER[] PROGMEM = "LOST_PEER,";
 
-    void sendHandshakeResponse(char *args[], bool secondary);
+	void sendHandshakeResponse(char* args[], bool secondary);
 
-    void startModulesResponse(char *args[]);
+	void startModulesResponse(char* args[]);
 
-    void continueInProgressMultiMessageResponse(char *args[]);
+	void continueInProgressMultiMessageResponse(char* args[]);
 
-    void stop(char *args[]);
+	void stop(char* args[]);
 
-    void syncTime(char *args[]);
+	void syncTime(char* args[]);
 
-    void deregisterAllEffectors(char **args);
+	void deregisterAllEffectors(char** args);
 
-    void clearAllCurves(char **args);
+	void clearAllCurves(char** args);
 
-    void updateEffectorSignalBounds(char **args);
+	void updateEffectorSignalBounds(char** args);
 
-    void registerPinServo(char **args);
+	void registerPinServo(char** args);
 
-    void registerI2CServo(char **args);
+	void registerI2CServo(char** args);
 
-    void registerPinStepper(char **args);
+	void registerPinStepper(char** args);
 
-    void registerDirStepper(char **args);
+	void registerDirStepper(char** args);
 
-    void registerCurvedEvent(char **args);
+	void registerCurvedEvent(char** args);
 
-    void registerOnOffEvent(char **args);
+	void registerOnOffEvent(char** args);
 
-    void registerTriggerEvent(char **args);
+	void registerTriggerEvent(char** args);
 
-    void registerColorEvent(char **args);
+	void registerColorEvent(char** args);
 
-    void registerCustomMotor(char **args);
+	void registerCustomMotor(char** args);
 
-    void deregisterEffector(char **args);
+	void deregisterEffector(char** args);
 
-    void addCurve(char **args);
+	void addCurve(char** args);
 
-    void addInstantCurve(char **args);
+	void addInstantCurve(char** args);
 
-    void addOnOffCurve(char **args);
+	void addOnOffCurve(char** args);
 
-    void addTriggerCurve(char **args);
+	void addTriggerCurve(char** args);
 
-    void addColorCurve(char **args);
+	void addColorCurve(char** args);
 
-    void addInstantColorCurve(char **args);
+	void addInstantColorCurve(char** args);
 
-    void stepperSync(char **args);
+	void stepperSync(char** args);
 
-    void clearCurvesForEffector(char **args);
+	void clearCurvesForEffector(char** args);
 
 #ifdef RELAY_SUPPORTED
-    void registerRelayController(char **args);
+	void registerRelayController(char** args);
 
-    void deregisterRelayController(char **args);
+	void deregisterRelayController(char** args);
 
-    void deregisterAllRelayControllers(char **args);
+	void deregisterAllRelayControllers(char** args);
 
-    void passToRelayController(char **args, byte paramsCount);
+	void passToRelayController(char** args, byte paramsCount);
 
-    void requestBoot(char **args);
+	void requestBoot(char** args);
 
-    void requestHeartbeat(char **args);
-#ifdef RELAY_COMS_ESPNOW
-    void getMACAddress(char **args);
+	void requestPoll(char** args);
+
+	void getMACAddress(char** args);
 #endif
-#endif
+
 #ifdef ALLOW_SYNC_COMMANDS
-    bool getNextSyncCommand(char syncCmd[], char prefixBuffer[CMD_PREFIX_SIZE], char outputCommand[MAX_COMMAND_LENGTH]);
-    void beginGetNextSyncCommand(char *syncCmd, char prefixBuffer[CMD_PREFIX_SIZE]);
-    void executeSyncronizedCommands(char *syncCmd, bool secondary);
+	bool getNextSyncCommand(char syncCmd[], char prefixBuffer[CMD_PREFIX_SIZE], char outputCommand[MAX_COMMAND_LENGTH]);
+	void beginGetNextSyncCommand(char* syncCmd, char prefixBuffer[CMD_PREFIX_SIZE]);
+	void executeSyncronizedCommands(char* syncCmd, bool secondary);
 #endif
 #ifdef ENABLE_ESP_OTA_UPDATE
-    void processOTA(char **args);
+	void processOTA(char** args);
 #endif
 
-	// ToDo: Do we want to leave this kind of functions within the BasicCommands, or move it to the module code?
-	// My opinnion is to move it out of here to reduce the #ifdef clutter and have everything contained within the module code.
 #ifdef AUDIO_SD_I2S
-    //void processAudioBinary(char **args);
-    void registerAudioEvent(char **args);
+	void processAudioBinary(char** args);
+	void registerAudioEvent(char** args);
 #endif
 
-	// ToDo: AudioBinaryUtil currently disabled (unfinished feature)
-//#if defined(AUDIO_SD_I2S) || defined(ENABLE_ESP_OTA_UPDATE)
-//#define BINARY_FLAG_START 's'
-//#define BINARY_FLAG_DATA 'd'
-//#define BINARY_FLAG_END 'e'
-//#endif
+#if defined(AUDIO_SD_I2S) || defined(ENABLE_ESP_OTA_UPDATE)
+#define BINARY_FLAG_START 's'
+#define BINARY_FLAG_DATA 'd'
+#define BINARY_FLAG_END 'e'
+#endif
 
 #if defined(ENABLE_DYNAMIC_ANIMATION_SOURCE_SWITCH) || defined(RELAY_SUPPORTED)
-    void setConfiguration(char **args);
+	void setConfiguration(char** args);
 #endif
 
-    void reboot(bool forceSendReady);
+	void reboot(bool forceSendReady);
 
 } // namespace BasicCommands
 

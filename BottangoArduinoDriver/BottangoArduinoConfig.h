@@ -200,26 +200,31 @@ inline const char SD_AUDIO_FORMAT[] PROGMEM = ".wav";              // file forma
 
 // relay parent and child config
 #ifdef RELAY_SUPPORTED
+
 #define MAX_RELAY_CHILD 16                                  // max number of controllers to relay commands to
-#define RELAY_BOOT_INTERVAL 250UL                           // how often to send a boot request to a peer to check if it has come online
-#define RELAY_HEARTBEAT_INTERVAL 3000UL                     // how often to send a heartbeat request from bridge to peer
-#define RELAY_HEARTBEAT_TIMEOUT 1000UL                      // how long to give the peer to reply before report lost
-#define RELAY_HEARTBEAT_KEEP_ALIVE_ADDITION 1000UL          // how long a peer should add to the heartbeat interval to get a heartbeat request before it should reboot due to lost bridge
+#define RELAY_BOOT_INTERVAL_AS_BRIDGE 500UL                 // how often bridge sends a boot request to check if a peer has come online
+#define RELAY_POLL_INTERVAL_AS_BRIDGE 500UL                // how often bridge enqueues a poll request
+#define RELAY_POLL_TIMEOUT_AS_PEER 3000UL                   // how long a peer should wait without a poll before rebooting due to lost bridge
+
+#define TXT_BUFFER_SIZE_RX_FROM_PEER 512                    // num chars to store in per peer (as bridge) in espnow recv buffers in Relay Child class
+#define OUT_MESSAGE_QUEUE_DEPTH 6                           // max num full commands to store for transmission to peers via comms (as bridge)
+
+#define TXT_BUFFER_SIZE_RX_COMMS 512                        // num chars to store in the active relay comms, rx
+#define TXT_BUFFER_SIZE_TX_COMMS 512                        // num chars to store in the active relay comms, tx
 
 #ifdef RELAY_COMS_ESPNOW
 #define ESPNOW_CHANNEL 1                                    // Wifi channel to use. All relays (send and recv) must be on the same channel
+#define ESPNOW_RX_QUEUE_DEPTH 4                             // RX packet queue depth for ESP-NOW relay comms
 #define ESPNOW_RETRY_MS 50                                  // time in MS before retry sending
 #define ESPNOW_TIMEOUT_MS 250                               // time in MS before timeout
-
-#define TXT_BUFFER_SIZE_RX_FROM_PEER 512                    // num chars to store in per peer (as bridge) in espnow recv buffers
-#define OUT_MESSAGE_QUEUE_DEPTH 6                           // max num full commands to store for transmission to peers via comms (as bridge)
-
-#define TXT_BUFFER_SIZE_PEER_TO_BRIDGE 512                  // num chars to store in the espnow up to bridge from peer (as peer) buffer
-#define TXT_BUFFER_SIZE_PEER_FROM_BRIDGE 512                // num chars to store in the espnow down to peer from bridge (as peer) buffer
-
-
+#define RELAY_ESPNOW_RESPONSE_TIMEOUT 250UL                 // how long to wait for a response from a peer on ESP-NOW (tune if enabled)
 #endif
-#endif
+
+#ifdef RELAY_COMS_RS485
+#define RELAY_RS485_RESPONSE_TIMEOUT 75UL                   // how long to wait for a response from a peer on RS485
+#endif // RELAY_COMS_RS485
+
+#endif // RELAY_SUPPORTED
 
 // ---------------------------------- //
 

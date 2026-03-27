@@ -5,330 +5,569 @@
 #include "RelayChildPool.h"
 #include "RelayChild.h"
 #include "BasicCommands.h"
+#include <limits.h>
+#ifdef TOGGLE_DEBUG
+#include "PersistentConfigUtil.h"
+#endif
+
+#if defined(RELAY_COMS_ESPNOW)
+#define RELAY_RESPONSE_TIMEOUT RELAY_ESPNOW_RESPONSE_TIMEOUT
+#elif defined(RELAY_COMS_RS485)
+#define RELAY_RESPONSE_TIMEOUT RELAY_RS485_RESPONSE_TIMEOUT
+#endif
 
 RelayChildPool::RelayChildPool()
 {
+#ifdef ESP32
+	_relayMutex = xSemaphoreCreateRecursiveMutex();
+	configASSERT(_relayMutex);
+#endif
 }
 
-void RelayChildPool::addRelay(RelayChild *relay)
+void RelayChildPool::addRelay(RelayChild* relay)
 {
-    if (relays.size() >= MAX_RELAY_CHILD)
-    {
-        Error::reportError_NoSpaceAvailable(); // todo unique out of space
-        return;
-    }
+	lockPool();
 
-    RelayChild *existingRelay = getRelay(relay->mac_addr);
+	if (_relays.size() >= MAX_RELAY_CHILD)
+	{
+		Error::reportError_NoSpaceAvailable(); // todo unique out of space
+		unlockPool();
+		return;
+	}
 
-    if (existingRelay != nullptr)
-    {
-        Error::reportError_RelayCollision(relay->mac_addr);
-        return;
-    }
-    else
-    {
-        relays.pushBack(relay);
-        if (messageStatus == sendID)
-        {
-            relayIdToReport = getIdForRelay(relay);
-        }
-    }
+	RelayChild* existingRelay = getRelay(relay->mac_addr);
+
+	if (existingRelay != nullptr)
+	{
+		Error::reportError_RelayCollision(relay->mac_addr);
+		unlockPool();
+		return;
+	}
+	else
+	{
+		int relayId = allocateRelayId();
+		if (relayId < 0)
+		{
+			unlockPool();
+			return;
+		}
+		relay->stableId = relayId;
+		_relays.pushBack(relay);
+	}
+
+	unlockPool();
 }
 
 void RelayChildPool::removeRelay(int id)
 {
-    RelayChild *relay = BottangoCore::relayPool->getRelay(id);
-    if (relay == nullptr)
-    {
-        Error::reportError_NoRelayForID(id);
-        return;
-    }
+	lockPool();
 
-    relays.remove(relay);
-    relay->destroy();
-    delete relay;
+	RelayChild* relay = getRelay(id);
+	if (relay == nullptr)
+	{
+		Error::reportError_NoRelayForID(id);
+		unlockPool();
+		return;
+	}
+
+	_relays.remove(relay);
+	relay->destroy();
+	delete relay;
+
+	unlockPool();
 }
 
-void RelayChildPool::passThroughCommandToRelay(int id, char **commands, byte paramsCount)
+void RelayChildPool::passThroughCommandToRelay(int id, char** commands, byte paramsCount)
 {
-    RelayChild *relay = BottangoCore::relayPool->getRelay(id);
-    if (relay == nullptr)
-    {
-        Error::reportError_NoRelayForID(id);
-        return;
-    }
+	lockPool();
 
-    char commandBuffer[MAX_COMMAND_LENGTH];
-    commandBuffer[0] = '\0';
+	RelayChild* relay = getRelay(id);
+	if (relay == nullptr)
+	{
+		Error::reportError_NoRelayForID(id);
+		unlockPool();
+		return;
+	}
 
-    if (paramsCount != 4)
-    {
-        // always should come in the exact same format, 4 total params
-        // todo error here
-        return;
-    }
+	char commandBuffer[MAX_COMMAND_LENGTH];
+	commandBuffer[0] = '\0';
 
-    // skip 0 - relay command
-    // skip 1 - relay identifier
-    // use 2 - all commands to pass through
-    // skip 3 - previous hash
+	if (paramsCount != 4)
+	{
+		// always should come in the exact same format, 4 total params
+		// todo error here
+		unlockPool();
+		return;
+	}
 
-    // add all commands to pass
-    strcat(commandBuffer, commands[2]);
+	// skip 0 - relay command
+	// skip 1 - relay identifier
+	// use 2 - all commands to pass through
+	// skip 3 - previous hash
 
-    executePassThrough(relay, commandBuffer);
+	// add all commands to pass
+	strcat(commandBuffer, commands[2]);
+
+	executePassThrough(relay, commandBuffer);
+
+	unlockPool();
 }
 
 void RelayChildPool::deregisterAll()
 {
-    for (int i = 0; i < relays.size(); i++)
-    {
-        RelayChild *relay = relays.get(i);
-        relay->destroy();
-        delete relays.get(i);
-    }
-    relays.clear();
+	lockPool();
+
+	for (int i = 0; i < _relays.size(); i++)
+	{
+		RelayChild* relay = _relays.get(i);
+		relay->destroy();
+		delete _relays.get(i);
+	}
+	_relays.clear();
+
+	unlockPool();
 }
 
-RelayChild *RelayChildPool::getRelay(const uint8_t *mac_addr)
+RelayChild* RelayChildPool::getRelay(const uint8_t* mac_addr)
 {
-    for (byte i = 0; i < relays.size(); i++)
-    {
-        RelayChild *iterator = relays.get(i);
-        if (isMacEqual(mac_addr, iterator->mac_addr))
-        {
-            return iterator;
-        }
-    }
-    return nullptr;
+	lockPool();
+	RelayChild* found = nullptr;
+	for (byte i = 0; i < _relays.size(); i++)
+	{
+		RelayChild* iterator = _relays.get(i);
+		if (isMacEqual(mac_addr, iterator->mac_addr))
+		{
+			found = iterator;
+			break;
+		}
+	}
+	unlockPool();
+	return found;
 }
 
-RelayChild *RelayChildPool::getRelay(int id)
+RelayChild* RelayChildPool::getRelay(int id)
 {
-    return relays.get(id);
+	lockPool();
+	if (id < 0)
+	{
+		unlockPool();
+		return nullptr;
+	}
+	RelayChild* found = nullptr;
+	for (int i = 0; i < _relays.size(); i++)
+	{
+		RelayChild* iterator = _relays.get(i);
+		if (iterator != nullptr && iterator->stableId == id)
+		{
+			found = iterator;
+			break;
+		}
+	}
+	unlockPool();
+	return found;
 }
 
-bool RelayChildPool::isMacEqual(const uint8_t *mac1, const uint8_t *mac2)
+bool RelayChildPool::isMacEqual(const uint8_t* mac1, const uint8_t* mac2)
 {
-    for (int i = 0; i < 6; i++)
-    {
-        if (mac1[i] != mac2[i])
-        {
-            return false;
-        }
-    }
-    return true;
+	for (int i = 0; i < 6; i++)
+	{
+		if (mac1[i] != mac2[i])
+		{
+			return false;
+		}
+	}
+	return true;
 }
 
 void RelayChildPool::update()
 {
-    for (byte i = 0; i < relays.size(); i++)
-    {
-        RelayChild *iterator = relays.get(i);
-        iterator->update();
-    }
+	unsigned long now = millis();
+	RelayChild* snapshot[MAX_RELAY_CHILD] = {};
+	int snapshotCount = 0;
+
+	lockPool();
+	int relayCount = _relays.size();
+	for (int i = 0; i < relayCount && i < MAX_RELAY_CHILD; i++)
+	{
+		snapshot[snapshotCount] = _relays.get(i);
+		snapshotCount++;
+	}
+	unlockPool();
+
+	for (int i = 0; i < snapshotCount; i++)
+	{
+		RelayChild* iterator = snapshot[i];
+		if (iterator == nullptr)
+		{
+			continue;
+		}
+		iterator->update();
+
+		if (iterator->pollOutstandingAndExpired(now, RELAY_RESPONSE_TIMEOUT))
+		{
+			// TODO decide how to handle a missing poll response
+			iterator->clearPollOutstanding();
+			reportLostPeer(iterator->stableId);
+		}
+	}
+
+	if (now - _lastPollEnqueueTime >= RELAY_POLL_INTERVAL_AS_BRIDGE && !_toPeerQueue.full())
+	{
+		int connectedCount = 0;
+		for (int i = 0; i < snapshotCount; i++)
+		{
+			RelayChild* peer = snapshot[i];
+			if (peer != nullptr && peer->connected)
+			{
+				connectedCount++;
+			}
+		}
+		if (connectedCount > 0)
+		{
+			enqueuePollBroadcast();
+			_lastPollEnqueueTime = now;
+		}
+	}
+
+	if (now - _lastBootEnqueueTime >= RELAY_BOOT_INTERVAL_AS_BRIDGE && !_toPeerQueue.full())
+	{
+		int unconnectedCount = 0;
+		for (int i = 0; i < snapshotCount; i++)
+		{
+			RelayChild* peer = snapshot[i];
+			if (peer != nullptr && !peer->connected)
+			{
+				unconnectedCount++;
+			}
+		}
+		if (unconnectedCount > 0)
+		{
+			enqueueBootBroadcast();
+			_lastBootEnqueueTime = now;
+		}
+	}
 }
 
-int RelayChildPool::hash(const char *str)
+int RelayChildPool::hash(const char* str)
 {
-    int finalValue = 0;
-    while (*str != '\0')
-    {
-        finalValue += static_cast<unsigned char>(*str);
-        ++str;
-    }
-    return finalValue;
+	int finalValue = 0;
+	while (*str != '\0')
+	{
+		finalValue += static_cast<unsigned char>(*str);
+		++str;
+	}
+	return finalValue;
 }
 
-int RelayChildPool::getIdForRelay(RelayChild *relayChild)
+int RelayChildPool::allocateRelayId()
 {
-    for (int i = 0; i < relays.size(); i++)
-    {
-        if (relays.get(i) == relayChild)
-        {
-            return i;
-        }
-    }
-    return -1;
+	if (_nextRelayId >= INT_MAX)
+	{
+		Error::reportError_NoSpaceAvailable();
+		return -1;
+	}
+	return _nextRelayId++;
 }
 
-void RelayChildPool::initializeMultiMessage()
+int RelayChildPool::getIdForRelay(RelayChild* relayChild)
 {
-    messageStatus = sendID;
+	lockPool();
+	int id = relayChild ? relayChild->stableId : -1;
+	unlockPool();
+	return id;
 }
 
-bool RelayChildPool::multiMessageisComplete()
+bool RelayChildPool::emitNextChunk()
 {
-    return messageStatus == complete;
-}
+	if (_relayIdToReport < 0 || hasEmittedAny())
+	{
+		return false;
+	}
 
-void RelayChildPool::updateMultiMessage()
-{
-    switch (messageStatus)
-    {
-    case idle:
-        break;
-    case sendID:
-        Outgoing::printOutputStringPROGMEM(RELAY_ID_RESPONSE_PREFIX); // rlyId,
-        Outgoing::printOutputStringMem(relayIdToReport);              // rlyId,2
-        Outgoing::printLine();
-        messageStatus = waitingForContinue;
-        relayIdToReport = -1;
-        break;
-    case waitingForContinue:
-        // if (!hasOutgoingMessage)
-        // {
-        //     messageStatus = complete;
-        // }
-        break;
-    }
+	Outgoing::printOutputStringPROGMEM(RELAY_ID_RESPONSE_PREFIX); // rlyId,
+	Outgoing::printOutputStringMem(_relayIdToReport);              // rlyId,2
+	Outgoing::printLine();
+	_relayIdToReport = -1;
+	return true;
 }
 
 void RelayChildPool::cleanUpMultiMessage()
 {
-    messageStatus = idle;
-    relayIdToReport = -1;
+	_relayIdToReport = -1;
+}
+
+void RelayChildPool::setRelayIdToReport(int id)
+{
+	_relayIdToReport = id;
 }
 
 bool RelayChildPool::bridgeIsConnectedToAllPeers()
 {
-    for (byte i = 0; i < relays.size(); i++)
-    {
-        RelayChild *iterator = relays.get(i);
-        if (!iterator->connected)
-        {
-            return false;
-        }
-    }
-    return true;
+	lockPool();
+
+	for (byte i = 0; i < _relays.size(); i++)
+	{
+		RelayChild* iterator = _relays.get(i);
+		if (!iterator->connected)
+		{
+			unlockPool();
+			return false;
+		}
+	}
+	unlockPool();
+	return true;
 }
 
 void RelayChildPool::stopTimeOnConnectedPeers()
 {
-    for (int i = 0; i < relays.size(); i++)
-    {
-        RelayChild *iterator = relays.get(i);
-        if (iterator->connected)
-        {
-            sendStopTimeCommand(iterator);
-        }
-    }
-}
+	lockPool();
 
-void RelayChildPool::sendStopTimeCommand(RelayChild *peer)
-{
-    char commandBuffer[MAX_COMMAND_LENGTH];
-    commandBuffer[0] = '\0';
-    strcat(commandBuffer, BasicCommands::TIME_SYNC);
-    strcat(commandBuffer, BottangoCore::delimiters);
-    strcat(commandBuffer, BasicCommands::RELAY_PEER_STOP_TIME);
+	char commandBuffer[MAX_COMMAND_LENGTH];
+	commandBuffer[0] = '\0';
+	strcat(commandBuffer, BasicCommands::TIME_SYNC);
+	strcat(commandBuffer, BottangoCore::delimiters);
+	strcat(commandBuffer, BasicCommands::RELAY_PEER_STOP_TIME);
 
-    executePassThrough(peer, commandBuffer);
-}
+	enqueueBroadcastPassThrough(commandBuffer, MessageIntent::Normal, TargetGroup::BroadcastConnected);
 
-void RelayChildPool::sendHeartbeat(RelayChild *peer)
-{
-    char commandBuffer[MAX_COMMAND_LENGTH];
-    commandBuffer[0] = '\0';
-    strcat(commandBuffer, BasicCommands::RELAY_HEARTBEAT_REQUEST);
-
-    executePassThrough(peer, commandBuffer);
+	unlockPool();
 }
 
 void RelayChildPool::clearCurvesOnConnectedPeers()
 {
-    for (int i = 0; i < relays.size(); i++)
-    {
-        RelayChild *iterator = relays.get(i);
-        if (iterator->connected)
-        {
-            sendClearCurvesCommand(iterator);
-        }
-    }
+	lockPool();
+
+	char commandBuffer[MAX_COMMAND_LENGTH];
+	commandBuffer[0] = '\0';
+	strcat(commandBuffer, BasicCommands::CLEAR_ALL_CURVES);
+
+	enqueueBroadcastPassThrough(commandBuffer, MessageIntent::Normal, TargetGroup::BroadcastConnected);
+
+	unlockPool();
 }
 
-void RelayChildPool::sendClearCurvesCommand(RelayChild *peer)
+void RelayChildPool::sendHandshakeCommand(RelayChild* peer)
 {
-    char commandBuffer[MAX_COMMAND_LENGTH];
-    commandBuffer[0] = '\0';
-    strcat(commandBuffer, BasicCommands::CLEAR_ALL_CURVES);
+	lockPool();
 
-    executePassThrough(peer, commandBuffer);
+	char commandBuffer[MAX_COMMAND_LENGTH];
+	commandBuffer[0] = '\0';
+	strcat(commandBuffer, BasicCommands::HANDSHAKE_REQUEST);
+	strcat(commandBuffer, BottangoCore::delimiters);
+	strcat(commandBuffer, "0");
+
+	executePassThrough(peer, commandBuffer);
+
+	unlockPool();
 }
 
-void RelayChildPool::sendHandshakeCommand(RelayChild *peer)
+bool RelayChildPool::buildPassThroughCommand(char* outBuffer, const char* commandString)
 {
-    char commandBuffer[MAX_COMMAND_LENGTH];
-    commandBuffer[0] = '\0';
-    strcat(commandBuffer, BasicCommands::HANDSHAKE_REQUEST);
-    strcat(commandBuffer, BottangoCore::delimiters);
-    strcat(commandBuffer, "0");
+	outBuffer[0] = '\0';
+	strcat(outBuffer, commandString);
 
-    executePassThrough(peer, commandBuffer);
+	// generate hash up to last token, which is the hash
+	char hashBuffer[12];
+	int hashResult = hash(outBuffer);
+	itoa(hashResult, hashBuffer, 10);
+
+	int used = (int)strlen(outBuffer);
+	int hashLen = (int)strlen(hashBuffer);
+	int totalLen = used + 2 + hashLen + 1; // ",h" + hash + "\n"
+	if (totalLen >= MAX_COMMAND_LENGTH)
+	{
+		Error::reportError_CmdTooLong(totalLen);
+		return false;
+	}
+
+	// add hash
+	strcat(outBuffer, ",h");
+	strcat(outBuffer, hashBuffer);
+
+	// finish with NL
+	strcat(outBuffer, "\n");
+
+	return true;
 }
 
-void RelayChildPool::executePassThrough(RelayChild *peer, char *commandString)
+void RelayChildPool::executePassThrough(RelayChild* peer, char* commandString)
 {
-    char commandBuffer[MAX_COMMAND_LENGTH];
-    commandBuffer[0] = '\0';
-    strcat(commandBuffer, commandString);
+	char commandBuffer[MAX_COMMAND_LENGTH];
+	if (!buildPassThroughCommand(commandBuffer, commandString))
+	{
+		return;
+	}
 
-    // generate hash up to last token, which is the hash
-    char hashBuffer[12];
-    int hashResult = hash(commandBuffer);
-
-    // add hash
-    strcat(commandBuffer, ",h");
-    strcat(commandBuffer, itoa(hashResult, hashBuffer, 10));
-
-    // finish with NL
-    strcat(commandBuffer, "\n");
-
-    peer->passDownCommands(commandBuffer);
+	peer->passDownCommands(commandBuffer);
 }
 
-bool RelayChildPool::enqueueToSendQueue(RelayChild *peer, char *commandString)
+bool RelayChildPool::enqueueBroadcastPassThrough(char* commandString, MessageIntent intent, TargetGroup target)
 {
-    if (toPeerQueue.full())
-    {
-        return false;
-    }
+	char commandBuffer[MAX_COMMAND_LENGTH];
+	if (!buildPassThroughCommand(commandBuffer, commandString))
+	{
+		return false;
+	}
 
-    return toPeerQueue.enqueue(peer->mac_addr, commandString);
+	return _toPeerQueue.enqueueMessage(-1, commandBuffer, intent, target);
+}
+
+void RelayChildPool::enqueuePollBroadcast()
+{
+	if (_toPeerQueue.full())
+	{
+		return;
+	}
+
+	char payloadBuffer[MAX_COMMAND_LENGTH];
+	payloadBuffer[0] = '\0';
+	strcat(payloadBuffer, BasicCommands::RELAY_POLL_REQUEST);
+
+	char commandBuffer[MAX_COMMAND_LENGTH];
+	if (!buildPassThroughCommand(commandBuffer, payloadBuffer))
+	{
+		return;
+	}
+
+	enqueueBroadcastPassThrough(payloadBuffer, MessageIntent::Poll, TargetGroup::BroadcastConnected);
+}
+
+void RelayChildPool::enqueueBootBroadcast()
+{
+	if (_toPeerQueue.full())
+	{
+		return;
+	}
+
+	char payloadBuffer[MAX_COMMAND_LENGTH];
+	payloadBuffer[0] = '\0';
+	strcat(payloadBuffer, BasicCommands::REQUEST_PEER_BOOT);
+
+	char commandBuffer[MAX_COMMAND_LENGTH];
+	if (!buildPassThroughCommand(commandBuffer, payloadBuffer))
+	{
+		return;
+	}
+
+	enqueueBroadcastPassThrough(payloadBuffer, MessageIntent::Boot, TargetGroup::BroadcastUnconnected);
+}
+
+bool RelayChildPool::enqueueUnicastToPeerQueue(RelayChild* peer, char* commandString)
+{
+	lockPool();
+
+	if (_toPeerQueue.full())
+	{
+		unlockPool();
+		return false;
+	}
+
+	bool enqueued = _toPeerQueue.enqueueMessage(getIdForRelay(peer), commandString, MessageIntent::Normal, TargetGroup::Unicast);
+	unlockPool();
+	return enqueued;
 }
 
 void RelayChildPool::resumeTimeConnectedPeers(bool clearCurves)
 {
-    char commandBuffer[MAX_COMMAND_LENGTH];
-    commandBuffer[0] = '\0';
+	lockPool();
 
-    if (clearCurves)
-    {
-        strcat(commandBuffer, BasicCommands::CLEAR_ALL_CURVES);
+	char commandBuffer[MAX_COMMAND_LENGTH];
+	commandBuffer[0] = '\0';
 
-        for (int i = 0; i < relays.size(); i++)
-        {
-            RelayChild *peer = relays.get(i);
-            if (peer->connected)
-            {
-                executePassThrough(peer, commandBuffer);
-            }
-        }
-        commandBuffer[0] = '\0';
-    }
+	if (clearCurves)
+	{
+		strcat(commandBuffer, BasicCommands::CLEAR_ALL_CURVES);
+		enqueueBroadcastPassThrough(commandBuffer, MessageIntent::Normal, TargetGroup::BroadcastConnected);
+		commandBuffer[0] = '\0';
+	}
 
-    strcat(commandBuffer, BasicCommands::TIME_SYNC);
-    strcat(commandBuffer, BottangoCore::delimiters);
-    strcat(commandBuffer, "0");
+	strcat(commandBuffer, BasicCommands::TIME_SYNC);
+	strcat(commandBuffer, BottangoCore::delimiters);
+	strcat(commandBuffer, "0");
+	enqueueBroadcastPassThrough(commandBuffer, MessageIntent::Normal, TargetGroup::BroadcastConnected);
 
-    for (int i = 0; i < relays.size(); i++)
-    {
-        RelayChild *peer = relays.get(i);
-        if (peer->connected)
-        {
-            executePassThrough(peer, commandBuffer);
-        }
-    }
+	unlockPool();
+}
+
+void RelayChildPool::getConnectedRelayIds(int* outIds, uint8_t& outCount)
+{
+	lockPool();
+
+	outCount = 0;
+	for (int i = 0; i < _relays.size(); i++)
+	{
+		RelayChild* peer = _relays.get(i);
+		if (peer != nullptr && peer->connected)
+		{
+			outIds[outCount] = peer->stableId;
+			outCount++;
+			if (outCount >= MAX_RELAY_CHILD)
+			{
+				unlockPool();
+				return;
+			}
+		}
+	}
+	unlockPool();
+}
+
+void RelayChildPool::getUnconnectedRelayIds(int* outIds, uint8_t& outCount)
+{
+	lockPool();
+
+	outCount = 0;
+	for (int i = 0; i < _relays.size(); i++)
+	{
+		RelayChild* peer = _relays.get(i);
+		if (peer != nullptr && !peer->connected)
+		{
+			outIds[outCount] = peer->stableId;
+			outCount++;
+			if (outCount >= MAX_RELAY_CHILD)
+			{
+				unlockPool();
+				return;
+			}
+		}
+	}
+	unlockPool();
+}
+
+void RelayChildPool::markPeerTx(int peerId)
+{
+	lockPool();
+
+	RelayChild* peer = getRelay(peerId);
+	if (peer != nullptr)
+	{
+		peer->markTxTime();
+	}
+
+	unlockPool();
+}
+
+void RelayChildPool::markPeerPollOutstanding(int peerId)
+{
+	lockPool();
+
+	RelayChild* peer = getRelay(peerId);
+	if (peer != nullptr)
+	{
+		peer->markPollOutstanding();
+	}
+
+	unlockPool();
+}
+
+void RelayChildPool::reportLostPeer(int peerId)
+{
+	Outgoing::printOutputStringFlash(F("ERR: Lost peer "));
+	Outgoing::printOutputStringMem(peerId);
+	Outgoing::printLine();
+
+	Outgoing::printOutputStringPROGMEM(BasicCommands::LOST_PEER);
+	Outgoing::printOutputStringMem(peerId);
+	Outgoing::printLine();
 }
 
 #endif

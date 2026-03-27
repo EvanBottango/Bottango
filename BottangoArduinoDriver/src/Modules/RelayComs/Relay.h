@@ -6,6 +6,13 @@
 #include "RelayChildPool.h"
 #include "../../Module Handling/ModuleLoop.h"
 
+/*
+Naming should move to:
+relay - feature set especially shared elements
+Bridge - thing that has peers
+Peer - things that connect to bridge
+*/
+
 class Relay : public LoopModule
 {
 public:
@@ -15,12 +22,25 @@ public:
 		Peer
 	};
 
-	void onPhase(Phase p) override;
 	void init() override;
+
+	// Bridge
+	virtual void initializeAsBridge() = 0;
+	virtual void registerPeer(const uint8_t* udid) = 0;
+	virtual void deregisterPeer(const uint8_t* udid) = 0;
+
+	// Peer
+	virtual void initializeAsPeer() = 0;
+	virtual void peerPrint(const char* str) = 0;
+	virtual void peerPrint(const __FlashStringHelper* str) = 0;
+	virtual void peerPrintln() = 0;
+	virtual void peerFlush() = 0;
+	virtual bool peerRecvAvailable() = 0;
+	virtual char peerReadNextChar() = 0;
 
 	RelayRole getRole() const { return _relayRole; }
 
-private:
+protected:
 	RelayChildPool* _relayPool = nullptr;
 	RelayRole _relayRole = RelayRole::Peer;
 };

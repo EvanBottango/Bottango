@@ -2,11 +2,6 @@
 #include "../../PersistentConfigUtil.h"
 #include "../../System/SystemStatus.h"
 
-void Relay::onPhase(Phase p)
-{
-
-}
-
 void Relay::init()
 {
 	int relayState = PersistentConfigUtil::getRelayState();
@@ -27,13 +22,8 @@ void Relay::init()
 	}
 	else if (relayState == VALUE_RELAY_STATE_BRIDGE)
 	{
-		//isRelayBridge = true;
-		//isRelayPeer = false;
 		_relayRole = RelayRole::Bridge;
 		SystemStatus::systemStatus.ConnectionStatus = SystemStatus::eConnectionStatus::No_Connection_Serial;
-
-		//initUSBSerialComms();
-
 #ifdef RELAY_LOGGING
 #ifdef TOGGLE_DEBUG
 		if (PersistentConfigUtil::debugEnabled())

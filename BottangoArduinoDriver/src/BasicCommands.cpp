@@ -17,29 +17,28 @@
 #include "System/SystemStatus.h"
 #include "Module Handling/ModuleMaster.h"
 
-//#ifdef AUDIO_SD_I2S
-// ToDo: No need to dobule guard
+#ifdef AUDIO_SD_I2S
 #include "I2SAudioEffector.h"
-//#include "AudioBinaryUtil.h"
-//#endif
+#include "AudioBinaryUtil.h"
+#endif
 
 #ifdef RELAY_SUPPORTED
-#include "RelayChild.h"
-#ifdef RELAY_COMS_ESPNOW
+#include "Modules/RelayComs/RelayChild.h"
+#include "Modules/RelayComs/UDIDHelper.h"
+#include "Modules/RelayComs/Relay.h"
 #include "MACResponder.h"
 #endif
+
+#ifdef ENABLE_STATUS_LIGHTS
+#include "Modules/StatusLightsModule.h"
 #endif
 
 #ifdef ENABLE_ESP_OTA_UPDATE
 #include "OTAUpdateUtil.h"
 #endif
 
-#ifdef ENABLE_DYNAMIC_ANIMATION_SOURCE_SWITCH
+#if defined(ENABLE_DYNAMIC_ANIMATION_SOURCE_SWITCH) || defined(RELAY_SUPPORTED)
 #include "PersistentConfigUtil.h"
-#endif
-
-#if defined(RELAY_SUPPORTED)
-#include "ESPNOWUtil.h"
 #endif
 
 namespace BasicCommands
@@ -109,10 +108,10 @@ namespace BasicCommands
 #endif
 
 #if defined(RELAY_SUPPORTED)
-            if (BottangoCore::isRelayPeer)
-            {
-                BottangoCore::lastHeartbeatTime = millis();
-            }
+			if (BottangoCore::isRelayPeer)
+			{
+				BottangoCore::lastPollTimeAsPeer = millis();
+			}
 #endif
 
             Callbacks::onThisControllerStarted();
@@ -120,23 +119,23 @@ namespace BasicCommands
     }
 
     // initialize modules response
-    void startModulesResponse(char *args[])
-    {
-        if (BottangoCore::activeOutgoingMultimessage != nullptr)
-        {
-            // shouldn't have an active...
-            BottangoCore::activeOutgoingMultimessage->cleanUpMultiMessage();
-            BottangoCore::activeOutgoingMultimessage = nullptr;
-        }
-        BottangoCore::activeOutgoingMultimessage = new ModulesResponder();
-        BottangoCore::activeOutgoingMultimessage->initializeMultiMessage();
+	void startModulesResponse(char* args[])
+	{
+		if (BottangoCore::activeOutgoingMultimessage != nullptr)
+		{
+			// shouldn't have an active...
+			BottangoCore::activeOutgoingMultimessage->cleanUpMultiMessage();
+			BottangoCore::activeOutgoingMultimessage = nullptr;
+		}
+		BottangoCore::activeOutgoingMultimessage = new ModulesResponder();
 #ifdef RELAY_SUPPORTED
-        if (Outgoing::secondaryPeerOutgoing)
-        {
-            BottangoCore::activeOutgoingMultimessage->setSecondary();
-        }
+		if (Outgoing::secondaryPeerOutgoing)
+		{
+			BottangoCore::activeOutgoingMultimessage->setSecondary();
+		}
 #endif
-    }
+		BottangoCore::activeOutgoingMultimessage->initializeMultiMessage();
+	}
 
     void continueInProgressMultiMessageResponse(char *args[])
     {
@@ -547,117 +546,121 @@ namespace BasicCommands
     }
 
 #ifdef RELAY_SUPPORTED
-    void registerRelayController(char **args)
-    {
-        if (!BottangoCore::isRelayBridge)
-        {
-            Outgoing::printOutputStringFlash(F("Aborting register relay, Not bridge"));
-            Outgoing::printLine();
-            return;
-        }
+	void registerRelayController(char** args)
+	{
+		if (!BottangoCore::isRelayBridge)
+		{
+			Outgoing::printOutputStringFlash(F("Aborting register relay, Not bridge"));
+			Outgoing::printLine();
+			return;
+		}
 
-        if (BottangoCore::activeOutgoingMultimessage != nullptr)
-        {
-            // shouldn't have an active...
-            BottangoCore::activeOutgoingMultimessage->cleanUpMultiMessage();
-            BottangoCore::activeOutgoingMultimessage = nullptr;
-        }
-        BottangoCore::activeOutgoingMultimessage = BottangoCore::relayPool;
-        BottangoCore::activeOutgoingMultimessage->initializeMultiMessage();
-
-        char *macAddress = args[1];
+		char* macAddress = args[1];
 
 #ifdef RELAY_LOGGING
 #ifdef TOGGLE_DEBUG
-        if (PersistentConfigUtil::debugEnabled())
+		if (PersistentConfigUtil::debugEnabled())
 #endif
-        {
-            Outgoing::printOutputStringFlash(F("Reg Relay with Mac: "));
-            Outgoing::printOutputStringMem(macAddress);
-            Outgoing::printLine();
-        }
+		{
+			Outgoing::printOutputStringFlash(F("Reg Relay with Mac: "));
+			Outgoing::printOutputStringMem(macAddress);
+			Outgoing::printLine();
+		}
 #endif
 
-        RelayChild *newRelay = new RelayChild(macAddress);
-        BottangoCore::relayPool->addRelay(newRelay);
-    }
+		RelayChild* newRelay = new RelayChild(macAddress);
+		BottangoCore::relayPool->addRelay(newRelay);
+		int relayId = BottangoCore::relayPool->getIdForRelay(newRelay);
+		BottangoCore::relayPool->setRelayIdToReport(relayId);
 
-    void deregisterRelayController(char **args)
-    {
-        int id = atoi(args[1]);
-        BottangoCore::relayPool->removeRelay(id);
-    }
-
-    void deregisterAllRelayControllers(char **args)
-    {
-        BottangoCore::relayPool->deregisterAll();
-    }
-
-    void passToRelayController(char **args, byte paramsCount)
-    {
-        int id = atoi(args[1]);
-        BottangoCore::relayPool->passThroughCommandToRelay(id, args, paramsCount);
-    }
-
-    void requestBoot(char **args)
-    {
-#ifdef RELAY_LOGGING
-#ifdef TOGGLE_DEBUG
-        if (PersistentConfigUtil::debugEnabled())
-#endif
-        {
-            Outgoing::toggleOnSecondaryOutgoing();
-            Outgoing::printOutputStringFlash(F("Peer recieved boot request from bridge"));
-            Outgoing::printLine();
-            Outgoing::endToggleOnSecondaryOutgoing();
-        }
-#endif
-        Outgoing::printLine();
-        Outgoing::printOutputStringPROGMEM(BasicCommands::REPLY_PEER_BOOT);
-        Outgoing::printLine();
-    }
-
-    void requestHeartbeat(char **args)
-    {
-#ifdef RELAY_LOGGING
-#ifdef TOGGLE_DEBUG
-        if (PersistentConfigUtil::debugEnabled())
-#endif
-        {
-            Outgoing::toggleOnSecondaryOutgoing();
-            Outgoing::printOutputStringFlash(F("Peer recieved heartbeat request from bridge"));
-            Outgoing::printLine();
-            Outgoing::endToggleOnSecondaryOutgoing();
-        }
-#endif
-        Outgoing::printOutputStringPROGMEM(BasicCommands::RELAY_HEARTBEAT_RESPONSE);
-        Outgoing::printLine();
-        BottangoCore::lastHeartbeatTime = millis();
-    }
-
-#ifdef RELAY_COMS_ESPNOW
-    // initialize mac address response
-    void getMACAddress(char *args[])
-    {
-        if (BottangoCore::activeOutgoingMultimessage != nullptr)
-        {
-            // shouldn't have an active...
-            BottangoCore::activeOutgoingMultimessage->cleanUpMultiMessage();
-            BottangoCore::activeOutgoingMultimessage = nullptr;
-        }
-        BottangoCore::activeOutgoingMultimessage = new MACResponder();
-        BottangoCore::activeOutgoingMultimessage->initializeMultiMessage();
+		if (BottangoCore::activeOutgoingMultimessage != nullptr)
+		{
+			// shouldn't have an active...
+			BottangoCore::activeOutgoingMultimessage->cleanUpMultiMessage();
+			BottangoCore::activeOutgoingMultimessage = nullptr;
+		}
+		BottangoCore::activeOutgoingMultimessage = BottangoCore::relayPool;
 #ifdef RELAY_SUPPORTED
-        if (Outgoing::secondaryPeerOutgoing)
-        {
-            BottangoCore::activeOutgoingMultimessage->setSecondary();
-        }
+		if (Outgoing::secondaryPeerOutgoing)
+		{
+			BottangoCore::activeOutgoingMultimessage->setSecondary();
+		}
 #endif
-    }
+		BottangoCore::activeOutgoingMultimessage->initializeMultiMessage();
+	}
+
+	void deregisterRelayController(char** args)
+	{
+		int id = atoi(args[1]);
+		BottangoCore::relayPool->removeRelay(id);
+	}
+
+	void deregisterAllRelayControllers(char** args)
+	{
+		BottangoCore::relayPool->deregisterAll();
+	}
+
+	void passToRelayController(char** args, byte paramsCount)
+	{
+		int id = atoi(args[1]);
+		BottangoCore::relayPool->passThroughCommandToRelay(id, args, paramsCount);
+	}
+
+	void requestBoot(char** args)
+	{
+#ifdef RELAY_LOGGING
+#ifdef TOGGLE_DEBUG
+		if (PersistentConfigUtil::debugEnabled())
 #endif
+		{
+			Outgoing::toggleOnSecondaryOutgoing();
+			Outgoing::printOutputStringFlash(F("Peer recieved boot request from bridge"));
+			Outgoing::printLine();
+			Outgoing::endToggleOnSecondaryOutgoing();
+		}
 #endif
+		Outgoing::printOutputStringPROGMEM(BasicCommands::REPLY_PEER_BOOT);
+		Outgoing::printLine();
+	}
+
+	void requestPoll(char** args)
+	{
+#ifdef RELAY_LOGGING
+#ifdef TOGGLE_DEBUG
+		if (PersistentConfigUtil::debugEnabled())
+#endif
+		{
+			Outgoing::toggleOnSecondaryOutgoing();
+			Outgoing::printOutputStringFlash(F("Peer recieved poll request from bridge"));
+			Outgoing::printLine();
+			Outgoing::endToggleOnSecondaryOutgoing();
+		}
+#endif
+		Outgoing::printOutputStringPROGMEM(BasicCommands::RELAY_POLL_RESPONSE);
+		Outgoing::printLine();
+		BottangoCore::lastPollTimeAsPeer = millis();
+	}
+
+	// initialize mac address response
+	void getMACAddress(char* args[])
+	{
+		if (BottangoCore::activeOutgoingMultimessage != nullptr)
+		{
+			// shouldn't have an active...
+			BottangoCore::activeOutgoingMultimessage->cleanUpMultiMessage();
+			BottangoCore::activeOutgoingMultimessage = nullptr;
+		}
+		BottangoCore::activeOutgoingMultimessage = new MACResponder();
+		if (Outgoing::secondaryPeerOutgoing)
+		{
+			BottangoCore::activeOutgoingMultimessage->setSecondary();
+		}
+		BottangoCore::activeOutgoingMultimessage->initializeMultiMessage();
+	}
+#endif // RELAY_SUPPORTED
 
 #ifdef ALLOW_SYNC_COMMANDS
+	// ToDo: Das kann alles weg
     // Finds the next ';' in inputString, severs it, returns it in output
     // as one full command (prefix+data), then slides the remainder forward.
     // Returns true if it consumed a command, false when no ';' remains.
@@ -762,7 +765,7 @@ namespace BasicCommands
             BottangoCore::executeCommand(singleCommand, secondary);
         }
     }
-#endif
+#endif // ALLOW_SYNC_COMMANDS
 
     void reboot(bool forceSendReady)
     {
@@ -810,7 +813,7 @@ namespace BasicCommands
     }
 #endif
 
-//#ifdef AUDIO_SD_I2S
+#ifdef AUDIO_SD_I2S
 // ToDo: AudioBinaryUtil currently disabled (unfinished feature)
     //void processAudioBinary(char **args)
     //{
@@ -831,7 +834,7 @@ namespace BasicCommands
             AudioBinaryUtil::finishAudioBinary(args[2]);
         }*/
     //}
-//#endif
+#endif
 
 #if defined(ENABLE_DYNAMIC_ANIMATION_SOURCE_SWITCH) || defined(RELAY_SUPPORTED)
     void setConfiguration(char **args)
@@ -883,7 +886,7 @@ namespace BasicCommands
                 // may just be updating bridge address
                 uint8_t newMac[6];
                 uint8_t currentMac[6];
-                ESPNowUtil::convertCStrToMac(args[3], newMac);
+				(void)UDIDHelper::convertCStrToMAC(args[3], newMac);
                 bool gotBridgeMac = PersistentConfigUtil::getBridgeMacAddress(currentMac);
 
                 bool newMatchesCurrent = false;
