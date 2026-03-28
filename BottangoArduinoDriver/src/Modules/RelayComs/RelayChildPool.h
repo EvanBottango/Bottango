@@ -12,7 +12,7 @@
 
 #ifdef ESP32
 #include <freertos/semphr.h>
-#endif
+#endif // ESP32
 
 // Forward declaration of RelayChild
 class RelayChild;
@@ -43,9 +43,9 @@ public:
 #else
 	inline void lockPool() {}
 	inline void unlockPool() {}
-#endif
+#endif // ESP32
 
-	void addPeer(RelayChild* relay);
+	void addPeer(RelayChild* newPeer);
 
 	void removePeer(int id);
 
@@ -95,7 +95,7 @@ private:
 
 #ifdef ESP32
 	SemaphoreHandle_t _relayMutex = nullptr;
-#endif
+#endif // ESP32
 
 	bool isMacEqual(const uint8_t* mac1, const uint8_t* mac2) const;
 	int hash(const char* str) const;

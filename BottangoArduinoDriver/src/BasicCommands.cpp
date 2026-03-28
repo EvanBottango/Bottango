@@ -68,7 +68,7 @@ namespace BasicCommands
 				deregisterAllEffectors(NULL);
 			}
 		}
-#endif
+#endif // RELAY_SUPPORTED
 
 		// command name
 		Outgoing::printOutputStringPROGMEM(BasicCommands::HANDSHAKE);
@@ -86,6 +86,7 @@ namespace BasicCommands
 
 		Serial.flush();
 
+		// ToDo: Irgendwas stimmt hier nicht mit dem Status der gesetzt wird? Der Compile-Guard für die LEDs ist auch nicht mehr nötig
 #if defined(RELAY_SUPPORTED)
 		if (!sourceIsUsbSerial)
 		{
@@ -103,10 +104,9 @@ namespace BasicCommands
 			{
 				relay->setLastHeartbeatTime(millis());
 			}
-#endif
-
-			Callbacks::onThisControllerStarted();
 		}
+#endif // RELAY_SUPPORTED
+		Callbacks::onThisControllerStarted();
 	}
 
 	// initialize modules response
@@ -529,9 +529,10 @@ namespace BasicCommands
 	}
 
 #ifdef RELAY_SUPPORTED
-	void registerRelayController(char** args)
+	void registerPeer(char** args)
 	{
-		if (!BottangoCore::isRelayBridge)
+		Relay* relay = BottangoCore::mMaster.getModule<Relay>(Modules::RelayComs);
+		if (relay->getRole() != Relay::RelayRole::Bridge)
 		{
 			OutgoingSerial::printOutputStringFlash(F("Aborting register relay, Not bridge"));
 			OutgoingSerial::printLine();
@@ -545,16 +546,17 @@ namespace BasicCommands
 		if (PersistentConfigUtil::debugEnabled())
 #endif // TOGGLE_DEBUG
 		{
-			Outgoing::printOutputStringFlash(F("Reg Relay with Mac: "));
-			Outgoing::printOutputStringMem(macAddress);
-			Outgoing::printLine();
+			OutgoingSerial::printOutputStringFlash(F("Reg Relay with Mac: "));
+			OutgoingSerial::printOutputStringMem(macAddress);
+			OutgoingSerial::printLine();
 		}
 #endif // RELAY_LOGGING
 
-		RelayChild* newRelay = new RelayChild(macAddress);
-		BottangoCore::relayPool->addRelay(newRelay);
-		int relayId = BottangoCore::relayPool->getIdForRelay(newRelay);
-		BottangoCore::relayPool->setRelayIdToReport(relayId);
+		RelayChild* newPeer = new RelayChild(macAddress);
+		relay->getPeerPool()->addPeer(newPeer);
+
+		int relayId = relay->getPeerPool()->getIdForPeer(newPeer);
+		relay->getPeerPool()->setPeerIdToReport(relayId);
 
 		if (BottangoCore::activeOutgoingMultimessage != nullptr)
 		{
@@ -562,7 +564,7 @@ namespace BasicCommands
 			BottangoCore::activeOutgoingMultimessage->cleanUpMultiMessage();
 			BottangoCore::activeOutgoingMultimessage = nullptr;
 		}
-		BottangoCore::activeOutgoingMultimessage = BottangoCore::relayPool;
+		BottangoCore::activeOutgoingMultimessage = relay->getPeerPool();
 #ifdef RELAY_SUPPORTED
 		if (Outgoing::secondaryPeerOutgoing)
 		{
@@ -572,21 +574,21 @@ namespace BasicCommands
 		BottangoCore::activeOutgoingMultimessage->initializeMultiMessage();
 	}
 
-	void deregisterRelayController(char** args)
+	void deregisterPeer(char** args)
 	{
 		int id = atoi(args[1]);
-		BottangoCore::relayPool->removeRelay(id);
+		BottangoCore::mMaster.getModule<Relay>(Modules::RelayComs)->getPeerPool()->removePeer(id);
 	}
 
-	void deregisterAllRelayControllers(char** args)
+	void deregisterAllPeers(char** args)
 	{
-		BottangoCore::relayPool->deregisterAll();
+		BottangoCore::mMaster.getModule<Relay>(Modules::RelayComs)->getPeerPool()->deregisterAll();
 	}
 
-	void passToRelayController(char** args, byte paramsCount)
+	void passToPeer(char** args, byte paramsCount)
 	{
 		int id = atoi(args[1]);
-		BottangoCore::relayPool->passThroughCommandToRelay(id, args, paramsCount);
+		BottangoCore::mMaster.getModule<Relay>(Modules::RelayComs)->getPeerPool()->passThroughCommandToPeer(id, args, paramsCount);
 	}
 
 	void requestBoot(char** args)
@@ -596,10 +598,10 @@ namespace BasicCommands
 		if (PersistentConfigUtil::debugEnabled())
 #endif // TOGGLE_DEBUG
 		{
-			Outgoing::toggleOnSecondaryOutgoing();
-			Outgoing::printOutputStringFlash(F("Peer recieved boot request from bridge"));
-			Outgoing::printLine();
-			Outgoing::endToggleOnSecondaryOutgoing();
+			//Outgoing::toggleOnSecondaryOutgoing();
+			OutgoingSerial::printOutputStringFlash(F("Peer recieved boot request from bridge"));
+			OutgoingSerial::printLine();
+			//Outgoing::endToggleOnSecondaryOutgoing();
 		}
 #endif // RELAY_LOGGING
 		Outgoing::printOutputStringPROGMEM(BasicCommands::REPLY_PEER_BOOT);
@@ -611,17 +613,18 @@ namespace BasicCommands
 #ifdef RELAY_LOGGING
 #ifdef TOGGLE_DEBUG
 		if (PersistentConfigUtil::debugEnabled())
-#endif
+#endif // TOGGLE_DEBUG
 		{
-			Outgoing::toggleOnSecondaryOutgoing();
-			Outgoing::printOutputStringFlash(F("Peer recieved poll request from bridge"));
-			Outgoing::printLine();
-			Outgoing::endToggleOnSecondaryOutgoing();
+			//Outgoing::toggleOnSecondaryOutgoing();
+			OutgoingSerial::printOutputStringFlash(F("Peer recieved poll request from bridge"));
+			OutgoingSerial::printLine();
+			//Outgoing::endToggleOnSecondaryOutgoing();
 		}
-#endif
+#endif // RELAY_LOGGING
 		Outgoing::printOutputStringPROGMEM(BasicCommands::RELAY_POLL_RESPONSE);
 		Outgoing::printLine();
 		BottangoCore::lastPollTimeAsPeer = millis();
+		//BottangoCore::mMaster.getModule<Relay>(Modules::RelayComs)->setLastHeartbeatTime(millis());
 	}
 
 	// initialize mac address response
@@ -642,133 +645,21 @@ namespace BasicCommands
 	}
 #endif // RELAY_SUPPORTED
 
-#ifdef ALLOW_SYNC_COMMANDS
-	// ToDo: Das kann alles weg
-	// Finds the next ';' in inputString, severs it, returns it in output
-	// as one full command (prefix+data), then slides the remainder forward.
-	// Returns true if it consumed a command, false when no ';' remains.
-	bool getNextSyncCommand(char syncCmd[], char prefixBuffer[CMD_PREFIX_SIZE], char outputCommand[MAX_COMMAND_LENGTH])
-	{
-		// empty
-		// or starts with newline (export end of command)
-		// or starts with , (live control ends with ,hXYZ hash)
-		if (syncCmd[0] == '\0' || syncCmd[0] == '\n' || syncCmd[0] == ',')
-		{
-			return false;
-		}
-
-		// Update prefix if this chunk starts with '*'
-		if (syncCmd[0] == '*')
-		{
-			char* commaPtr = strchr(syncCmd + 1, ',');
-			int newPrefixLen = int(commaPtr - (syncCmd + 1) + 1);
-			memcpy(prefixBuffer, syncCmd + 1, newPrefixLen);
-			prefixBuffer[newPrefixLen] = '\0';
-
-			// Remove the "*prefix," from buffer
-			char* remainder = commaPtr + 1;
-			memmove(syncCmd, remainder, strlen(remainder) + 1);
-
-			// Recurse to fetch the actual command next
-			return getNextSyncCommand(syncCmd, prefixBuffer, outputCommand);
-		}
-
-		// Find the next ';' to isolate a raw chunk
-		char* semicolonPtr = strchr(syncCmd, ';');
-		size_t rawChunkLength;
-		char* nextStart;
-
-		if (semicolonPtr)
-		{
-			rawChunkLength = semicolonPtr - syncCmd;
-			nextStart = semicolonPtr + 1;
-		}
-		else
-		{
-			rawChunkLength = strlen(syncCmd);
-			nextStart = syncCmd + rawChunkLength;
-		}
-
-		// Skip over existing prefix in the chunk
-		int prefixLen = strlen(prefixBuffer);
-		char* dataStart = syncCmd;
-		size_t dataLength = rawChunkLength;
-
-		if (rawChunkLength >= (size_t)prefixLen &&
-			strncmp(syncCmd, prefixBuffer, prefixLen) == 0)
-		{
-			dataStart = syncCmd + prefixLen;
-			dataLength = rawChunkLength - prefixLen;
-		}
-
-		// Build outputCommand = prefix + dataStart
-		size_t copyLength = dataLength;
-		if ((size_t)prefixLen + copyLength >= MAX_COMMAND_LENGTH)
-		{
-			copyLength = MAX_COMMAND_LENGTH - prefixLen - 1;
-		}
-
-		memcpy(outputCommand, prefixBuffer, prefixLen);
-		memcpy(outputCommand + prefixLen, dataStart, copyLength);
-		outputCommand[prefixLen + copyLength] = '\0';
-
-		// Remove the processed chunk (and its ';') from buffer
-		memmove(syncCmd, nextStart, strlen(nextStart) + 1);
-
-		return true;
-	}
-
-	void beginGetNextSyncCommand(char* syncCmd, char prefixBuffer[CMD_PREFIX_SIZE])
-	{
-		// 1) Strip up to and including the first comma
-		// String contains: sSY,sc,id1,x,y,z;id2,x,y,z;id3,x,y,z*scI,id4,hash/0
-		//                      | Pointer
-		char* commaPtr = strchr(syncCmd, ',');
-		memmove(syncCmd, commaPtr + 1, strlen(commaPtr + 1) + 1);
-
-		// 2) Seed prefixBuffer with the first token
-		// String contains: sc,id1,x,y,z;id2,x,y,z;id3,x,y,z*scI,id4,hash/0
-		commaPtr = strchr(syncCmd, ',');
-		int seedLength = int(commaPtr - syncCmd + 1);
-		memcpy(prefixBuffer, syncCmd, seedLength);
-
-		// String contains: sc
-		prefixBuffer[seedLength] = '\0';
-	}
-
-	void executeSyncronizedCommands(char* syncCmd, bool secondary)
-	{
-		char prefixBuffer[CMD_PREFIX_SIZE] = { 0 };
-		beginGetNextSyncCommand(syncCmd, prefixBuffer);
-
-		// Loop and execute each command
-		char singleCommand[MAX_COMMAND_LENGTH] = { 0 };
-		while (getNextSyncCommand(syncCmd, prefixBuffer, singleCommand))
-		{
-			BottangoCore::executeCommand(singleCommand, secondary);
-		}
-	}
-#endif // ALLOW_SYNC_COMMANDS
-
 	void reboot(bool forceSendReady)
 	{
 		if (forceSendReady)
 		{
-			Outgoing::printOutputStringPROGMEM(BasicCommands::READY);
-			// cover all bases, send secondary ok as well, if the config command came over serial
+			// cover all bases, send OK to all outputs
+			OutgoingSerial::printOutputStringPROGMEM(BasicCommands::READY);
+			OutgoingSerial::flush();
 #ifdef RELAY_SUPPORTED
-			if (!Outgoing::secondaryPeerOutgoing)
-			{
-				Outgoing::setSecondaryPeerOutgoing(true);
-				Outgoing::printOutputStringPROGMEM(BasicCommands::READY);
-				Outgoing::flush();
-				Outgoing::setSecondaryPeerOutgoing(false);
-			}
-#endif
+			OutgoingRelay::printOutputStringPROGMEM(BasicCommands::READY);
+			OutgoingRelay::flush();
+#endif // RELAY_SUPPORTED
 		}
+
 #ifdef ESP32
 		// this feels risky?
-		Outgoing::flush();
 		delay(150);
 		ESP.restart();
 #elif defined(TEENSYDUINO)
@@ -794,7 +685,7 @@ namespace BasicCommands
 			OTAUpdateUtil::finishOTA(args[2]);
 		}
 	}
-#endif
+#endif // ENABLE_ESP_OTA_UPDATE
 
 #ifdef AUDIO_SD_I2S
 	// ToDo: AudioBinaryUtil currently disabled (unfinished feature)
@@ -817,7 +708,7 @@ namespace BasicCommands
 				AudioBinaryUtil::finishAudioBinary(args[2]);
 			}*/
 			//}
-#endif
+#endif // AUDIO_SD_I2S
 
 #if defined(ENABLE_DYNAMIC_ANIMATION_SOURCE_SWITCH) || defined(RELAY_SUPPORTED)
 	void setConfiguration(char** args)
@@ -840,7 +731,7 @@ namespace BasicCommands
 			}
 			return;
 		}
-#endif
+#endif // ENABLE_DYNAMIC_ANIMATION_SOURCE_SWITCH
 
 #if defined(DYNAMIC_STOP_BUTTON_BEHAVIOR)
 		// set command source
@@ -850,7 +741,7 @@ namespace BasicCommands
 			PersistentConfigUtil::setStopIsShutdown((bool)setValue);
 			return;
 		}
-#endif
+#endif // DYNAMIC_STOP_BUTTON_BEHAVIOR
 
 #if defined(RELAY_SUPPORTED)
 		if (strcmp_P(args[1], BasicCommands::SET_CONFIG_RELAY_TYPE) == 0)
@@ -907,8 +798,8 @@ namespace BasicCommands
 			}
 			return;
 		}
-#endif
+#endif // RELAY_SUPPORTED
 	}
-#endif
+#endif // ENABLE_DYNAMIC_ANIMATION_SOURCE_SWITCH || RELAY_SUPPORTED
 
 } // namespace BasicCommands

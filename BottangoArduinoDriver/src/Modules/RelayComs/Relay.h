@@ -39,7 +39,8 @@ public:
 	virtual bool peerRecvAvailable() = 0;
 	virtual char peerReadNextChar() = 0;
 
-	RelayRole getRole() const { return _relayRole; }
+	RelayChildPool* getPeerPool() const { return _relayPool; }
+	RelayRole getRole() const { return _relayRole; }	
 
 	void setLastHeartbeatTime(unsigned long time) { lastHeartbeatTime = time; }
 

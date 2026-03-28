@@ -11,8 +11,11 @@
 
 class RelayChild
 {
-
 public:
+	int stableId = -1;
+	uint8_t mac_addr[6];
+	bool connected;
+
 	RelayChild(char* macAddress);
 	void passDownCommands(char* commands);
 	void passUpCommands(char* commands);
@@ -22,19 +25,16 @@ public:
 	void markPollOutstanding();
 	void clearPollOutstanding();
 	bool pollOutstandingAndExpired(unsigned long now, unsigned long timeout);
-	int stableId = -1;
-	uint8_t mac_addr[6];
-	bool connected;
 
 private:
+	TxtBuffer<TXT_BUFFER_SIZE_RX_FROM_PEER> _incomingFromPeerBuffer;
+	char _disconnectedMessageHoldingBuffer[MAX_COMMAND_LENGTH] = { 0 };
+	unsigned long _lastTxTime = 0;
+	bool _pollOutstanding = false;
+
 	void onConnectionComplete();
 	void onReboot();
-
-	TxtBuffer<TXT_BUFFER_SIZE_RX_FROM_PEER> incomingFromPeerBuffer;
-	char disconnectedMessageHoldingBuffer[MAX_COMMAND_LENGTH] = { 0 };
-	unsigned long lastTxTime = 0;
-	bool pollOutstanding = false;
 };
 
-#endif
-#endif
+#endif // RelayChild_h
+#endif // RELAY_SUPPORTED

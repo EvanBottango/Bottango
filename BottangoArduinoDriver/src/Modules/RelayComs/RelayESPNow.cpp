@@ -770,18 +770,15 @@ void RelayCommsESPNow::registerPeer(const uint8_t * mac_addr)
 #ifdef RELAY_LOGGING
 #ifdef TOGGLE_DEBUG
 		if (PersistentConfigUtil::debugEnabled() || ALWAYS_LOG_ERROR_CASE)
-#endif
+#endif // TOGGLE_DEBUG
 		{
-			//Outgoing::toggleOnSecondaryOutgoing();
 			OutgoingSerial::printOutputStringFlash(F("Failed to add peer: "));
 			OutgoingSerial::printOutputStringMem(esp_err_to_name(ret));
 			OutgoingSerial::printOutputStringFlash(F(" "));
 			OutgoingSerial::printOutputStringMem(String(ret, HEX).c_str());
 			OutgoingSerial::printLine();
-			//Outgoing::endToggleOnSecondaryOutgoing();
 		}
-
-#endif
+#endif // RELAY_LOGGING
 		return;
 	}
 

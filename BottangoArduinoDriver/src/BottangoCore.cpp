@@ -223,9 +223,14 @@ namespace BottangoCore
 
 #ifdef ENABLE_STATUS_LIGHTS
 #ifdef RELAY_SUPPORTED
-		SystemStatus::systemStatus.ConnectionStatus = isRelayPeer
-			? SystemStatus::eConnectionStatus::No_Connection_Peer
-			: SystemStatus::eConnectionStatus::No_Connection_Serial;
+		if (mMaster.getModule<Relay>(Modules::RelayComs)->getRole() == Relay::RelayRole::Peer)
+		{
+			SystemStatus::eConnectionStatus::No_Connection_Peer;
+		}
+		else
+		{
+			SystemStatus::eConnectionStatus::No_Connection_Serial;
+		}
 #else
 		SystemStatus::systemStatus.ConnectionStatus = SystemStatus::eConnectionStatus::No_Connection_Serial;
 #endif
@@ -362,165 +367,6 @@ namespace BottangoCore
 		}
 
 		paramsCount = idxResult;*/
-		return true;
-	}
-
-	// note this is destructive to the string
-	unsigned long getMSTimeOfCommand(char* commandString, bool returnStartTime)
-	{
-
-#ifdef RELAY_SUPPORTED
-		// need to trim "sR,Idx" and then recurse back
-		if (strncmp_P(commandString, BasicCommands::PASS_TO_RELAY, 2) == 0)
-		{
-			char* thirdFieldStart = commandString;
-
-			// Find the comma after the 1st field, then again after the 2nd
-			for (int skip = 0; skip < 2; ++skip)
-			{
-				thirdFieldStart = strchr(thirdFieldStart, ','); // strchr returns a pointer to the comma
-				++thirdFieldStart;                              // move one past it, so we land at the start of the next field
-			}
-
-			// Now thirdFieldStart points to the first character of the 3rd field.
-			// Shift everything from there (including the '\0') down to the front.
-			memmove(commandString, thirdFieldStart, strlen(thirdFieldStart) + 1);
-
-			return getMSTimeOfCommand(commandString, returnStartTime);
-		}
-#endif
-
-#ifdef ALLOW_SYNC_COMMANDS
-		// recurse through all sync commands for the earliest start
-		if (strncmp_P(commandString, BasicCommands::SYNC_COMMAND, 3) == 0)
-		{
-			bool firstTimeSet = false;
-			unsigned long resultTime = 0;
-
-			char prefixBuffer[CMD_PREFIX_SIZE] = { 0 };
-			char splitCmd[MAX_COMMAND_LENGTH] = { 0 };
-			BasicCommands::beginGetNextSyncCommand(commandString, prefixBuffer);
-			while (BasicCommands::getNextSyncCommand(commandString, prefixBuffer, splitCmd))
-			{
-				unsigned long subCmdTime = getMSTimeOfCommand(splitCmd, returnStartTime);
-				if (!firstTimeSet || (returnStartTime && subCmdTime < resultTime) || (!returnStartTime && subCmdTime > resultTime))
-				{
-					resultTime = subCmdTime;
-				}
-			}
-
-			return resultTime;
-		}
-#endif
-
-		char cmdCopy[MAX_COMMAND_LENGTH] = { 0 };
-		strcpy(cmdCopy, commandString);
-
-		byte paramsCount = 0;
-		bool splitSuccess = splitIntoBuffer(commandString, paramsCount);
-		if (!splitSuccess)
-		{
-			return Time::getCurrentTimeInMs();
-		}
-
-		unsigned long time = Time::getCurrentTimeInMs();
-
-		// Note / ToDo: This is still needed, but is commented out for now, until I get to the point of the relay stuff. The global var splitCommandBuffer does not exist anymore.
-	   /*char* commandName = splitCommandBuffer[0];
-
-		if (returnStartTime)
-		{
-			if (strcmp_P(commandName, BasicCommands::SET_CURVE) == 0 ||
-				strcmp_P(commandName, BasicCommands::SET_ONOFFCURVE) == 0 ||
-				strcmp_P(commandName, BasicCommands::SET_TRIGGERCURVE) == 0 ||
-				strcmp_P(commandName, BasicCommands::SET_COLOR_CURVE) == 0)
-			{
-				time = Time::getLastSyncedTimeInMs() + atol(splitCommandBuffer[2]);
-			}
-		}
-		else
-		{
-			if (strcmp_P(commandName, BasicCommands::SET_CURVE) == 0 ||
-				strcmp_P(commandName, BasicCommands::SET_COLOR_CURVE) == 0)
-			{
-
-				unsigned long startTime = getMSTimeOfCommand(cmdCopy, true);
-				time = startTime + atol(splitCommandBuffer[3]);
-			}
-		}*/
-
-		return time;
-	}
-
-	bool externalCommandIsAllowed(char* commandString, bool secondary)
-	{
-/*
-#if defined(USE_CODE_COMMAND_STREAM) || defined(USE_SD_CARD_COMMAND_STREAM)
-		bool offline = isOffline();
-
-		bool limitiedCmdSet = offline;
-#ifdef RELAY_SUPPORTED
-		if (isRelayPeer && secondary)
-		{
-			limitiedCmdSet = true;
-		}
-#endif
-
-		if (limitiedCmdSet)
-		{
-
-			byte commandCount = 0;
-			bool splitSuccess = splitIntoBuffer(commandString, commandCount);
-			if (!splitSuccess)
-			{
-				// ignoring invalid command
-				return false;
-			}
-
-			char* commandName = splitCommandBuffer[0];
-
-			// handshake request is allowed
-			if (strcmp_P(commandName, BasicCommands::HANDSHAKE_REQUEST) == 0)
-			{
-				return true;
-			}
-			// modules request is allowed
-			else if (strcmp_P(commandName, BasicCommands::MODULES_REQUEST) == 0)
-			{
-				return true;
-			}
-			// continue modules request is allowed
-			else if (strcmp_P(commandName, BasicCommands::READY_FOR_NEXT_RESPONSE) == 0)
-			{
-				return true;
-			}
-#ifdef ENABLE_ESP_OTA_UPDATE
-			// esp32 ota update is allowed
-			else if (strcmp_P(commandName, BasicCommands::OTA_UPDATE) == 0)
-			{
-				return true;
-			}
-#endif
-#ifdef ENABLE_DYNAMIC_ANIMATION_SOURCE_SWITCH
-			// switch configuration is allowed
-			else if (strcmp_P(commandName, BasicCommands::SET_CONFIG) == 0)
-			{
-				return true;
-			}
-#endif
-#ifdef RELAY_COMS_ESPNOW
-			// get MAC address is allowed
-			else if (strcmp_P(commandName, BasicCommands::GET_MAC_ADDRESS) == 0)
-			{
-				return true;
-			}
-#endif
-			// otherwise ignore
-
-			return false;
-		}
-#endif
-		// allowed, not offline*/
 		return true;
 	}
 
@@ -675,7 +521,7 @@ namespace BottangoCore
 #endif		
 	}
 
-	bool isOffline()
+	/*bool isOffline()
 	{
 		bool offline = false;
 #if defined(USE_CODE_COMMAND_STREAM) || defined(USE_SD_CARD_COMMAND_STREAM)
@@ -689,7 +535,7 @@ namespace BottangoCore
 #endif
 #endif
 		return offline;
-	}
+	}*/
 
 	void updateReadBuffer(bool secondary)
 	{
@@ -902,7 +748,7 @@ namespace BottangoCore
 
 	bool rcvAvailable(bool secondary)
 	{
-#ifdef RELAY_SUPPORTED
+	/*#ifdef RELAY_SUPPORTED
 		if (isRelayPeer)
 		{
 			if (secondary)
@@ -920,17 +766,17 @@ namespace BottangoCore
 		}
 
 #elif defined(USE_USB_SERIAL)
-		return Serial.available() > 0;
+		return Serial.available() > 0;*/
 
-#elif defined(USE_ESP32_WIFI)
+#if defined(USE_ESP32_WIFI)
 		return client.available() > 0;
-
 #endif
+		return '\0';
 	}
 
 	char readNextChar(bool secondary)
 	{
-#ifdef RELAY_SUPPORTED
+	/*#ifdef RELAY_SUPPORTED
 		if (isRelayPeer)
 		{
 			if (secondary)
@@ -947,11 +793,12 @@ namespace BottangoCore
 			return Serial.read();
 		}
 #elif defined(USE_USB_SERIAL)
-		return Serial.read();
+		return Serial.read();*/
 
-#elif defined(USE_ESP32_WIFI)
+#if defined(USE_ESP32_WIFI)
 		return client.read();
 #endif
+		return '\0';
 	}
 
 } // namespace BottangoCore

@@ -187,15 +187,15 @@ bool Parser::parseCommand(char** splitCommandBuffer, bool sourceIsUsbSerial) con
 #ifdef RELAY_SUPPORTED
 	else if (strcmp_P(commandName, BasicCommands::REGISTER_RELAY) == 0)
 	{
-		BasicCommands::registerRelayController(splitCommandBuffer);
+		BasicCommands::registerPeer(splitCommandBuffer);
 	}
 	else if (strcmp_P(commandName, BasicCommands::DEREGISTER_RELAY) == 0)
 	{
-		BasicCommands::deregisterRelayController(splitCommandBuffer);
+		BasicCommands::deregisterPeer(splitCommandBuffer);
 	}
 	else if (strcmp_P(commandName, BasicCommands::DEREGISTER_ALL_RELAY) == 0)
 	{
-		BasicCommands::deregisterAllRelayControllers(splitCommandBuffer);
+		BasicCommands::deregisterAllPeers(splitCommandBuffer);
 	}
 	else if (strcmp_P(commandName, BasicCommands::RELAY_POLL_REQUEST) == 0)
 	{

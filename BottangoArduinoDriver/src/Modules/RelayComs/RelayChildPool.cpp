@@ -23,7 +23,7 @@ RelayChildPool::RelayChildPool()
 #endif
 }
 
-void RelayChildPool::addPeer(RelayChild* relay)
+void RelayChildPool::addPeer(RelayChild* newPeer)
 {
 	lockPool();
 
@@ -34,11 +34,11 @@ void RelayChildPool::addPeer(RelayChild* relay)
 		return;
 	}
 
-	RelayChild* existingRelay = getPeer(relay->mac_addr);
+	RelayChild* existingRelay = getPeer(newPeer->mac_addr);
 
 	if (existingRelay != nullptr)
 	{
-		Error::reportError_RelayCollision(relay->mac_addr);
+		Error::reportError_RelayCollision(newPeer->mac_addr);
 		unlockPool();
 		return;
 	}
@@ -50,8 +50,8 @@ void RelayChildPool::addPeer(RelayChild* relay)
 			unlockPool();
 			return;
 		}
-		relay->stableId = relayId;
-		_relays.pushBack(relay);
+		newPeer->stableId = relayId;
+		_relays.pushBack(newPeer);
 	}
 
 	unlockPool();

@@ -161,7 +161,7 @@ namespace BasicCommands
 	 * Command to get ESPNOW mac address
 	 */
 	const char GET_MAC_ADDRESS[] PROGMEM = "rMAC";
-#endif
+#endif // RELAY_SUPPORTED
 
 #ifdef ALLOW_SYNC_COMMANDS
     /**
@@ -169,7 +169,7 @@ namespace BasicCommands
      * rest of tokens are the combined command with sync'd syntax
      */
     inline const char SYNC_COMMAND[] PROGMEM = "sSY";
-#endif
+#endif // ALLOW_SYNC_COMMANDS
 
 #ifdef ENABLE_ESP_OTA_UPDATE
     /**
@@ -178,7 +178,7 @@ namespace BasicCommands
      * [1] ota param. s has no param, d is data in 64 byte or less chunk, e is expected checksum of data
      */
     inline const char OTA_UPDATE[] PROGMEM = "ota";
-#endif
+#endif // ENABLE_ESP_OTA_UPDATE
 
 //#ifdef AUDIO_SD_I2S
 
@@ -204,21 +204,21 @@ namespace BasicCommands
      * [1] config switch option (see below)
      */
     inline const char SET_CONFIG[] PROGMEM = "sCfg";
-#endif
+#endif // ENABLE_DYNAMIC_ANIMATION_SOURCE_SWITCH || RELAY_SUPPORTED
 
 #ifdef ENABLE_DYNAMIC_ANIMATION_SOURCE_SWITCH
     /**
      * [1 on sCfg] config switch option, command source
      */
     inline const char SET_CONFIG_COMMAND_SOURCE[] PROGMEM = "CMD"; // set command source sub param
-#endif
+#endif // ENABLE_DYNAMIC_ANIMATION_SOURCE_SWITCH
 
 #ifdef DYNAMIC_STOP_BUTTON_BEHAVIOR
     /**
      * [1 on sCfg] stop button option, 0 is pause, 1 is shutdown
      */
     inline const char SET_CONFIG_STOP_BUTTON[] PROGMEM = "STP_BTN"; // set stop button behavior
-#endif
+#endif // DYNAMIC_STOP_BUTTON_BEHAVIOR
 
 #ifdef RELAY_SUPPORTED
     /**
@@ -230,8 +230,7 @@ namespace BasicCommands
     inline const char RELAY_PEER_STOP_TIME[] PROGMEM = "STOP_TIME";   // set command source sub param
 	inline const char RELAY_POLL_REQUEST[] PROGMEM = "RLY_POLL";	// Relay poll request
 	inline const char RELAY_POLL_RESPONSE[] PROGMEM = "RLY_ACK";	// Relay poll response
-
-#endif
+#endif // RELAY_SUPPORTED
 
 	/** !!!!!!!!!! */
 	/** OUTGOING STRINGS */
@@ -326,34 +325,29 @@ namespace BasicCommands
 	void clearCurvesForEffector(char** args);
 
 #ifdef RELAY_SUPPORTED
-	void registerRelayController(char** args);
+	void registerPeer(char** args);
 
-	void deregisterRelayController(char** args);
+	void deregisterPeer(char** args);
 
-	void deregisterAllRelayControllers(char** args);
+	void deregisterAllPeers(char** args);
 
-	void passToRelayController(char** args, byte paramsCount);
+	void passToPeer(char** args, byte paramsCount);
 
 	void requestBoot(char** args);
 
 	void requestPoll(char** args);
 
 	void getMACAddress(char** args);
-#endif
+#endif // RELAY_SUPPORTED
 
-#ifdef ALLOW_SYNC_COMMANDS
-	bool getNextSyncCommand(char syncCmd[], char prefixBuffer[CMD_PREFIX_SIZE], char outputCommand[MAX_COMMAND_LENGTH]);
-	void beginGetNextSyncCommand(char* syncCmd, char prefixBuffer[CMD_PREFIX_SIZE]);
-	void executeSyncronizedCommands(char* syncCmd, bool secondary);
-#endif
 #ifdef ENABLE_ESP_OTA_UPDATE
 	void processOTA(char** args);
-#endif
+#endif // ENABLE_ESP_OTA_UPDATE
 
 #ifdef AUDIO_SD_I2S
 	//void processAudioBinary(char** args);
 	void registerAudioEvent(char** args);
-#endif
+#endif // AUDIO_SD_I2S
 
 #if defined(AUDIO_SD_I2S) || defined(ENABLE_ESP_OTA_UPDATE)
 #define BINARY_FLAG_START 's'
@@ -363,7 +357,7 @@ namespace BasicCommands
 
 #if defined(ENABLE_DYNAMIC_ANIMATION_SOURCE_SWITCH) || defined(RELAY_SUPPORTED)
 	void setConfiguration(char** args);
-#endif
+#endif // ENABLE_DYNAMIC_ANIMATION_SOURCE_SWITCH || RELAY_SUPPORTED
 
 	void reboot(bool forceSendReady);
 

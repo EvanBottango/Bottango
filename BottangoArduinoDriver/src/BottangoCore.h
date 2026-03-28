@@ -42,11 +42,7 @@ namespace BottangoCore
 
     void updateReadBuffer(bool secondary);
 
-    unsigned long getMSTimeOfCommand(char *commandString, bool returnStartTime);
-
-    bool externalCommandIsAllowed(char *commandString, bool secondary);
-
-    bool isOffline();
+    //bool isOffline();
 
     extern EffectorPool effectorPool;
     extern AbstractMultiMessageOutgoingSource *activeOutgoingMultimessage;
