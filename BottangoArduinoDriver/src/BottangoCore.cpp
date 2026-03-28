@@ -72,34 +72,12 @@ namespace BottangoCore
 #endif
 
 		// init comms types
-#if defined(RELAY_SUPPORTED)
-		//initRelayComs();
-//#elif defined(USE_USB_SERIAL)
-		// Note: Moved to mMaster.initModules();
-		//initUSBSerialComms();
-#elif defined(USE_ESP32_WIFI)
+#if defined(USE_ESP32_WIFI)
 		initESP32WifiComs();
 #endif
 
 		// init status lights
 #ifdef ENABLE_STATUS_LIGHTS
-/*#ifdef RELAY_SUPPORTED
-		if (isRelayPeer)
-		{
-			SystemStatus::systemStatus.ConnectionStatus = SystemStatus::eConnectionStatus::No_Connection_Peer;
-			//StatusLights::setDesiredColor(CONNECTION_STATUS_LIGHT, STATUS_COLOR_NO_CONNECTION_PEER);
-			//StatusLights::setLightMode(CONNECTION_STATUS_LIGHT, StatusLights::LightMode::MODE_BLINK);
-		}
-		else
-		{
-			SystemStatus::systemStatus.ConnectionStatus = SystemStatus::eConnectionStatus::No_Connection_Serial;
-			//StatusLights::setDesiredColor(CONNECTION_STATUS_LIGHT, STATUS_COLOR_NO_CONNECTION_SERIAL);
-			//StatusLights::setLightMode(CONNECTION_STATUS_LIGHT, StatusLights::LightMode::MODE_BLINK);
-		}
-#else	
-		//StatusLights::setDesiredColor(CONNECTION_STATUS_LIGHT, STATUS_COLOR_NO_CONNECTION_SERIAL);
-		//StatusLights::setLightMode(CONNECTION_STATUS_LIGHT, StatusLights::LightMode::MODE_BLINK);
-#endif*/
 		SystemStatus::systemStatus.Signal = SystemStatus::eSignal::Off;
 		SystemStatus::systemStatus.UserLED = SystemStatus::eUserLED::Off;
 		//StatusLights::setDesiredColor(SIGNAL_STATUS_LIGHT, CRGB::Black);
@@ -108,7 +86,7 @@ namespace BottangoCore
 
 // enter exported animation if required
 //#ifdef ENABLE_DYNAMIC_ANIMATION_SOURCE_SWITCH
-		// ToDo: implement dynamic source switch
+		// ToDo: implement dynamic source switch <- das müsste eigentlich drin sein
 //        if (PersistentConfigUtil::getUseExportedCommandStream())
 //#endif
 //#if defined(USE_CODE_COMMAND_STREAM) || defined(USE_SD_CARD_COMMAND_STREAM)
@@ -129,26 +107,6 @@ namespace BottangoCore
 		// Setup is done
 		SystemStatus::systemStatus.initialized = true;
 		Callbacks::onThisControllerStarted();
-	}
-
-	void initUSBSerialComms()
-	{
-		Serial.begin(BAUD_RATE);
-#ifdef RELAY_SUPPORTED
-		if (isRelayPeer)
-		{
-			Outgoing::setSecondaryPeerOutgoing(true);
-		}
-#endif
-		Outgoing::printLine();
-		Outgoing::printOutputStringPROGMEM(BasicCommands::BOOT);
-		Outgoing::printLine();
-#ifdef RELAY_SUPPORTED
-		if (isRelayPeer)
-		{
-			Outgoing::setSecondaryPeerOutgoing(false);
-		}
-#endif
 	}
 
 #ifdef USE_ESP32_WIFI
@@ -282,7 +240,7 @@ namespace BottangoCore
 		}
 		else
 		{
-			Outgoing::outgoing_requestStopPlay();
+			OutgoingSerial::printOutputStringPROGMEM(BasicCommands::STOP_PLAY);
 		}
 	}
 
@@ -295,7 +253,7 @@ namespace BottangoCore
 		}
 		else
 		{
-			Outgoing::outgoing_requestEStop();
+			OutgoingSerial::printOutputStringPROGMEM(BasicCommands::ESTOP);
 		}
 	}
 
@@ -407,214 +365,6 @@ namespace BottangoCore
 		return true;
 	}
 
-	// parses the serial buffer and turns it into commands
-	// param commandString: e.g. "rSP,9,1000,3000"
-	bool executeCommand(char* commandString, bool secondary)
-	{
-		return true;
-
-		/*bool sendReady = true;
-
-		SystemStatus::systemStatus.CommandStatus = SystemStatus::eCommandStatus::NewCommand;
-
-#ifdef ALLOW_SYNC_COMMANDS
-		// before split, check if this is a syncronized command
-		// we don't actually want to split a syncronized command, but to parse it's own unique syntax
-		if (strncmp_P(commandString, BasicCommands::SYNC_COMMAND, 3) == 0)
-		{
-			BasicCommands::executeSyncronizedCommands(commandString, secondary);
-			return sendReady;
-		}
-#endif
-
-		byte paramsCount = 0;
-		bool splitSuccess = splitIntoBuffer(commandString, paramsCount);
-		if (!splitSuccess)
-		{
-			return sendReady;
-		}
-
-		// The command name is the first string in the array, subsequent strings are parameters of that command
-		char *commandName = splitCommandBuffer[0];
-
-		// to all who may judge a giant list of if / else... I get it.
-		// but also, benchamarking proved this to be faster than any other more elegant looking approach
-		// so it may be ugly... but it's quick.
-
-		if (strcmp_P(commandName, BasicCommands::SET_CURVE) == 0)
-		{
-			BasicCommands::addCurve(splitCommandBuffer);
-		}
-		else if (strcmp_P(commandName, BasicCommands::SET_INSTANTCURVE) == 0)
-		{
-			BasicCommands::addInstantCurve(splitCommandBuffer);
-		}
-		else if (strcmp_P(commandName, BasicCommands::STOP) == 0)
-		{
-			BasicCommands::stop(splitCommandBuffer);
-		}
-#ifdef RELAY_SUPPORTED
-		else if (strcmp_P(commandName, BasicCommands::PASS_TO_RELAY) == 0)
-		{
-			BasicCommands::passToRelayController(splitCommandBuffer, paramsCount);
-		}
-#endif
-		else if (strcmp_P(commandName, BasicCommands::TIME_SYNC) == 0)
-		{
-			BasicCommands::syncTime(splitCommandBuffer);
-		}
-		else if (strcmp_P(commandName, BasicCommands::DEREGISTER_ALL_EFFECTORS) == 0)
-		{
-			BasicCommands::deregisterAllEffectors(splitCommandBuffer);
-		}
-		else if (strcmp_P(commandName, BasicCommands::HANDSHAKE_REQUEST) == 0)
-		{
-			BasicCommands::sendHandshakeResponse(splitCommandBuffer, secondary);
-		}
-		else if (strcmp_P(commandName, BasicCommands::MODULES_REQUEST) == 0)
-		{
-			BasicCommands::startModulesResponse(splitCommandBuffer);
-		}
-		else if (strcmp_P(commandName, BasicCommands::READY_FOR_NEXT_RESPONSE) == 0)
-		{
-			BasicCommands::continueInProgressMultiMessageResponse(splitCommandBuffer);
-		}
-		else if (strcmp_P(commandName, BasicCommands::CLEAR_ALL_CURVES) == 0)
-		{
-			BasicCommands::clearAllCurves(splitCommandBuffer);
-		}
-		else if (strcmp_P(commandName, BasicCommands::UPDATE_EFFECTOR_SIGNAL_BOUNDS) == 0)
-		{
-			BasicCommands::updateEffectorSignalBounds(splitCommandBuffer);
-		}
-		else if (strcmp_P(commandName, BasicCommands::SET_ONOFFCURVE) == 0)
-		{
-			BasicCommands::addOnOffCurve(splitCommandBuffer);
-		}
-		else if (strcmp_P(commandName, BasicCommands::SET_TRIGGERCURVE) == 0)
-		{
-			BasicCommands::addTriggerCurve(splitCommandBuffer);
-		}
-		else if (strcmp_P(commandName, BasicCommands::CLEAR_EFFECTOR_CURVES) == 0)
-		{
-			BasicCommands::clearCurvesForEffector(splitCommandBuffer);
-		}
-		else if (strcmp_P(commandName, BasicCommands::SET_COLOR_CURVE) == 0)
-		{
-			BasicCommands::addColorCurve(splitCommandBuffer);
-		}
-		else if (strcmp_P(commandName, BasicCommands::SET_INSTANT_COLOR_CURVE) == 0)
-		{
-			BasicCommands::addInstantColorCurve(splitCommandBuffer);
-		}
-		else if (strcmp_P(commandName, BasicCommands::DEREGISTER_EFFECTOR) == 0)
-		{
-			BasicCommands::deregisterEffector(splitCommandBuffer);
-		}
-		else if (strcmp_P(commandName, BasicCommands::REGISTER_I2C_SERVO) == 0)
-		{
-			BasicCommands::registerI2CServo(splitCommandBuffer);
-		}
-		else if (strcmp_P(commandName, BasicCommands::REGISTER_PIN_SERVO) == 0)
-		{
-			BasicCommands::registerPinServo(splitCommandBuffer);
-		}
-		else if (strcmp_P(commandName, BasicCommands::REGISTER_PIN_STEPPER) == 0)
-		{
-			BasicCommands::registerPinStepper(splitCommandBuffer);
-		}
-		else if (strcmp_P(commandName, BasicCommands::REGISTER_DIR_STEPPER) == 0)
-		{
-			BasicCommands::registerDirStepper(splitCommandBuffer);
-		}
-		else if (strcmp_P(commandName, BasicCommands::REGISTER_CURVED_EVENT) == 0)
-		{
-			BasicCommands::registerCurvedEvent(splitCommandBuffer);
-		}
-		else if (strcmp_P(commandName, BasicCommands::REGISTER_ONOFF_EVENT) == 0)
-		{
-			BasicCommands::registerOnOffEvent(splitCommandBuffer);
-		}
-		else if (strcmp_P(commandName, BasicCommands::REGISTER_TRIGGER_EVENT) == 0)
-		{
-			BasicCommands::registerTriggerEvent(splitCommandBuffer);
-		}
-		else if (strcmp_P(commandName, BasicCommands::REGISTER_CUSTOM_MOTOR) == 0)
-		{
-			BasicCommands::registerCustomMotor(splitCommandBuffer);
-		}
-		else if (strcmp_P(commandName, BasicCommands::REGISTER_COLOR_EVENT) == 0)
-		{
-			BasicCommands::registerColorEvent(splitCommandBuffer);
-		}
-		else if (strcmp_P(commandName, BasicCommands::STEPPER_SYNC) == 0)
-		{
-			BasicCommands::stepperSync(splitCommandBuffer);
-		}
-#ifdef AUDIO_SD_I2S
-		// ToDo: (24.12.2025) Move the registering of optional modules into the ModuleMaster, to have them at their own place
-		// This is to reduce complexity for adding new modules. This way "Module" code stays within the ModuleMaster part.
-		// (25.12.2025) Or mabye not? I'm not sure yet.
-		// (04.01.2026) Solution: See below
-		else if (strcmp_P(commandName, BasicCommands::I2S_RegisterAudioEvent()) == 0)
-		{
-			// ToDo: Leave the logic to register the effecotr up to the effector itself
-			// This way the BasicCommands don't need to know about module specific stuff
-			//BottangoCore::effectorPool.addEffector<I2SAudioEffector>(splitCommandBuffer);
-			//I2SAudioEffector* newEffector = new I2SAudioEffector(splitCommandBuffer);
-			//BottangoCore::effectorPool
-			BasicCommands::registerAudioEvent(splitCommandBuffer);
-		}*/
-		/*else if (strcmp_P(commandName, BasicCommands::AUDIO_BIN) == 0)
-		{
-			BasicCommands::processAudioBinary(splitCommandBuffer);
-		}*/
-		/*#endif
-		#ifdef RELAY_SUPPORTED
-				else if (strcmp_P(commandName, BasicCommands::REGISTER_RELAY) == 0)
-				{
-					BasicCommands::registerRelayController(splitCommandBuffer);
-				}
-				else if (strcmp_P(commandName, BasicCommands::DEREGISTER_RELAY) == 0)
-				{
-					BasicCommands::deregisterRelayController(splitCommandBuffer);
-				}
-				else if (strcmp_P(commandName, BasicCommands::DEREGISTER_ALL_RELAY) == 0)
-				{
-					BasicCommands::deregisterAllRelayControllers(splitCommandBuffer);
-				}
-				else if (strcmp_P(commandName, BasicCommands::RELAY_HEARTBEAT_REQUEST) == 0)
-				{
-					BasicCommands::requestHeartbeat(splitCommandBuffer);
-					sendReady = false;
-				}
-				else if (strcmp_P(commandName, BasicCommands::REQUEST_PEER_BOOT) == 0)
-				{
-					BasicCommands::requestBoot(splitCommandBuffer);
-				}
-		#ifdef RELAY_COMS_ESPNOW
-				else if (strcmp_P(commandName, BasicCommands::GET_MAC_ADDRESS) == 0)
-				{
-					BasicCommands::getMACAddress(splitCommandBuffer);
-				}
-		#endif
-		#endif
-		#ifdef ENABLE_ESP_OTA_UPDATE
-				else if (strcmp_P(commandName, BasicCommands::OTA_UPDATE) == 0)
-				{
-					BasicCommands::processOTA(splitCommandBuffer);
-				}
-		#endif
-		#if defined(ENABLE_DYNAMIC_ANIMATION_SOURCE_SWITCH) || defined(RELAY_SUPPORTED)
-				else if (strcmp_P(commandName, BasicCommands::SET_CONFIG) == 0)
-				{
-					BasicCommands::setConfiguration(splitCommandBuffer);
-				}
-		#endif
-
-				return sendReady;*/
-	}
-
 	// note this is destructive to the string
 	unsigned long getMSTimeOfCommand(char* commandString, bool returnStartTime)
 	{
@@ -704,7 +454,7 @@ namespace BottangoCore
 
 	bool externalCommandIsAllowed(char* commandString, bool secondary)
 	{
-
+/*
 #if defined(USE_CODE_COMMAND_STREAM) || defined(USE_SD_CARD_COMMAND_STREAM)
 		bool offline = isOffline();
 
@@ -770,7 +520,7 @@ namespace BottangoCore
 			return false;
 		}
 #endif
-		// allowed, not offline
+		// allowed, not offline*/
 		return true;
 	}
 
@@ -843,14 +593,14 @@ namespace BottangoCore
 		mMaster.executePhase(Phase::Logic);
 		mMaster.executePhase(Phase::Output);
 
-		//updateReadBuffer(false); // standard read
+		//updateReadBuffer(false); // standard read <--- Next: Standard Read für Relay einbauen!
 
-#ifdef RELAY_SUPPORTED
+/*#ifdef RELAY_SUPPORTED
 		if (isRelayPeer)
 		{
 			updateReadBuffer(true); // secondary read when peer also
 		}
-#endif
+#endif*/
 
 		/*if (initialized)
 		{
@@ -914,11 +664,11 @@ namespace BottangoCore
 		if (PersistentConfigUtil::debugEnabled())
 #endif
 		{
-			if (isRelayPeer && !initialized && Time::getCurrentTimeInMs() - lastWaitForConnectLog >= 1000)
+			if (isRelayPeer && !SystemStatus::systemStatus.initialized && Time::getCurrentTimeInMs() - lastWaitForConnectLog >= 1000)
 			{
-				Outgoing::toggleOnSecondaryOutgoing();
-				Outgoing::printOutputStringFlash(F("Waiting for bridge...\n"));
-				Outgoing::endToggleOnSecondaryOutgoing();
+				//Outgoing::toggleOnSecondaryOutgoing();
+				OutgoingSerial::printOutputStringFlash(F("Waiting for bridge...\n"));
+				//Outgoing::endToggleOnSecondaryOutgoing();
 				lastWaitForConnectLog = Time::getCurrentTimeInMs();
 			}
 		}
@@ -954,7 +704,7 @@ namespace BottangoCore
 		#ifdef RELAY_SUPPORTED
 				if (isRelayPeer && secondary)
 				{
-					Outgoing::setSecondaryPeerOutgoing(true); // <-- Das muss ich noch irgendwo setzen
+					Outgoing::setSecondaryPeerOutgoing(true);
 				}
 		#endif
 

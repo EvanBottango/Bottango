@@ -10,7 +10,7 @@
 #include "../BottangoArduinoModules.h"
 #include "Module Handling/ModuleMaster.h"
 #include "System/Time.h"
-#include "Outgoing.h"
+#include "Modules/OutgoingSerial.h"
 #include <Arduino.h>
 
 #ifdef USE_ESP32_WIFI
@@ -42,8 +42,6 @@ namespace BottangoCore
 
     void updateReadBuffer(bool secondary);
 
-    bool executeCommand(char *commandString, bool secondary);
-
     unsigned long getMSTimeOfCommand(char *commandString, bool returnStartTime);
 
     bool externalCommandIsAllowed(char *commandString, bool secondary);
@@ -55,10 +53,6 @@ namespace BottangoCore
 	extern ModuleMaster mMaster;
 
 	extern char delimiters[];
-
-    //extern char *splitCommandBuffer[COMMANDS_PARAMS_SIZE];
-
-    void initUSBSerialComms();
 
     bool rcvAvailable(bool secondary);
     char readNextChar(bool secondary);

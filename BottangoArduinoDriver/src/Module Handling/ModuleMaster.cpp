@@ -17,7 +17,12 @@
 #include "../Modules/StatusLightsModule.h"
 #include "../Modules/Audio/I2SAudioModule.h"
 #include "../Modules/AnimationPlaybackControl.h"
-#include "../Outgoing.h"
+#include "../Modules/RelayComs/Relay.h"
+#include "../Modules/OutgoingSerial.h"
+
+#ifdef RELAY_COMS_ESPNOW
+#include "../Modules/OutgoingRelay.h"
+#endif
 
 void ModuleMaster::setupModules()
 {
@@ -28,6 +33,15 @@ void ModuleMaster::setupModules()
 
 #if defined(USE_SD_CARD_COMMAND_STREAM) || defined(USE_CODE_COMMAND_STREAM)
 	registerModule<AnimationPlaybackControl>(Modules::AnimPlaybackCntrl);
+#endif
+
+#if defined(RELAY_SUPPORTED)
+	registerModule<Relay>(Modules::RelayComs);
+
+	// Relay Output
+	static OutgoingRelayImpl outgoingRelay;
+	OutgoingRelay::bind(&outgoingRelay);
+	outgoingRelay.setRelayComs(getModule<Relay>(Modules::RelayComs));
 #endif
 
 	AsciiCmdDecoder* asciiDecoder = registerModule<AsciiCmdDecoder>(Modules::Decoder);
@@ -51,6 +65,11 @@ void ModuleMaster::setupModules()
 	_modules[(int)Modules::AudioI2S] = &audioModule;
 	InterfaceRegistry::registerInterface(Modules::AudioI2S, static_cast<IAudioPlayback*>(&audioModule));
 #endif
+
+	// Serial Output
+	static OutgoingSerialImpl outgoingSerialImpl;
+	OutgoingSerial::bind(&outgoingSerialImpl);
+	Outgoing::bind(&outgoingSerialImpl);
 }
 
 void ModuleMaster::initModules()

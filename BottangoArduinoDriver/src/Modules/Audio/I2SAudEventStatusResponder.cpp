@@ -17,7 +17,7 @@ void I2SAudEventStatusResponder::initializeMultiMessage()
 
 bool I2SAudEventStatusResponder::multiMessageisComplete()
 {
-    return statusSent && !hasOutgoingMessage;
+    return statusSent && !_hasOutgoingMessage;
 }
 
 void I2SAudEventStatusResponder::updateMultiMessage()
@@ -25,7 +25,7 @@ void I2SAudEventStatusResponder::updateMultiMessage()
     if (!statusSent)
     {
 #ifdef RELAY_SUPPORTED
-        if (secondary)
+        if (_secondary)
         {
             Outgoing::setSecondaryPeerOutgoing(true);
         }
@@ -36,7 +36,7 @@ void I2SAudEventStatusResponder::updateMultiMessage()
         Outgoing::printLine();
 
 #ifdef RELAY_SUPPORTED
-        if (secondary)
+        if (_secondary)
         {
             Outgoing::setSecondaryPeerOutgoing(false);
         }

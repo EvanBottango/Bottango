@@ -6,7 +6,7 @@
 
 #include "CircularArray.h"
 #include "../BottangoArduinoConfig.h"
-#include "Outgoing.h"
+#include "Modules/Outgoing.h"
 #include "AbstractMultiMessageOutgoingSource.h"
 #include "RelayChildMessageQueue.h"
 
@@ -29,13 +29,13 @@ public:
 	// lock / unlock relay pool access (task-safe)
 	// Required because ESP-NOW task and main loop both access relay list/lifetime.
 	// Keep lock holds short to avoid stalling the main loop.
-	inline void lockPool()
+	inline void lockPool() const
 	{
 		configASSERT(_relayMutex);
 		xSemaphoreTakeRecursive(_relayMutex, portMAX_DELAY);
 	}
 
-	inline void unlockPool()
+	inline void unlockPool() const
 	{
 		configASSERT(_relayMutex);
 		xSemaphoreGiveRecursive(_relayMutex);
@@ -45,17 +45,17 @@ public:
 	inline void unlockPool() {}
 #endif
 
-	void addRelay(RelayChild* relay);
+	void addPeer(RelayChild* relay);
 
-	void removeRelay(int id);
+	void removePeer(int id);
 
-	void passThroughCommandToRelay(int id, char** commands, byte paramsCount);
+	void passThroughCommandToPeer(int id, char** commands, byte paramsCount);
 
 	void deregisterAll();
 
 	void update();
 
-	bool bridgeIsConnectedToAllPeers();
+	bool bridgeIsConnectedToAllPeers() const;
 
 	void resumeTimeConnectedPeers(bool clearCurves);
 	void stopTimeOnConnectedPeers();
@@ -64,25 +64,25 @@ public:
 
 	void clearCurvesOnConnectedPeers();
 
-	RelayChild* getRelay(int id);
-	RelayChild* getRelay(const uint8_t* mac_addr);
-	int getIdForRelay(RelayChild* relayChild);
+	RelayChild* getPeer(int id) const;
+	RelayChild* getPeer(const uint8_t* mac_addr) const;
+	int getIdForPeer(RelayChild* relayChild) const;	
 
-	bool toPeerQueueFull() const { return _toPeerQueue.full(); }
+	void setPeerIdToReport(int id);
 
-	virtual void cleanUpMultiMessage() override;
+	bool enqueueUnicastToPeerQueue(RelayChild* peer, char* commandString);	
 
-	void setRelayIdToReport(int id);
-
-	bool enqueueUnicastToPeerQueue(RelayChild* peer, char* commandString);
-
-	RelayChildMessageQueue& outgoingQueue() { return _toPeerQueue; }
-
-	void getConnectedRelayIds(int* outIds, uint8_t& outCount);
-	void getUnconnectedRelayIds(int* outIds, uint8_t& outCount);
+	void getConnectedPeerIds(int* outIds, uint8_t& outCount) const;
+	void getUnconnectedPeerIds(int* outIds, uint8_t& outCount) const;
 	void markPeerTx(int peerId);
 	void markPeerPollOutstanding(int peerId);
 	void reportLostPeer(int peerId);
+
+	bool toPeerQueueFull() const { return _toPeerQueue.full(); }
+	RelayChildMessageQueue& getOutgoingQueue() { return _toPeerQueue; }
+
+	// ==== AbstractMultiMessageOutgoingSource implementation ====
+	virtual void cleanUpMultiMessage() override;
 
 private:
 	RelayChildMessageQueue _toPeerQueue;
@@ -97,11 +97,11 @@ private:
 	SemaphoreHandle_t _relayMutex = nullptr;
 #endif
 
-	bool isMacEqual(const uint8_t* mac1, const uint8_t* mac2);
-	int hash(const char* str);
+	bool isMacEqual(const uint8_t* mac1, const uint8_t* mac2) const;
+	int hash(const char* str) const;
 	int allocateRelayId();
 
-	bool buildPassThroughCommand(char* outBuffer, const char* commandString);
+	bool buildPassThroughCommand(char* outBuffer, const char* commandString) const;
 	void executePassThrough(RelayChild* peer, char* commandString);
 	bool enqueueBroadcastPassThrough(char* commandString, MessageIntent intent, TargetGroup target);
 	void enqueuePollBroadcast();

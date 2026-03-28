@@ -65,6 +65,7 @@ namespace SystemStatus
 		eCommandStatus CommandStatus = eCommandStatus::Idle;
 		ePlaybackStatus PlaybackStatus = ePlaybackStatus::NotPlaying;
 		bool initialized = false;
+		bool handshake = false;
 		//bool resetPreferences = false;
 	};
 

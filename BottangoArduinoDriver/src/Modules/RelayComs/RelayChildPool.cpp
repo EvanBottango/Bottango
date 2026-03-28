@@ -1,5 +1,4 @@
 #include "../BottangoArduinoModules.h"
-
 #if defined(RELAY_SUPPORTED)
 
 #include "RelayChildPool.h"
@@ -8,7 +7,7 @@
 #include <limits.h>
 #ifdef TOGGLE_DEBUG
 #include "PersistentConfigUtil.h"
-#endif
+#endif // TOGGLE_DEBUG
 
 #if defined(RELAY_COMS_ESPNOW)
 #define RELAY_RESPONSE_TIMEOUT RELAY_ESPNOW_RESPONSE_TIMEOUT
@@ -24,7 +23,7 @@ RelayChildPool::RelayChildPool()
 #endif
 }
 
-void RelayChildPool::addRelay(RelayChild* relay)
+void RelayChildPool::addPeer(RelayChild* relay)
 {
 	lockPool();
 
@@ -35,7 +34,7 @@ void RelayChildPool::addRelay(RelayChild* relay)
 		return;
 	}
 
-	RelayChild* existingRelay = getRelay(relay->mac_addr);
+	RelayChild* existingRelay = getPeer(relay->mac_addr);
 
 	if (existingRelay != nullptr)
 	{
@@ -58,11 +57,11 @@ void RelayChildPool::addRelay(RelayChild* relay)
 	unlockPool();
 }
 
-void RelayChildPool::removeRelay(int id)
+void RelayChildPool::removePeer(int id)
 {
 	lockPool();
 
-	RelayChild* relay = getRelay(id);
+	RelayChild* relay = getPeer(id);
 	if (relay == nullptr)
 	{
 		Error::reportError_NoRelayForID(id);
@@ -77,11 +76,11 @@ void RelayChildPool::removeRelay(int id)
 	unlockPool();
 }
 
-void RelayChildPool::passThroughCommandToRelay(int id, char** commands, byte paramsCount)
+void RelayChildPool::passThroughCommandToPeer(int id, char** commands, byte paramsCount)
 {
 	lockPool();
 
-	RelayChild* relay = getRelay(id);
+	RelayChild* relay = getPeer(id);
 	if (relay == nullptr)
 	{
 		Error::reportError_NoRelayForID(id);
@@ -128,7 +127,7 @@ void RelayChildPool::deregisterAll()
 	unlockPool();
 }
 
-RelayChild* RelayChildPool::getRelay(const uint8_t* mac_addr)
+RelayChild* RelayChildPool::getPeer(const uint8_t* mac_addr) const
 {
 	lockPool();
 	RelayChild* found = nullptr;
@@ -145,7 +144,7 @@ RelayChild* RelayChildPool::getRelay(const uint8_t* mac_addr)
 	return found;
 }
 
-RelayChild* RelayChildPool::getRelay(int id)
+RelayChild* RelayChildPool::getPeer(int id) const
 {
 	lockPool();
 	if (id < 0)
@@ -167,7 +166,7 @@ RelayChild* RelayChildPool::getRelay(int id)
 	return found;
 }
 
-bool RelayChildPool::isMacEqual(const uint8_t* mac1, const uint8_t* mac2)
+bool RelayChildPool::isMacEqual(const uint8_t* mac1, const uint8_t* mac2) const
 {
 	for (int i = 0; i < 6; i++)
 	{
@@ -248,7 +247,7 @@ void RelayChildPool::update()
 	}
 }
 
-int RelayChildPool::hash(const char* str)
+int RelayChildPool::hash(const char* str) const
 {
 	int finalValue = 0;
 	while (*str != '\0')
@@ -269,7 +268,7 @@ int RelayChildPool::allocateRelayId()
 	return _nextRelayId++;
 }
 
-int RelayChildPool::getIdForRelay(RelayChild* relayChild)
+int RelayChildPool::getIdForPeer(RelayChild* relayChild) const
 {
 	lockPool();
 	int id = relayChild ? relayChild->stableId : -1;
@@ -284,9 +283,9 @@ bool RelayChildPool::emitNextChunk()
 		return false;
 	}
 
-	Outgoing::printOutputStringPROGMEM(RELAY_ID_RESPONSE_PREFIX); // rlyId,
-	Outgoing::printOutputStringMem(_relayIdToReport);              // rlyId,2
-	Outgoing::printLine();
+	Outgoing::printOutputStringPROGMEM(RELAY_ID_RESPONSE_PREFIX);	// rlyId,
+	Outgoing::printOutputStringMem(_relayIdToReport);				// rlyId,2
+	Outgoing::printLine();											// rlyId,2\n
 	_relayIdToReport = -1;
 	return true;
 }
@@ -296,12 +295,12 @@ void RelayChildPool::cleanUpMultiMessage()
 	_relayIdToReport = -1;
 }
 
-void RelayChildPool::setRelayIdToReport(int id)
+void RelayChildPool::setPeerIdToReport(int id)
 {
 	_relayIdToReport = id;
 }
 
-bool RelayChildPool::bridgeIsConnectedToAllPeers()
+bool RelayChildPool::bridgeIsConnectedToAllPeers() const
 {
 	lockPool();
 
@@ -361,7 +360,7 @@ void RelayChildPool::sendHandshakeCommand(RelayChild* peer)
 	unlockPool();
 }
 
-bool RelayChildPool::buildPassThroughCommand(char* outBuffer, const char* commandString)
+bool RelayChildPool::buildPassThroughCommand(char* outBuffer, const char* commandString) const
 {
 	outBuffer[0] = '\0';
 	strcat(outBuffer, commandString);
@@ -462,7 +461,7 @@ bool RelayChildPool::enqueueUnicastToPeerQueue(RelayChild* peer, char* commandSt
 		return false;
 	}
 
-	bool enqueued = _toPeerQueue.enqueueMessage(getIdForRelay(peer), commandString, MessageIntent::Normal, TargetGroup::Unicast);
+	bool enqueued = _toPeerQueue.enqueueMessage(getIdForPeer(peer), commandString, MessageIntent::Normal, TargetGroup::Unicast);
 	unlockPool();
 	return enqueued;
 }
@@ -489,7 +488,7 @@ void RelayChildPool::resumeTimeConnectedPeers(bool clearCurves)
 	unlockPool();
 }
 
-void RelayChildPool::getConnectedRelayIds(int* outIds, uint8_t& outCount)
+void RelayChildPool::getConnectedPeerIds(int* outIds, uint8_t& outCount) const
 {
 	lockPool();
 
@@ -511,7 +510,7 @@ void RelayChildPool::getConnectedRelayIds(int* outIds, uint8_t& outCount)
 	unlockPool();
 }
 
-void RelayChildPool::getUnconnectedRelayIds(int* outIds, uint8_t& outCount)
+void RelayChildPool::getUnconnectedPeerIds(int* outIds, uint8_t& outCount) const
 {
 	lockPool();
 
@@ -537,7 +536,7 @@ void RelayChildPool::markPeerTx(int peerId)
 {
 	lockPool();
 
-	RelayChild* peer = getRelay(peerId);
+	RelayChild* peer = getPeer(peerId);
 	if (peer != nullptr)
 	{
 		peer->markTxTime();
@@ -550,7 +549,7 @@ void RelayChildPool::markPeerPollOutstanding(int peerId)
 {
 	lockPool();
 
-	RelayChild* peer = getRelay(peerId);
+	RelayChild* peer = getPeer(peerId);
 	if (peer != nullptr)
 	{
 		peer->markPollOutstanding();

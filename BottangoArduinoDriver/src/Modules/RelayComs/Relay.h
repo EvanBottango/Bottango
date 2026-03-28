@@ -19,7 +19,8 @@ public:
 	enum class RelayRole
 	{
 		Bridge,
-		Peer
+		Peer,
+		None
 	};
 
 	void init() override;
@@ -40,9 +41,13 @@ public:
 
 	RelayRole getRole() const { return _relayRole; }
 
+	void setLastHeartbeatTime(unsigned long time) { lastHeartbeatTime = time; }
+
 protected:
 	RelayChildPool* _relayPool = nullptr;
-	RelayRole _relayRole = RelayRole::Peer;
+	RelayRole _relayRole = RelayRole::None;
+
+	unsigned long lastHeartbeatTime = 0;
 };
 
 #endif; // RELAY_SUPPORTED

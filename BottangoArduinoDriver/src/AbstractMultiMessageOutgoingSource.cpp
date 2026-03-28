@@ -1,32 +1,98 @@
 #include "AbstractMultiMessageOutgoingSource.h"
 #include "System/Time.h"
 #include "../BottangoArduinoConfig.h"
-#include "Outgoing.h"
+#include "Errors.h"
+
+void AbstractMultiMessageOutgoingSource::initializeMultiMessage()
+{
+	_hasOutgoingMessage = false;
+	_lastMessageTime = 0;
+	_complete = false;
+	_emittedAny = false;
+	_pendingEmit = true;
+	onMultiMessageStart();
+}
 
 void AbstractMultiMessageOutgoingSource::setRecievedContinue()
 {
-    hasOutgoingMessage = false;
-    _lastMessageTime = 0;
+	_hasOutgoingMessage = false;
+	_lastMessageTime = 0;
+	_pendingEmit = true;
 }
 
-bool AbstractMultiMessageOutgoingSource::isTimeout()
+bool AbstractMultiMessageOutgoingSource::multiMessageisComplete() const
 {
-    if (hasOutgoingMessage && Time::getCurrentTimeInMs() - _lastMessageTime >= OUTGOING_TIMEOUT_RESPONSE_TIME)
-    {
-        return true;
-    }
-    return false;
+	return _complete;
+}
+
+void AbstractMultiMessageOutgoingSource::updateMultiMessage()
+{
+	if (_hasOutgoingMessage)
+	{
+		if (isTimeout())
+		{
+			onTimeout();
+			_hasOutgoingMessage = false;
+			_lastMessageTime = 0;
+			_complete = true;
+		}
+		return;
+	}
+
+	if (!_complete && _pendingEmit)
+	{
+		tryEmitNextChunk();
+	}
+}
+
+void AbstractMultiMessageOutgoingSource::onTimeout()
+{
+	Error::reportError_MultiMessageTimeout();
+}
+
+void AbstractMultiMessageOutgoingSource::tryEmitNextChunk()
+{
+	if (_complete || _hasOutgoingMessage)
+	{
+		return;
+	}
+
+	_pendingEmit = false;
+	if (emitNextChunk())
+	{
+		setTransmitted();
+	}
+	else
+	{
+		_complete = true;
+	}
+}
+
+bool AbstractMultiMessageOutgoingSource::isTimeout() const
+{
+	if (_hasOutgoingMessage && Time::getCurrentTimeInMs() - _lastMessageTime >= OUTGOING_TIMEOUT_RESPONSE_TIME)
+	{
+		return true;
+	}
+	return false;
 }
 
 void AbstractMultiMessageOutgoingSource::setTransmitted()
 {
-    hasOutgoingMessage = true;
-    _lastMessageTime = Time::getCurrentTimeInMs();
+	_hasOutgoingMessage = true;
+	_emittedAny = true;
+	_lastMessageTime = Time::getCurrentTimeInMs();
 }
 
-#ifdef RELAY_SUPPORTED
-void AbstractMultiMessageOutgoingSource::setSecondary()
+void AbstractMultiMessageOutgoingSource::emitPending()
 {
-    secondary = true;
+	if (_complete || _hasOutgoingMessage)
+	{
+		return;
+	}
+
+	if (_pendingEmit)
+	{
+		tryEmitNextChunk();
+	}
 }
-#endif

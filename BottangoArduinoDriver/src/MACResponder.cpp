@@ -10,7 +10,7 @@ void MACResponder::initializeMultiMessage()
 
 bool MACResponder::multiMessageisComplete()
 {
-    return macSent && !hasOutgoingMessage;
+    return macSent && !_hasOutgoingMessage;
 }
 
 void MACResponder::updateMultiMessage()
@@ -20,7 +20,7 @@ void MACResponder::updateMultiMessage()
         char buffer[15];
         PersistentConfigUtil::getThisDeviceMacAddress(buffer);
 #ifdef RELAY_SUPPORTED
-        if (secondary)
+        if (_secondary)
         {
             Outgoing::setSecondaryPeerOutgoing(true);
         }
@@ -30,7 +30,7 @@ void MACResponder::updateMultiMessage()
         Outgoing::printOutputStringMem(buffer);
         Outgoing::printLine();
 #ifdef RELAY_SUPPORTED
-        if (secondary)
+        if (_secondary)
         {
             Outgoing::setSecondaryPeerOutgoing(false);
         }

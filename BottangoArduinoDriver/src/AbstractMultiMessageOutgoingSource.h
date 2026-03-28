@@ -18,15 +18,11 @@ public:
 	// caller received a "continue" from the requester (ex: OK)
 	void setRecievedContinue();
 
-#ifdef RELAY_SUPPORTED
-	void setSecondary();
-#endif
-
 	// start a new multi-message response, next chunk is emitted after device OK is sent
 	void initializeMultiMessage();
 
 	// true when no more chunks are expected
-	bool multiMessageisComplete();
+	bool multiMessageisComplete() const;
 
 	// handles timeouts (error state), emits next chunk when ready
 	void updateMultiMessage();
@@ -37,6 +33,9 @@ public:
 	virtual void cleanUpMultiMessage() = 0; // cleanup if aborting...
 
 protected:
+	unsigned long _lastMessageTime = 0;
+	bool _hasOutgoingMessage = false;
+
 	// initialize responder state (iterator, flags, etc.)
 	virtual void onMultiMessageStart() {};
 	// emit at most one response chunk; base class drives timing
@@ -44,20 +43,16 @@ protected:
 	// called when a continue timeout is hit (error / abort)
 	virtual void onTimeout();
 
-	bool isTimeout();
+	bool isTimeout() const;
 	void setTransmitted();
 	bool hasEmittedAny() const { return _emittedAny; }
-	unsigned long lastMessageTime = 0;
-	bool hasOutgoingMessage = false;
-#ifdef RELAY_SUPPORTED
-	bool secondary = false;
-#endif
 
 private:
-	void tryEmitNextChunk();
 	bool _complete = false;
 	bool _emittedAny = false;
 	bool _pendingEmit = false;
+
+	void tryEmitNextChunk();
 };
 
 #endif

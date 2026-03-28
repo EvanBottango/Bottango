@@ -21,13 +21,13 @@ enum class Modules : uint8_t
 {
 	DataSource_Serial,			// [Mandatory] Primary data source, always present and active
 	DataSource_Secondary,		// [Optinal] Secondary data source, can be switched between different modules (e.g. SD card, RS485, etc.)
+	RelayComs,					// [Optinal] Relay communication module, if supported
 	Decoder,					// [Mandatory] Command decoder, parses raw data into commands. Can be switched between different decoders (e.g. ASCII, binary, etc.)
 	Parser,						// [Mandatory] Command parser, takes parsed commands and executes them
-	EffectorPool,				// [Mandatory] Pool of effectors that can be used by commands
+	EffectorPool,				// [Mandatory] Pool of effectors that can be used by commands	
 	StopButton,					// [Optinal] Stop button module, if supported
 	StatusLights,				// [Optinal] Status lights module, if supported
-	AudioI2S,					// [Optinal] I2S audio module, if supported
-	RelayComs,					// [Optinal] Relay communication module, if supported
+	AudioI2S,					// [Optinal] I2S audio module, if supported	
 	AnimPlaybackCntrl,			// [Mandatory] [Has to be second to last] Animation playback control module, is used automatically, depending on the active BottangoArduinoModules
 	Max							// [Mandatory] [Has to be the last] Sentinel value to indicate the number of modules, must always be last
 };

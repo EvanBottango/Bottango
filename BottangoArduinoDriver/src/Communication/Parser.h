@@ -27,7 +27,7 @@ public:
 	 * @param splitCommandBuffer Pointer to an array of strings representing the split command and its parameters.
 	 * @return true if the command was successfully parsed and executed, false otherwise.
 	 */
-	bool parseCommand(char** splitCommandBuffer) const;
+	bool parseCommand(char** splitCommandBuffer, bool sourceIsUsbSerial) const;
 
 	/**
 	 * @brief Helper to get the earliest start time from a command string. Will also find the earliest start time across all frames of a multi-frame sync command, if applicable.

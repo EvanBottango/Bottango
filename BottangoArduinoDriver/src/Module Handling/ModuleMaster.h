@@ -6,8 +6,7 @@
 #include <Arduino.h>
 #include "ModuleLoop.h"
 #include "ModuleSlot.h"
-
-
+#include "../Modules/Outgoing.h"
 
 /**
  * @brief The ModuleMaster class is responsible for managing and executing the lifecycle of various modules in the system.

@@ -257,7 +257,23 @@ namespace BasicCommands
 
 	const char LOST_PEER[] PROGMEM = "LOST_PEER,";
 
-	void sendHandshakeResponse(char* args[], bool secondary);
+	/** Request E Stop */
+	const char ESTOP[] PROGMEM = "reqStop\n";
+
+	/** Request pause anim */
+	const char STOP_PLAY[] PROGMEM = "reqPause\n";
+
+	/** Request start anim */
+	const char START_PLAY[] PROGMEM = "reqPlay,";
+
+#ifdef ONLINE_BUTTON_ACTIONS
+	const char START_PLAY_BUTTON[] PROGMEM = "reqPlayBtn,";
+#endif
+
+	/** Stepper/Custom Motor Auto Sync is Complete */
+	const char SYNC_COMPLETE[] PROGMEM = "sycMDone,";
+
+	void sendHandshakeResponse(char* args[], bool sourceIsUsbSerial);
 
 	void startModulesResponse(char* args[]);
 
@@ -335,7 +351,7 @@ namespace BasicCommands
 #endif
 
 #ifdef AUDIO_SD_I2S
-	void processAudioBinary(char** args);
+	//void processAudioBinary(char** args);
 	void registerAudioEvent(char** args);
 #endif
 

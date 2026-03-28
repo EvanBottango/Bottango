@@ -5,6 +5,7 @@
 #include "Parser.h"
 #include "../BasicCommands.h"
 #include "../System/SystemStatus.h"
+#include "../Modules/OutgoingSerial.h"
 
 #ifdef RELAY_SUPPORTED
 #include "../BottangoCore.h"
@@ -14,20 +15,15 @@
 
 void Parser::onPhase(Phase p)
 {
-	// Only parse commands during the MainLoop phase
+	// Only parse commands during the 'Logic' phase
 	if (p != Phase::Logic)
 	{
 		return;
 	}
 
-	/*if (parseCommand(splitCommandBuffer))
-	{
-		// Workaround for handshake bug - see SerialSource.cpp readData() for details
-		Outgoing::printOutputStringPROGMEM(BasicCommands::READY);
-	}*/
-
 	char** splitCommandBuffer = _decoder->tryConsumeCommand();
 	bool sourceIsUsbSerial = _decoder->isSourceUsbSerial();
+	bool sendRead = false;
 
 	if (splitCommandBuffer != nullptr)
 	{
@@ -35,15 +31,17 @@ void Parser::onPhase(Phase p)
 		{
 			if (commandIsAllowed(splitCommandBuffer[0], sourceIsUsbSerial))
 			{
-				parseCommand(splitCommandBuffer); // Hier geht weiter: Müssen wir das sendReady hier beachten? Nochmal mit Evan abklären wegen der Reihenfolge, wann das OK\n wirklich kommen soll
-				splitCommandBuffer = _decoder->tryConsumeCommand();
+				sendRead = parseCommand(splitCommandBuffer, sourceIsUsbSerial);
 			}
+			
+			splitCommandBuffer = _decoder->tryConsumeCommand();
 		}
 
-		// Workaround for handshake bug - see SerialSource.cpp readData() for details
-		Outgoing::printOutputStringPROGMEM(BasicCommands::READY);
+		if (sendRead)
+		{
+			Outgoing::printOutputStringPROGMEM(BasicCommands::READY);
+		}
 	}
-
 }
 
 void Parser::setCommandDecoder(CommandDecoder* cmdDecoder)
@@ -51,7 +49,7 @@ void Parser::setCommandDecoder(CommandDecoder* cmdDecoder)
 	_decoder = cmdDecoder;
 }
 
-bool Parser::parseCommand(char** splitCommandBuffer) const
+bool Parser::parseCommand(char** splitCommandBuffer, bool sourceIsUsbSerial) const
 {
 	if (splitCommandBuffer == nullptr)
 	{
@@ -86,8 +84,15 @@ bool Parser::parseCommand(char** splitCommandBuffer) const
 	}
 	else if (strcmp_P(commandName, BasicCommands::HANDSHAKE_REQUEST) == 0)
 	{
-		// ToDo: "secondary" temporary replaced with false
-		BasicCommands::sendHandshakeResponse(splitCommandBuffer, false);
+		// Ignore duplicate handshake requests after the initial handshake completes.
+		if (!sourceIsUsbSerial && SystemStatus::systemStatus.handshake)
+		{
+			return false;
+		}
+		else
+		{
+			BasicCommands::sendHandshakeResponse(splitCommandBuffer, sourceIsUsbSerial);
+		}
 	}
 	else if (strcmp_P(commandName, BasicCommands::MODULES_REQUEST) == 0)
 	{
@@ -192,10 +197,10 @@ bool Parser::parseCommand(char** splitCommandBuffer) const
 	{
 		BasicCommands::deregisterAllRelayControllers(splitCommandBuffer);
 	}
-	else if (strcmp_P(commandName, BasicCommands::RELAY_HEARTBEAT_REQUEST) == 0)
+	else if (strcmp_P(commandName, BasicCommands::RELAY_POLL_REQUEST) == 0)
 	{
-		BasicCommands::requestHeartbeat(splitCommandBuffer);
-		//sendReady = false;
+		BasicCommands::requestPoll(splitCommandBuffer);
+		return false;
 	}
 	else if (strcmp_P(commandName, BasicCommands::REQUEST_PEER_BOOT) == 0)
 	{
@@ -394,7 +399,7 @@ bool Parser::commandIsAllowed(char* commandName, bool sourceIsUsbSerial) const
 	if (sourceIsUsbSerial && BottangoCore::mMaster.getModule<Relay>(Modules::RelayComs)->getRole() == Relay::RelayRole::Peer)
 	{
 		limitiedCmdSet = true;
-	} 
+	}
 #endif // RELAY_SUPPORTED
 
 #if defined(USE_CODE_COMMAND_STREAM) || defined(USE_SD_CARD_COMMAND_STREAM) || defined(RELAY_SUPPORTED)

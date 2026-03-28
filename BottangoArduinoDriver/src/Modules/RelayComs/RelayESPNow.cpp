@@ -5,6 +5,7 @@
 #include "RelayChild.h"
 #include <stdio.h>
 #include "UDIDHelper.h"
+#include "Modules/OutgoingSerial.h"
 #ifdef ESP32
 //#include <esp_system.h>
 #endif
@@ -30,7 +31,7 @@ namespace
 
 		// Copy child MAC while locking relay pool so pointer lifetime of the child is safe.
 		pool->lockPool();
-		RelayChild* child = pool->getRelay(peerId);
+		RelayChild* child = pool->getPeer(peerId);
 		if (child != nullptr)
 		{
 			memcpy(mac, child->mac_addr, sizeof(mac));
@@ -46,11 +47,11 @@ namespace
 			if (PersistentConfigUtil::debugEnabled() || ALWAYS_LOG_ERROR_CASE)
 #endif
 			{
-				Outgoing::toggleOnSecondaryOutgoing();
-				Outgoing::printOutputStringFlash(F("WARN: Dropped msg, no relay for id "));
-				Outgoing::printOutputStringMem(peerId);
-				Outgoing::printLine();
-				Outgoing::endToggleOnSecondaryOutgoing();
+				//Outgoing::toggleOnSecondaryOutgoing();
+				OutgoingSerial::printOutputStringFlash(F("WARN: Dropped msg, no relay for id "));
+				OutgoingSerial::printOutputStringMem(peerId);
+				OutgoingSerial::printLine();
+				//Outgoing::endToggleOnSecondaryOutgoing();
 			}
 #endif
 			return EspNowSendResult::NoPeer;
@@ -79,13 +80,13 @@ namespace
 		if (PersistentConfigUtil::debugEnabled() || ALWAYS_LOG_ERROR_CASE)
 #endif
 		{
-			Outgoing::toggleOnSecondaryOutgoing();
-			Outgoing::printOutputStringFlash(F("ESP-NOW send failed for id "));
-			Outgoing::printOutputStringMem(peerId);
-			Outgoing::printOutputStringFlash(F(" err "));
-			Outgoing::printOutputStringMem(res);
-			Outgoing::printLine();
-			Outgoing::endToggleOnSecondaryOutgoing();
+			//Outgoing::toggleOnSecondaryOutgoing();
+			OutgoingSerial::printOutputStringFlash(F("ESP-NOW send failed for id "));
+			OutgoingSerial::printOutputStringMem(peerId);
+			OutgoingSerial::printOutputStringFlash(F(" err "));
+			OutgoingSerial::printOutputStringMem(res);
+			OutgoingSerial::printLine();
+			//Outgoing::endToggleOnSecondaryOutgoing();
 		}
 #endif
 		return EspNowSendResult::QueuedFail;
@@ -146,23 +147,22 @@ void RelayCommsESPNow::espNowTxRxTask(void* pvParameters)
 	// set up bridge vs peer state fields
 	RelayCommsESPNow* comms = static_cast<RelayCommsESPNow*>(pvParameters);
 	RelayChildPool* pool = comms->_relayPool;
-	RelayChildMessageQueue& queue = pool->outgoingQueue();
+	RelayChildMessageQueue& outQueue = pool->getOutgoingQueue();
 	OutgoingMessage msg;
 	EspNowRxPacket rxPacket;
 
-	for (;;)
+	while (true)
 	{
 		// basic sanity checks
-
 		if (comms == nullptr)
 		{
 			vTaskDelay(pdMS_TO_TICKS(10));
 			continue;
 		}
 
-		const bool isBridge = comms->isBridge;
-		RelayCommsESPNow::BridgeState* bridgeState = comms->bridgeState;
-		RelayCommsESPNow::PeerState* peerState = comms->peerState;
+		const bool isBridge = comms->getRole() == RelayRole::Bridge;
+		RelayCommsESPNow::BridgeState* bridgeState = comms->_bridgeState;
+		RelayCommsESPNow::PeerState* peerState = comms->_peerState;
 
 		// Role state must exist for the active role.
 		if (isBridge)
@@ -199,7 +199,7 @@ void RelayCommsESPNow::espNowTxRxTask(void* pvParameters)
 					// Get peer, and hold the pool lock only long enough to resolve and pass up,
 					// so pointer lifetime is safe but the lock window is tiny.
 					pool->lockPool();
-					RelayChild* relay = pool->getRelay(rxPacket.mac);
+					RelayChild* relay = pool->getPeer(rxPacket.mac);
 					if (relay != nullptr)
 					{
 						relay->passUpCommands(rxPacket.payload);
@@ -212,20 +212,20 @@ void RelayCommsESPNow::espNowTxRxTask(void* pvParameters)
 					{
 #ifdef TOGGLE_DEBUG
 						if (PersistentConfigUtil::debugEnabled() || ALWAYS_LOG_ERROR_CASE)
-#endif
+#endif // TOGGLE_DEBUG
 						{
-							Outgoing::toggleOnSecondaryOutgoing();
-							Outgoing::printOutputStringFlash(F("RCV msg "));
-							Outgoing::printOutputStringMem(rxPacket.payload);
-							Outgoing::printOutputStringFlash(F(" from unknown peer "));
+							//Outgoing::toggleOnSecondaryOutgoing();
+							OutgoingSerial::printOutputStringFlash(F("RCV msg "));
+							OutgoingSerial::printOutputStringMem(rxPacket.payload);
+							OutgoingSerial::printOutputStringFlash(F(" from unknown peer "));
 							char cMAC[20];
 							UDIDHelper::convertMACToCStr(rxPacket.mac, cMAC);
-							Outgoing::printOutputStringMem(cMAC);
-							Outgoing::printLine();
-							Outgoing::endToggleOnSecondaryOutgoing();
+							OutgoingSerial::printOutputStringMem(cMAC);
+							OutgoingSerial::printLine();
+							//Outgoing::endToggleOnSecondaryOutgoing();
 						}
 					}
-#endif
+#endif // RELAY_LOGGING
 				}
 				// peer side rx drain
 				else
@@ -238,15 +238,15 @@ void RelayCommsESPNow::espNowTxRxTask(void* pvParameters)
 #ifdef RELAY_LOGGING
 #ifdef TOGGLE_DEBUG
 						if (PersistentConfigUtil::debugEnabled() || ALWAYS_LOG_ERROR_CASE)
-#endif
+#endif // TOGGLE_DEBUG
 						{
-							Outgoing::toggleOnSecondaryOutgoing();
-							Outgoing::printOutputStringFlash(F("ERR: Msg recieved, in buffer full: "));
-							Outgoing::printOutputStringMem(rxPacket.payload);
-							Outgoing::printLine();
-							Outgoing::endToggleOnSecondaryOutgoing();
+							//Outgoing::toggleOnSecondaryOutgoing();
+							OutgoingSerial::printOutputStringFlash(F("ERR: Msg recieved, in buffer full: "));
+							OutgoingSerial::printOutputStringMem(rxPacket.payload);
+							OutgoingSerial::printLine();
+							//Outgoing::endToggleOnSecondaryOutgoing();
 						}
-#endif
+#endif // RELAY_LOGGING
 						continue;
 					}
 					else
@@ -270,14 +270,14 @@ void RelayCommsESPNow::espNowTxRxTask(void* pvParameters)
 #ifdef RELAY_LOGGING
 #ifdef TOGGLE_DEBUG
 			if (PersistentConfigUtil::debugEnabled() || ALWAYS_LOG_ERROR_CASE)
-#endif
+#endif // TOGGLE_DEBUG
 			{
-				Outgoing::toggleOnSecondaryOutgoing();
-				Outgoing::printOutputStringFlash(F("ERR: ESP-NOW RX dropped (oversize)"));
-				Outgoing::printLine();
-				Outgoing::endToggleOnSecondaryOutgoing();
+				//Outgoing::toggleOnSecondaryOutgoing();
+				OutgoingSerial::printOutputStringFlash(F("ERR: ESP-NOW RX dropped (oversize)"));
+				OutgoingSerial::printLine();
+				//Outgoing::endToggleOnSecondaryOutgoing();
 			}
-#endif
+#endif // RELAY_LOGGING
 		}
 
 		// callback couldn't enque, the callback text queue was full
@@ -287,14 +287,14 @@ void RelayCommsESPNow::espNowTxRxTask(void* pvParameters)
 #ifdef RELAY_LOGGING
 #ifdef TOGGLE_DEBUG
 			if (PersistentConfigUtil::debugEnabled() || ALWAYS_LOG_ERROR_CASE)
-#endif
+#endif // TOGGLE_DEBUG
 			{
-				Outgoing::toggleOnSecondaryOutgoing();
-				Outgoing::printOutputStringFlash(F("ERR: ESP-NOW RX dropped"));
-				Outgoing::printLine();
-				Outgoing::endToggleOnSecondaryOutgoing();
+				//Outgoing::toggleOnSecondaryOutgoing();
+				OutgoingSerial::printOutputStringFlash(F("ERR: ESP-NOW RX dropped"));
+				OutgoingSerial::printLine();
+				//Outgoing::endToggleOnSecondaryOutgoing();
 			}
-#endif
+#endif // RELAY_LOGGING
 		}
 
 		// TX failed
@@ -304,19 +304,19 @@ void RelayCommsESPNow::espNowTxRxTask(void* pvParameters)
 #ifdef RELAY_LOGGING
 #ifdef TOGGLE_DEBUG
 			if (PersistentConfigUtil::debugEnabled() || ALWAYS_LOG_ERROR_CASE)
-#endif
+#endif // TOGGLE_DEBUG
 			{
-				Outgoing::toggleOnSecondaryOutgoing();
-				Outgoing::printOutputStringFlash(F("ERR: ESP-NOW TX failed"));
-				Outgoing::printLine();
-				Outgoing::endToggleOnSecondaryOutgoing();
+				//Outgoing::toggleOnSecondaryOutgoing();
+				OutgoingSerial::printOutputStringFlash(F("ERR: ESP-NOW TX failed"));
+				OutgoingSerial::printLine();
+				//Outgoing::endToggleOnSecondaryOutgoing();
 			}
-#endif
+#endif // RELAY_LOGGING
 		}
 
 		// ---- Process TX (bridge only) ----
 		// peer handles tx in peer flush
-		if (isBridge && queue.peek(msg))
+		if (isBridge && outQueue.peek(msg))
 		{
 			// send to one target?
 			if (msg.target == TargetGroup::Unicast)
@@ -328,7 +328,7 @@ void RelayCommsESPNow::espNowTxRxTask(void* pvParameters)
 				// pop the message unless we got a radio failure
 				if (res == EspNowSendResult::NoPeer || res == EspNowSendResult::QueuedOk)
 				{
-					queue.pop();
+					outQueue.pop();
 				}
 			}
 			// broadcast to multiple targets
@@ -344,11 +344,11 @@ void RelayCommsESPNow::espNowTxRxTask(void* pvParameters)
 					// broadcast to all connected or unconnected peers?
 					if (msg.target == TargetGroup::BroadcastUnconnected)
 					{
-						pool->getUnconnectedRelayIds(bridgeState->broadcastTargetIds, bridgeState->broadcastTargetCount);
+						pool->getUnconnectedPeerIds(bridgeState->broadcastTargetIds, bridgeState->broadcastTargetCount);
 					}
 					else
 					{
-						pool->getConnectedRelayIds(bridgeState->broadcastTargetIds, bridgeState->broadcastTargetCount);
+						pool->getConnectedPeerIds(bridgeState->broadcastTargetIds, bridgeState->broadcastTargetCount);
 					}
 				}
 
@@ -356,7 +356,7 @@ void RelayCommsESPNow::espNowTxRxTask(void* pvParameters)
 				if (bridgeState->broadcastTargetCount == 0)
 				{
 					bridgeState->broadcastActive = false;
-					queue.pop();
+					outQueue.pop();
 				}
 				else
 				{
@@ -378,7 +378,7 @@ void RelayCommsESPNow::espNowTxRxTask(void* pvParameters)
 					if (bridgeState->broadcastNextIndex >= bridgeState->broadcastTargetCount)
 					{
 						bridgeState->broadcastActive = false;
-						queue.pop();
+						outQueue.pop();
 					}
 				}
 			}
@@ -409,13 +409,13 @@ void RelayCommsESPNow::OnDataSent(const uint8_t* mac_addr, esp_now_send_status_t
 		return;
 	}
 
-	if (bridgeState != nullptr)
+	if (_bridgeState != nullptr)
 	{
-		bridgeState->txFailPending = true;
+		_bridgeState->txFailPending = true;
 	}
-	else if (peerState != nullptr)
+	else if (_peerState != nullptr)
 	{
-		peerState->txFailPending = true;
+		_peerState->txFailPending = true;
 	}
 }
 
@@ -436,17 +436,17 @@ void RelayCommsESPNow::OnDataRecv(const uint8_t * mac_addr, const uint8_t * data
 	volatile bool* rxDropPending = nullptr;
 	volatile bool* rxOversizeDropPending = nullptr;
 
-	if (isBridge && bridgeState != nullptr)
+	if (_relayRole == RelayRole::Bridge && _bridgeState != nullptr)
 	{
-		rxQueue = bridgeState->rxQueue;
-		rxDropPending = &bridgeState->rxDropPending;
-		rxOversizeDropPending = &bridgeState->rxOversizeDropPending;
+		rxQueue = _bridgeState->rxQueue;
+		rxDropPending = &_bridgeState->rxDropPending;
+		rxOversizeDropPending = &_bridgeState->rxOversizeDropPending;
 	}
-	else if (!isBridge && peerState != nullptr)
+	else if (_relayRole == RelayRole::Peer && _peerState != nullptr)
 	{
-		rxQueue = peerState->rxQueue;
-		rxDropPending = &peerState->rxDropPending;
-		rxOversizeDropPending = &peerState->rxOversizeDropPending;
+		rxQueue = _peerState->rxQueue;
+		rxDropPending = &_peerState->rxDropPending;
+		rxOversizeDropPending = &_peerState->rxOversizeDropPending;
 	}
 
 	if (rxQueue == nullptr)
@@ -486,7 +486,7 @@ void RelayCommsESPNow::OnDataRecv(const uint8_t * mac_addr, const uint8_t * data
 
 bool RelayCommsESPNow::hasRoleState()
 {
-	return bridgeState != nullptr || peerState != nullptr;
+	return _bridgeState != nullptr || _peerState != nullptr;
 }
 
 void RelayCommsESPNow::initializeAsBridge()
@@ -495,30 +495,25 @@ void RelayCommsESPNow::initializeAsBridge()
 	{
 		return;
 	}
-	if (bridgeState == nullptr)
-	{
-		bridgeState = new BridgeState();
-	}
-	if (bridgeState->rxQueue == nullptr)
-	{
-		bridgeState->rxQueue = xQueueCreate(ESPNOW_RX_QUEUE_DEPTH, sizeof(EspNowRxPacket));
-		configASSERT(bridgeState->rxQueue);
-	}
-	isBridge = true;
+
+	_bridgeState = new BridgeState();
+	_bridgeState->rxQueue = xQueueCreate(ESPNOW_RX_QUEUE_DEPTH, sizeof(EspNowRxPacket));
+	configASSERT(_bridgeState->rxQueue);
+
+	_relayRole = RelayRole::Bridge;
 	initConnection();
 
 #ifdef RELAY_LOGGING
 #ifdef TOGGLE_DEBUG
 	if (PersistentConfigUtil::debugEnabled())
-#endif
+#endif // TOGGLE_DEBUG
 	{
-		Outgoing::toggleOnSecondaryOutgoing();
-		Outgoing::printOutputStringFlash(F("Bridge init complete"));
-		Outgoing::printLine();
-		Outgoing::endToggleOnSecondaryOutgoing();
+		//Outgoing::toggleOnSecondaryOutgoing();
+		OutgoingSerial::printOutputStringFlash(F("Bridge init complete"));
+		OutgoingSerial::printLine();
+		//Outgoing::endToggleOnSecondaryOutgoing();
 	}
-
-#endif
+#endif // RELAY_LOGGING
 
 	xTaskCreate(
 		espNowTxRxTask,
@@ -535,76 +530,71 @@ void RelayCommsESPNow::initializeAsPeer()
 	{
 		return;
 	}
-	if (peerState == nullptr)
-	{
-		peerState = new PeerState();
-	}
-	if (peerState->rxQueue == nullptr)
-	{
-		peerState->rxQueue = xQueueCreate(ESPNOW_RX_QUEUE_DEPTH, sizeof(EspNowRxPacket));
-		configASSERT(peerState->rxQueue);
-	}
 
-	peerState->rxBuffer = new TxtBuffer<TXT_BUFFER_SIZE_RX_COMMS>();
-	peerState->txBuffer = new TxtBuffer<TXT_BUFFER_SIZE_TX_COMMS>();
-	isBridge = false;
+	_peerState = new PeerState();
+	_peerState->rxQueue = xQueueCreate(ESPNOW_RX_QUEUE_DEPTH, sizeof(EspNowRxPacket));
+	configASSERT(_peerState->rxQueue);
 
+	_peerState->rxBuffer = new TxtBuffer<TXT_BUFFER_SIZE_RX_COMMS>();
+	_peerState->txBuffer = new TxtBuffer<TXT_BUFFER_SIZE_TX_COMMS>();
+
+	_relayRole = RelayRole::Peer;
 	initConnection();
 
-	uint8_t mac[6];
-	bool gotBridgeMac = PersistentConfigUtil::getBridgeMacAddress(mac);
+	uint8_t bridgeMAC[6];
+	bool gotBridgeMac = PersistentConfigUtil::getBridgeMacAddress(bridgeMAC);
 
 	// Fatal: no parent to talk to. Restart to surface the error and retry init.
 	if (!gotBridgeMac)
 	{
-		Outgoing::toggleOnSecondaryOutgoing();
-		Outgoing::printOutputStringFlash(F("ERR: No bridge mac for peer"));
-		Outgoing::printLine();
-		Outgoing::flush();
-		Outgoing::endToggleOnSecondaryOutgoing();
+		//Outgoing::toggleOnSecondaryOutgoing();
+		OutgoingSerial::printOutputStringFlash(F("ERR: No bridge mac for peer"));
+		OutgoingSerial::printLine();
+		OutgoingSerial::flush();
+		//Outgoing::endToggleOnSecondaryOutgoing();
 #ifdef ESP32
 		delay(100);
 		esp_restart();
-#endif
+#endif // ESP32
 		return;
 	}
 
-	memcpy(peerInfo.peer_addr, mac, 6);
-	peerInfo.channel = ESPNOW_CHANNEL;
-	peerInfo.encrypt = false;
+	memcpy(_peerInfo.peer_addr, bridgeMAC, 6);
+	_peerInfo.channel = ESPNOW_CHANNEL;
+	_peerInfo.encrypt = false;
 
-	// Add parent peer
-	if (esp_now_add_peer(&peerInfo) != ESP_OK)
+	// Add bridge ("parent peer")
+	if (esp_now_add_peer(&_peerInfo) != ESP_OK)
 	{
 #ifdef RELAY_LOGGING
 #ifdef TOGGLE_DEBUG
 		if (PersistentConfigUtil::debugEnabled() || ALWAYS_LOG_ERROR_CASE)
-#endif
+#endif // TOGGLE_DEBUG
 		{
-			Outgoing::toggleOnSecondaryOutgoing();
-			Outgoing::printOutputStringFlash(F("Failed to add parent peer"));
-			Outgoing::printLine();
-			Outgoing::endToggleOnSecondaryOutgoing();
+			//Outgoing::toggleOnSecondaryOutgoing();
+			OutgoingSerial::printOutputStringFlash(F("Failed to add parent peer"));
+			OutgoingSerial::printLine();
+			//Outgoing::endToggleOnSecondaryOutgoing();
 		}
-#endif
+#endif // RELAY_LOGGING
 		return;
 	}
 
 #ifdef RELAY_LOGGING
 #ifdef TOGGLE_DEBUG
 	if (PersistentConfigUtil::debugEnabled())
-#endif
+#endif // TOGGLE_DEBUG
 	{
 		char macC[20];
-		UDIDHelper::convertMACToCStr(mac, macC);
-		Outgoing::toggleOnSecondaryOutgoing();
-		Outgoing::printOutputStringFlash(F("Peer callback init from bridge with MAC "));
-		Outgoing::printOutputStringMem(macC);
-		Outgoing::printLine();
-		Outgoing::endToggleOnSecondaryOutgoing();
+		UDIDHelper::convertMACToCStr(bridgeMAC, macC);
+		//OutgoingSerial::toggleOnSecondaryOutgoing();
+		OutgoingSerial::printOutputStringFlash(F("Peer callback init from bridge with MAC "));
+		OutgoingSerial::printOutputStringMem(macC);
+		OutgoingSerial::printLine();
+		//Outgoing::endToggleOnSecondaryOutgoing();
 	}
 
-#endif
+#endif // RELAY_LOGGING
 
 	xTaskCreate(
 		espNowTxRxTask,
@@ -619,13 +609,13 @@ void RelayCommsESPNow::initConnection()
 {
 	gEspNowInstance = this;
 
-	if (wifiInitialized)
+	if (_wifiInitialized)
 	{
 		return;
 	}
 
 	// make sure netif + event loop exist
-	if (!netifReady)
+	if (!_netifReady)
 	{
 		esp_err_t ret;
 
@@ -646,7 +636,7 @@ void RelayCommsESPNow::initConnection()
 		{
 			esp_netif_create_default_wifi_sta();
 		}
-		netifReady = true;
+		_netifReady = true;
 	}
 
 	// Set device as a Wi-Fi Station
@@ -659,13 +649,13 @@ void RelayCommsESPNow::initConnection()
 		if (PersistentConfigUtil::debugEnabled() || ALWAYS_LOG_ERROR_CASE)
 #endif
 		{
-			Outgoing::toggleOnSecondaryOutgoing();
-			Outgoing::printOutputStringFlash(F("Error initializing WiFi: "));
-			Outgoing::printOutputStringMem(esp_err_to_name(ret));
-			Outgoing::printOutputStringFlash(F(" "));
-			Outgoing::printOutputStringMem(String(ret, HEX).c_str());
-			Outgoing::printLine();
-			Outgoing::endToggleOnSecondaryOutgoing();
+			//Outgoing::toggleOnSecondaryOutgoing();
+			OutgoingSerial::printOutputStringFlash(F("Error initializing WiFi: "));
+			OutgoingSerial::printOutputStringMem(esp_err_to_name(ret));
+			OutgoingSerial::printOutputStringFlash(F(" "));
+			OutgoingSerial::printOutputStringMem(String(ret, HEX).c_str());
+			OutgoingSerial::printLine();
+			//Outgoing::endToggleOnSecondaryOutgoing();
 		}
 
 #endif
@@ -680,13 +670,13 @@ void RelayCommsESPNow::initConnection()
 		if (PersistentConfigUtil::debugEnabled() || ALWAYS_LOG_ERROR_CASE)
 #endif
 		{
-			Outgoing::toggleOnSecondaryOutgoing();
-			Outgoing::printOutputStringFlash(F("Error setting WiFi mode: "));
-			Outgoing::printOutputStringMem(esp_err_to_name(ret));
-			Outgoing::printOutputStringFlash(F(" "));
-			Outgoing::printOutputStringMem(String(ret, HEX).c_str());
-			Outgoing::printLine();
-			Outgoing::endToggleOnSecondaryOutgoing();
+			//Outgoing::toggleOnSecondaryOutgoing();
+			OutgoingSerial::printOutputStringFlash(F("Error setting WiFi mode: "));
+			OutgoingSerial::printOutputStringMem(esp_err_to_name(ret));
+			OutgoingSerial::printOutputStringFlash(F(" "));
+			OutgoingSerial::printOutputStringMem(String(ret, HEX).c_str());
+			OutgoingSerial::printLine();
+			//Outgoing::endToggleOnSecondaryOutgoing();
 		}
 
 #endif
@@ -702,13 +692,13 @@ void RelayCommsESPNow::initConnection()
 		if (PersistentConfigUtil::debugEnabled() || ALWAYS_LOG_ERROR_CASE)
 #endif
 		{
-			Outgoing::toggleOnSecondaryOutgoing();
-			Outgoing::printOutputStringFlash(F("Error starting WiFi: "));
-			Outgoing::printOutputStringMem(esp_err_to_name(ret));
-			Outgoing::printOutputStringFlash(F(" "));
-			Outgoing::printOutputStringMem(String(ret, HEX).c_str());
-			Outgoing::printLine();
-			Outgoing::endToggleOnSecondaryOutgoing();
+			//Outgoing::toggleOnSecondaryOutgoing();
+			OutgoingSerial::printOutputStringFlash(F("Error starting WiFi: "));
+			OutgoingSerial::printOutputStringMem(esp_err_to_name(ret));
+			OutgoingSerial::printOutputStringFlash(F(" "));
+			OutgoingSerial::printOutputStringMem(String(ret, HEX).c_str());
+			OutgoingSerial::printLine();
+			//Outgoing::endToggleOnSecondaryOutgoing();
 		}
 
 #endif
@@ -726,13 +716,13 @@ void RelayCommsESPNow::initConnection()
 		if (PersistentConfigUtil::debugEnabled() || ALWAYS_LOG_ERROR_CASE)
 #endif
 		{
-			Outgoing::toggleOnSecondaryOutgoing();
-			Outgoing::printOutputStringFlash(F("Error initializing ESP-NOW: "));
-			Outgoing::printOutputStringMem(esp_err_to_name(ret));
-			Outgoing::printOutputStringFlash(F(" "));
-			Outgoing::printOutputStringMem(String(ret, HEX).c_str());
-			Outgoing::printLine();
-			Outgoing::endToggleOnSecondaryOutgoing();
+			//Outgoing::toggleOnSecondaryOutgoing();
+			OutgoingSerial::printOutputStringFlash(F("Error initializing ESP-NOW: "));
+			OutgoingSerial::printOutputStringMem(esp_err_to_name(ret));
+			OutgoingSerial::printOutputStringFlash(F(" "));
+			OutgoingSerial::printOutputStringMem(String(ret, HEX).c_str());
+			OutgoingSerial::printLine();
+			//Outgoing::endToggleOnSecondaryOutgoing();
 		}
 
 #endif
@@ -747,18 +737,17 @@ void RelayCommsESPNow::initConnection()
 	if (PersistentConfigUtil::debugEnabled())
 #endif
 	{
-		Outgoing::toggleOnSecondaryOutgoing();
-		Outgoing::printOutputStringFlash(F("ESP-NOW radio initialized"));
-		Outgoing::printLine();
-		Outgoing::endToggleOnSecondaryOutgoing();
+		//Outgoing::toggleOnSecondaryOutgoing();
+		OutgoingSerial::printOutputStringFlash(F("ESP-NOW radio initialized"));
+		OutgoingSerial::printLine();
+		//Outgoing::endToggleOnSecondaryOutgoing();
 	}
 #endif
 
-	wifiInitialized = true;
+	_wifiInitialized = true;
 }
 
 // peer management, as bridge
-
 void RelayCommsESPNow::registerPeer(const uint8_t * mac_addr)
 {
 	if (!hasRoleState())
@@ -766,15 +755,15 @@ void RelayCommsESPNow::registerPeer(const uint8_t * mac_addr)
 		initializeAsBridge();
 	}
 
-	memset(&peerInfo, 0, sizeof(esp_now_peer_info_t)); // Zero out the structure
+	memset(&_peerInfo, 0, sizeof(esp_now_peer_info_t)); // Zero out the structure
 
 	// Register peer
-	memcpy(peerInfo.peer_addr, mac_addr, 6);
-	peerInfo.channel = ESPNOW_CHANNEL;
-	peerInfo.encrypt = false;
+	memcpy(_peerInfo.peer_addr, mac_addr, 6);
+	_peerInfo.channel = ESPNOW_CHANNEL;
+	_peerInfo.encrypt = false;
 
 	// Add peer
-	esp_err_t ret = esp_now_add_peer(&peerInfo);
+	esp_err_t ret = esp_now_add_peer(&_peerInfo);
 
 	if (ret != ESP_OK)
 	{
@@ -783,13 +772,13 @@ void RelayCommsESPNow::registerPeer(const uint8_t * mac_addr)
 		if (PersistentConfigUtil::debugEnabled() || ALWAYS_LOG_ERROR_CASE)
 #endif
 		{
-			Outgoing::toggleOnSecondaryOutgoing();
-			Outgoing::printOutputStringFlash(F("Failed to add peer: "));
-			Outgoing::printOutputStringMem(esp_err_to_name(ret));
-			Outgoing::printOutputStringFlash(F(" "));
-			Outgoing::printOutputStringMem(String(ret, HEX).c_str());
-			Outgoing::printLine();
-			Outgoing::endToggleOnSecondaryOutgoing();
+			//Outgoing::toggleOnSecondaryOutgoing();
+			OutgoingSerial::printOutputStringFlash(F("Failed to add peer: "));
+			OutgoingSerial::printOutputStringMem(esp_err_to_name(ret));
+			OutgoingSerial::printOutputStringFlash(F(" "));
+			OutgoingSerial::printOutputStringMem(String(ret, HEX).c_str());
+			OutgoingSerial::printLine();
+			//Outgoing::endToggleOnSecondaryOutgoing();
 		}
 
 #endif
@@ -812,13 +801,13 @@ void RelayCommsESPNow::deregisterPeer(const uint8_t * mac_addr)
 		if (PersistentConfigUtil::debugEnabled() || ALWAYS_LOG_ERROR_CASE)
 #endif
 		{
-			Outgoing::toggleOnSecondaryOutgoing();
-			Outgoing::printOutputStringFlash(F("Failed to remove peer: "));
-			Outgoing::printOutputStringMem(esp_err_to_name(ret));
-			Outgoing::printOutputStringFlash(F(" "));
-			Outgoing::printOutputStringMem(String(ret, HEX).c_str());
-			Outgoing::printLine();
-			Outgoing::endToggleOnSecondaryOutgoing();
+			//Outgoing::toggleOnSecondaryOutgoing();
+			OutgoingSerial::printOutputStringFlash(F("Failed to remove peer: "));
+			OutgoingSerial::printOutputStringMem(esp_err_to_name(ret));
+			OutgoingSerial::printOutputStringFlash(F(" "));
+			OutgoingSerial::printOutputStringMem(String(ret, HEX).c_str());
+			OutgoingSerial::printLine();
+			//Outgoing::endToggleOnSecondaryOutgoing();
 		}
 
 #endif
@@ -827,30 +816,29 @@ void RelayCommsESPNow::deregisterPeer(const uint8_t * mac_addr)
 }
 
 // comms, as peer
-
 void RelayCommsESPNow::peerPrint(const char* str)
 {
-	if (peerState != nullptr && peerState->txBuffer && peerState->txBuffer->isFull())
+	if (_peerState != nullptr && _peerState->txBuffer && _peerState->txBuffer->isFull())
 	{
 #ifdef RELAY_LOGGING
 #ifdef TOGGLE_DEBUG
 		if (PersistentConfigUtil::debugEnabled() || ALWAYS_LOG_ERROR_CASE)
-#endif
+#endif // TOGGLE_DEBUG
 		{
-			Outgoing::toggleOnSecondaryOutgoing();
-			Outgoing::printOutputStringFlash(F("Outgoing peer buffer is full!"));
-			Outgoing::printLine();
-			Outgoing::endToggleOnSecondaryOutgoing();
+			//OutgoingRelay::toggleOnSecondaryOutgoing();
+			OutgoingSerial::printOutputStringFlash(F("Outgoing peer buffer is full!"));
+			OutgoingSerial::printLine();
+			//Outgoing::endToggleOnSecondaryOutgoing();
 		}
 
-#endif
+#endif // RELAY_LOGGING
 		return;
 	}
 
 	// add to buffer
-	if (peerState != nullptr && peerState->txBuffer)
+	if (_peerState != nullptr && _peerState->txBuffer)
 	{
-		peerState->txBuffer->addTxt(str);
+		_peerState->txBuffer->addTxt(str);
 	}
 
 	// flush whole buffer to espnow if newline in this text
@@ -885,10 +873,10 @@ void RelayCommsESPNow::peerPrintln()
 
 void RelayCommsESPNow::peerFlush()
 {
-	while (peerState != nullptr && peerState->txBuffer && peerState->txBuffer->available())
+	while (_peerState != nullptr && _peerState->txBuffer && _peerState->txBuffer->available())
 	{
 		char message[MAX_COMMAND_LENGTH];
-		peerState->txBuffer->getNextTxt(message);
+		_peerState->txBuffer->getNextTxt(message);
 
 		if (strlen(message) == 0)
 		{
@@ -903,7 +891,7 @@ void RelayCommsESPNow::peerFlush()
 		// Outgoing::setSecondaryPeerOutgoing(false);
 
 		// Send message via ESP-NOW
-		esp_err_t result = esp_now_send(peerInfo.peer_addr, (uint8_t*)message, strlen(message));
+		esp_err_t result = esp_now_send(_peerInfo.peer_addr, (uint8_t*)message, strlen(message));
 
 		if (result != ESP_OK)
 		{
@@ -913,11 +901,11 @@ void RelayCommsESPNow::peerFlush()
 			if (PersistentConfigUtil::debugEnabled() || ALWAYS_LOG_ERROR_CASE)
 #endif
 			{
-				Outgoing::setSecondaryPeerOutgoing(true);
-				Outgoing::printOutputStringFlash(F("Sent with Failure: "));
-				Outgoing::printOutputStringMem(message);
-				Outgoing::printLine();
-				Outgoing::setSecondaryPeerOutgoing(false);
+				//Outgoing::setSecondaryPeerOutgoing(true);
+				OutgoingSerial::printOutputStringFlash(F("Sent with Failure: "));
+				OutgoingSerial::printOutputStringMem(message);
+				OutgoingSerial::printLine();
+				//Outgoing::setSecondaryPeerOutgoing(false);
 			}
 
 #endif
@@ -927,11 +915,11 @@ void RelayCommsESPNow::peerFlush()
 
 bool RelayCommsESPNow::peerRecvAvailable()
 {
-	return peerState != nullptr && peerState->rxBuffer && peerState->rxBuffer->available();
+	return _peerState != nullptr && _peerState->rxBuffer && _peerState->rxBuffer->available();
 }
 
 char RelayCommsESPNow::peerReadNextChar()
 {
-	return (peerState != nullptr && peerState->rxBuffer) ? peerState->rxBuffer->getNextChar() : '\0';
+	return (_peerState != nullptr && _peerState->rxBuffer) ? _peerState->rxBuffer->getNextChar() : '\0';
 }
 #endif
