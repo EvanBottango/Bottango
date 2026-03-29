@@ -6,11 +6,10 @@
 
 #include "../BottangoArduinoConfig.h"
 #include <cstring>
-#include "Outgoing.h"
 
 #ifdef ESP32
 #include <freertos/semphr.h>
-#endif
+#endif // ESP32
 
 template <int BufferSize>
 class TxtBuffer

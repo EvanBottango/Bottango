@@ -40,7 +40,10 @@ public:
 	virtual char peerReadNextChar() = 0;
 
 	RelayChildPool* getPeerPool() const { return _relayPool; }
-	RelayRole getRole() const { return _relayRole; }	
+
+	RelayRole getRole() const { return _relayRole; }
+	bool isBridge() const { return _relayRole == RelayRole::Bridge; }
+	bool isPeer() const { return _relayRole == RelayRole::Peer; }
 
 	void setLastHeartbeatTime(unsigned long time) { lastHeartbeatTime = time; }
 

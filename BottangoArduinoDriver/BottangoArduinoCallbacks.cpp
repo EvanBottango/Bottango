@@ -1,6 +1,6 @@
 #include "BottangoArduinoCallbacks.h"
 #include "src/AbstractEffector.h"
-#include "src/Outgoing.h"
+#include "src/Modules/Outgoing.h"
 #include "src/BottangoCore.h"
 
 namespace Callbacks

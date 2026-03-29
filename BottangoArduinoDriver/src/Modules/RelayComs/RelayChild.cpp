@@ -28,12 +28,12 @@ RelayChild::RelayChild(char* macAddress)
 			OutgoingSerial::printOutputStringFlash(F("Exported Anim, queue handshake"));
 			OutgoingSerial::printLine();
 		}
-
 #endif // RELAY_LOGGING
 		//BottangoCore::relayPool->sendHandshakeCommand(this);
 		BottangoCore::mMaster.getModule<Relay>(Modules::RelayComs)->getPeerPool()->sendHandshakeCommand(this);
 	}
 
+	// ToDo: The child should not register itself - it should not know anything about the pool
 	BottangoCore::mMaster.getModule<Relay>(Modules::RelayComs)->registerPeer(this->mac_addr);
 }
 
@@ -59,9 +59,11 @@ void RelayChild::passDownCommands(char* commands)
 {
 	// connected and to peer queue has space?
 	// send away!
-	if (connected && !BottangoCore::relayPool->toPeerQueueFull())
+	//if (connected && !BottangoCore::relayPool->toPeerQueueFull())
+	if (connected && !BottangoCore::mMaster.getModule<Relay>(Modules::RelayComs)->getPeerPool()->toPeerQueueFull())
 	{
-		BottangoCore::relayPool->enqueueUnicastToPeerQueue(this, commands);
+		//BottangoCore::relayPool->enqueueUnicastToPeerQueue(this, commands);
+		BottangoCore::mMaster.getModule<Relay>(Modules::RelayComs)->getPeerPool()->enqueueUnicastToPeerQueue(this, commands);
 	}
 	// otherwise...
 	else
@@ -73,27 +75,26 @@ void RelayChild::passDownCommands(char* commands)
 #ifdef RELAY_LOGGING
 #ifdef TOGGLE_DEBUG
 			if (PersistentConfigUtil::debugEnabled() || ALWAYS_LOG_ERROR_CASE)
-#endif
+#endif // TOGGLE_DEBUG
 			{
-				Outgoing::printOutputStringFlash(F("Toss prev in holding buffer "));
-				Outgoing::printOutputStringMem(_disconnectedMessageHoldingBuffer);
-				Outgoing::printLine();
+				OutgoingSerial::printOutputStringFlash(F("Toss prev in holding buffer "));
+				OutgoingSerial::printOutputStringMem(_disconnectedMessageHoldingBuffer);
+				OutgoingSerial::printLine();
 			}
 
-#endif
+#endif // RELAY_LOGGING
 			_disconnectedMessageHoldingBuffer[0] = '\0';
 		}
 
 #ifdef RELAY_LOGGING
 #ifdef TOGGLE_DEBUG
 		if (PersistentConfigUtil::debugEnabled())
-#endif
+#endif // TOGGLE_DEBUG
 		{
-			Outgoing::printOutputStringFlash(F("Held for connection / space"));
-			Outgoing::printLine();
+			OutgoingSerial::printOutputStringFlash(F("Held for connection / space"));
+			OutgoingSerial::printLine();
 		}
-
-#endif
+#endif // RELAY_LOGGING
 
 		// hold it until connected and space is available
 		strcpy(_disconnectedMessageHoldingBuffer, commands);
@@ -107,13 +108,12 @@ void RelayChild::passUpCommands(char* commands)
 #ifdef RELAY_LOGGING
 #ifdef TOGGLE_DEBUG
 		if (PersistentConfigUtil::debugEnabled() || ALWAYS_LOG_ERROR_CASE)
-#endif
+#endif // TOGGLE_DEBUG
 		{
-			Outgoing::printOutputStringFlash(F("Pass up buffer full!"));
-			Outgoing::printLine();
+			OutgoingSerial::printOutputStringFlash(F("Pass up buffer full!"));
+			OutgoingSerial::printLine();
 		}
-
-#endif
+#endif // RELAY_LOGGING
 		return;
 	}
 	_incomingFromPeerBuffer.addTxt(commands);
@@ -137,13 +137,13 @@ void RelayChild::update()
 #ifdef RELAY_LOGGING
 #ifdef TOGGLE_DEBUG
 				if (PersistentConfigUtil::debugEnabled())
-#endif
+#endif // TOGGLE_DEBUG
 				{
-					Outgoing::printOutputStringFlash(F("Got peer boot response from peer: "));
-					Outgoing::printOutputStringMem(message);
-					Outgoing::printLine();
+					OutgoingSerial::printOutputStringFlash(F("Got peer boot response from peer: "));
+					OutgoingSerial::printOutputStringMem(message);
+					OutgoingSerial::printLine();
 				}
-#endif
+#endif // RELAY_LOGGING
 				onConnectionComplete();
 				break;
 			}
@@ -153,25 +153,25 @@ void RelayChild::update()
 				// otherwise toss it. Only want "BOOT"
 #ifdef TOGGLE_DEBUG
 				if (PersistentConfigUtil::debugEnabled() || ALWAYS_LOG_ERROR_CASE)
-#endif
+#endif // TOGGLE_DEBUG
 				{
 					char macbuffer[20];
 					UDIDHelper::convertMACToCStr(mac_addr, macbuffer);
-					Outgoing::printOutputStringFlash(F("Toss non connected rcv on peer"));
-					Outgoing::printOutputStringMem(macbuffer);
-					Outgoing::printOutputStringFlash(F(": "));
+					OutgoingSerial::printOutputStringFlash(F("Toss non connected rcv on peer"));
+					OutgoingSerial::printOutputStringMem(macbuffer);
+					OutgoingSerial::printOutputStringFlash(F(": "));
 					if (strlen(message) > 0 && message[0] == '\n')
 					{
-						Outgoing::printOutputStringFlash(F("NL"));
+						OutgoingSerial::printOutputStringFlash(F("NL"));
 					}
 					else
 					{
-						Outgoing::printOutputStringMem(message);
+						OutgoingSerial::printOutputStringMem(message);
 					}
-					Outgoing::printLine();
+					OutgoingSerial::printLine();
 				}
 			}
-#endif
+#endif // RELAY_LOGGING
 		}
 	}
 
@@ -198,25 +198,27 @@ void RelayChild::update()
 		if (SystemStatus::systemStatus.ConnectionStatus == SystemStatus::eConnectionStatus::Export_Playback)
 		{
 			// handle requests from peer
-			if (strncmp_P(message, Outgoing::ESTOP, 7) == 0)
+			if (strncmp_P(message, BasicCommands::ESTOP, 7) == 0)
 			{
-				BottangoCore::stop(true);
+				BottangoCore::request_eStop();
 			}
-			else if (strncmp_P(message, Outgoing::STOP_PLAY, 8) == 0)
+			else if (strncmp_P(message, BasicCommands::STOP_PLAY, 8) == 0)
 			{
-#if defined(USE_CODE_COMMAND_STREAM) || defined(USE_SD_CARD_COMMAND_STREAM)
+				BottangoCore::request_Stop();
+/*#if defined(USE_CODE_COMMAND_STREAM) || defined(USE_SD_CARD_COMMAND_STREAM)
 				if (BottangoCore::commandStreamProvider != nullptr)
 				{
 					BottangoCore::commandStreamProvider->stop();
 				}
-#endif
+#endif*/
 			}
 #ifndef RELAY_LOGGING
 			return;
 #endif
 		}
 
-		int id = BottangoCore::relayPool->getIdForRelay(this);
+		//int id = BottangoCore::relayPool->getIdForRelay(this);
+		int id = BottangoCore::mMaster.getModule<Relay>(Modules::RelayComs)->getPeerPool()->getIdForPeer(this);
 		char idStr[10];
 		itoa(id, idStr, 10);
 
@@ -254,41 +256,39 @@ void RelayChild::update()
 			passUpCommand[length + 1] = '\0';
 		}
 
+		// ToDo: This seems double-guarded, as we return early above if in export mode, and if RELAY_LOGGING is not defined.
 		if (SystemStatus::systemStatus.ConnectionStatus == SystemStatus::eConnectionStatus::Export_Playback)
 		{
 #ifdef RELAY_LOGGING
 #ifdef TOGGLE_DEBUG
 			if (PersistentConfigUtil::debugEnabled())
-#endif
+#endif // TOGGLE_DEBUG
 			{
-				Outgoing::printOutputStringFlash(F("Export toss pass Up: "));
-				Outgoing::printOutputStringMem(passUpCommand);
+				OutgoingSerial::printOutputStringFlash(F("Export toss pass Up: "));
+				OutgoingSerial::printOutputStringMem(passUpCommand);
 			}
-
 			return;
-#endif
+#endif // RELAY_LOGGING
 		}
 
-		Outgoing::printOutputStringMem(passUpCommand);
+		OutgoingRelay::printOutputStringMem(passUpCommand);
 	}
 
 	// any pass down to child holding buffer if any
 	if (connected)
 	{
-		if (!BottangoCore::relayPool->toPeerQueueFull())
+		if (_disconnectedMessageHoldingBuffer[0] != '\0' && !BottangoCore::mMaster.getModule<Relay>(Modules::RelayComs)->getPeerPool()->toPeerQueueFull())
 		{
-			if (_disconnectedMessageHoldingBuffer[0] != '\0' && !BottangoCore::relayPool->toPeerQueueFull())
-			{
-				BottangoCore::relayPool->enqueueUnicastToPeerQueue(this, _disconnectedMessageHoldingBuffer);
-				_disconnectedMessageHoldingBuffer[0] = '\0';
-			}
+			BottangoCore::mMaster.getModule<Relay>(Modules::RelayComs)->getPeerPool()->enqueueUnicastToPeerQueue(this, _disconnectedMessageHoldingBuffer);
+			_disconnectedMessageHoldingBuffer[0] = '\0';
 		}
 	}
 }
 
 void RelayChild::destroy()
 {
-	BottangoCore::relayComs->deregisterPeer(this->mac_addr);
+	//BottangoCore::relayComs->deregisterPeer(this->mac_addr);
+	BottangoCore::mMaster.getModule<Relay>(Modules::RelayComs)->deregisterPeer(this->mac_addr);
 }
 
 void RelayChild::onConnectionComplete()
@@ -296,19 +296,19 @@ void RelayChild::onConnectionComplete()
 #ifdef RELAY_LOGGING
 #ifdef TOGGLE_DEBUG
 	if (PersistentConfigUtil::debugEnabled())
-#endif
+#endif // TOGGLE_DEBUG
 	{
-		Outgoing::printOutputStringFlash(F("Connected to peer: "));
+		OutgoingSerial::printOutputStringFlash(F("Connected to peer: "));
 		char buffer[20];
 		UDIDHelper::convertMACToCStr(mac_addr, buffer);
-		Outgoing::printOutputStringMem(buffer);
-		Outgoing::printLine();
+		OutgoingSerial::printOutputStringMem(buffer);
+		OutgoingSerial::printLine();
 	}
-#endif
+#endif // RELAY_LOGGING
 
-	if (_disconnectedMessageHoldingBuffer[0] != '\0' && !BottangoCore::relayPool->toPeerQueueFull())
+	if (_disconnectedMessageHoldingBuffer[0] != '\0' && !BottangoCore::mMaster.getModule<Relay>(Modules::RelayComs)->getPeerPool()->toPeerQueueFull())
 	{
-		BottangoCore::relayPool->enqueueUnicastToPeerQueue(this, _disconnectedMessageHoldingBuffer);
+		BottangoCore::mMaster.getModule<Relay>(Modules::RelayComs)->getPeerPool()->enqueueUnicastToPeerQueue(this, _disconnectedMessageHoldingBuffer);
 		_disconnectedMessageHoldingBuffer[0] = '\0';
 	}
 

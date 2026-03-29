@@ -26,17 +26,17 @@ namespace BottangoCore
 	bool isRelayPeer = false;
 	char* secondaryPeerCommandBuffer = nullptr;
 	int secondaryCommandIdx = 0;
-	unsigned long secondaryTimeOfLastChar = 0;
+	unsigned long secondaryTimeOfLastChar = 0;*/
 	unsigned long lastHeartbeatTime = 0;
-	bool secondaryCommandInProgress = false;
+	//bool secondaryCommandInProgress = false;
 #ifdef RELAY_LOGGING
 	unsigned long lastWaitForConnectLog = 0;
 #endif
-#endif*/
+//#endif
 
-#if defined(USE_CODE_COMMAND_STREAM) || defined(USE_SD_CARD_COMMAND_STREAM)
-	CommandStreamProvider* commandStreamProvider = nullptr;
-#endif
+//#if defined(USE_CODE_COMMAND_STREAM) || defined(USE_SD_CARD_COMMAND_STREAM)
+//	CommandStreamProvider* commandStreamProvider = nullptr;
+//#endif
 
 #if !defined(RELAY_SUPPORTED) && defined(USE_ESP32_WIFI)
 	WiFiClient client;
@@ -271,14 +271,14 @@ namespace BottangoCore
 		hardStop();
 	}
 
-	bool splitIntoBuffer(char* stringToSplit, byte& paramsCount)
+	/*bool splitIntoBuffer(char* stringToSplit, byte& paramsCount)
 	{
 #ifdef RELAY_SUPPORTED
 		// Special case if first token is relay pass through if is relay bridge
 		// first token is sR, second is peer id, third token is all of the command, fourth is the hash
-		if (isRelayBridge &&
-			strncmp(stringToSplit, BasicCommands::PASS_TO_RELAY, strlen(BasicCommands::PASS_TO_RELAY)) == 0 &&
-			stringToSplit[strlen(BasicCommands::PASS_TO_RELAY)] == ',')
+		if (isRelayBridge
+			&& strncmp(stringToSplit, BasicCommands::PASS_TO_RELAY, strlen(BasicCommands::PASS_TO_RELAY)) == 0
+			&& stringToSplit[strlen(BasicCommands::PASS_TO_RELAY)] == ',')
 		{
 			// Find first comma (after sR)
 			char* firstComma = strchr(stringToSplit, ',');
@@ -350,7 +350,7 @@ namespace BottangoCore
 			paramsCount = 4;
 			return true;
 		}
-#endif
+#endif*/
 		// Regular tokenization
 		/*byte idxResult = 0;
 		char *token = strtok(stringToSplit, delimiters);
@@ -367,8 +367,8 @@ namespace BottangoCore
 		}
 
 		paramsCount = idxResult;*/
-		return true;
-	}
+		//return true;
+	//}
 
 	bool checkHash(char* cmdString)
 	{
@@ -439,7 +439,7 @@ namespace BottangoCore
 		mMaster.executePhase(Phase::Logic);
 		mMaster.executePhase(Phase::Output);
 
-		//updateReadBuffer(false); // standard read <--- Next: Standard Read für Relay einbauen!
+		//updateReadBuffer(false); // standard read
 
 /*#ifdef RELAY_SUPPORTED
 		if (isRelayPeer)
@@ -448,40 +448,40 @@ namespace BottangoCore
 		}
 #endif*/
 
-		/*if (initialized)
+		if (SystemStatus::systemStatus.initialized)
 		{
 
-#ifdef ENABLE_DYNAMIC_ANIMATION_SOURCE_SWITCH
-			if (isOffline())
-#endif
-#if defined(USE_CODE_COMMAND_STREAM) || defined(USE_SD_CARD_COMMAND_STREAM)
-			{
-				if (commandStreamProvider != nullptr)
-				{
-					commandStreamProvider->updateOnLoop();
-				}
-			}
-#endif
+			/*#ifdef ENABLE_DYNAMIC_ANIMATION_SOURCE_SWITCH
+						if (isOffline())
+			#endif
+			#if defined(USE_CODE_COMMAND_STREAM) || defined(USE_SD_CARD_COMMAND_STREAM)
+						{
+							if (commandStreamProvider != nullptr)
+							{
+								commandStreamProvider->updateOnLoop();
+							}
+						}
+			#endif*/
 
 			// update effector pool
 			effectorPool.updateAllDriveTargets();
 
 			// update relay pool
 #ifdef RELAY_SUPPORTED
-			if (isRelayBridge)
+			if (mMaster.getModule<Relay>(Modules::RelayComs)->isBridge())
 			{
-				relayPool->update();
+				mMaster.getModule<Relay>(Modules::RelayComs)->getPeerPool()->update();
 			}
-			else if (isRelayPeer && millis() - lastHeartbeatTime > RELAY_HEARTBEAT_INTERVAL + RELAY_HEARTBEAT_KEEP_ALIVE_ADDITION)
+			else if (mMaster.getModule<Relay>(Modules::RelayComs)->isPeer() && millis() - lastPollTimeAsPeer > RELAY_POLL_TIMEOUT_AS_PEER)
 			{
-				Outgoing::toggleOnSecondaryOutgoing();
-				Outgoing::printOutputStringFlash(F("Lost Bridge!"));
-				Outgoing::printLine();
-				Outgoing::endToggleOnSecondaryOutgoing();
+				//Outgoing::toggleOnSecondaryOutgoing();
+				OutgoingSerial::printOutputStringFlash(F("Lost Bridge!"));
+				OutgoingSerial::printLine();
+				//Outgoing::endToggleOnSecondaryOutgoing();
 				BasicCommands::reboot(false);
 			}
 #endif
-		}*/
+		}
 
 		// update outgoing multimessage sender if any
 		if (activeOutgoingMultimessage != nullptr)
@@ -508,9 +508,9 @@ namespace BottangoCore
 #if defined(RELAY_SUPPORTED) && defined(RELAY_LOGGING)
 #ifdef TOGGLE_DEBUG
 		if (PersistentConfigUtil::debugEnabled())
-#endif
-		{
-			if (isRelayPeer && !SystemStatus::systemStatus.initialized && Time::getCurrentTimeInMs() - lastWaitForConnectLog >= 1000)
+#endif // TOGGLE_DEBUG
+		{			
+			if (mMaster.getModule<Relay>(Modules::RelayComs)->isPeer() && !SystemStatus::systemStatus.initialized && Time::getCurrentTimeInMs() - lastWaitForConnectLog >= 1000)
 			{
 				//Outgoing::toggleOnSecondaryOutgoing();
 				OutgoingSerial::printOutputStringFlash(F("Waiting for bridge...\n"));
@@ -518,7 +518,7 @@ namespace BottangoCore
 				lastWaitForConnectLog = Time::getCurrentTimeInMs();
 			}
 		}
-#endif		
+#endif // RELAY_SUPPORTED && RELAY_LOGGING
 	}
 
 	/*bool isOffline()
@@ -748,25 +748,25 @@ namespace BottangoCore
 
 	bool rcvAvailable(bool secondary)
 	{
-	/*#ifdef RELAY_SUPPORTED
-		if (isRelayPeer)
-		{
-			if (secondary)
+		/*#ifdef RELAY_SUPPORTED
+			if (isRelayPeer)
 			{
-				return Serial.available() > 0;
+				if (secondary)
+				{
+					return Serial.available() > 0;
+				}
+				else
+				{
+					return ESPNowUtil::peerRecvAvailable();
+				}
 			}
 			else
 			{
-				return ESPNowUtil::peerRecvAvailable();
+				return Serial.available() > 0;
 			}
-		}
-		else
-		{
-			return Serial.available() > 0;
-		}
 
-#elif defined(USE_USB_SERIAL)
-		return Serial.available() > 0;*/
+	#elif defined(USE_USB_SERIAL)
+			return Serial.available() > 0;*/
 
 #if defined(USE_ESP32_WIFI)
 		return client.available() > 0;
@@ -776,24 +776,24 @@ namespace BottangoCore
 
 	char readNextChar(bool secondary)
 	{
-	/*#ifdef RELAY_SUPPORTED
-		if (isRelayPeer)
-		{
-			if (secondary)
+		/*#ifdef RELAY_SUPPORTED
+			if (isRelayPeer)
 			{
-				return Serial.read();
+				if (secondary)
+				{
+					return Serial.read();
+				}
+				else
+				{
+					return ESPNowUtil::peerReadNextChar();
+				}
 			}
 			else
 			{
-				return ESPNowUtil::peerReadNextChar();
+				return Serial.read();
 			}
-		}
-		else
-		{
-			return Serial.read();
-		}
-#elif defined(USE_USB_SERIAL)
-		return Serial.read();*/
+	#elif defined(USE_USB_SERIAL)
+			return Serial.read();*/
 
 #if defined(USE_ESP32_WIFI)
 		return client.read();

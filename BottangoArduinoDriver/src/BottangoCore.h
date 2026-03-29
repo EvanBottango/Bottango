@@ -21,13 +21,9 @@
 #include "PersistentConfigUtil.h"
 #endif
 
-#if defined(USE_CODE_COMMAND_STREAM) || defined(USE_SD_CARD_COMMAND_STREAM)
+/*#if defined(USE_CODE_COMMAND_STREAM) || defined(USE_SD_CARD_COMMAND_STREAM)
 #include "CommandStreamProvider.h"
-#endif
-
-//#ifdef RELAY_SUPPORTED
-//#include "Modules/RelayComs/RelayChildPool.h"
-//#endif
+#endif*/
 
 namespace BottangoCore
 {
@@ -36,6 +32,10 @@ namespace BottangoCore
 
 	void request_Stop();
 	void request_eStop();
+
+    /**
+	 * @brief Stops the playback - only use when the source is Serial! Otherwise, use the request_Stop() or request_eStop() functions
+     */
     void stop();
 
     void uninitialize();
@@ -54,25 +54,27 @@ namespace BottangoCore
     char readNextChar(bool secondary);
 
 #if defined(RELAY_SUPPORTED)
+	extern unsigned long lastPollTimeAsPeer;
+#endif // RELAY_SUPPORTED
+
 #ifdef RELAY_LOGGING
     extern unsigned long lastWaitForConnectLog;
-#endif
-#endif
+#endif // RELAY_LOGGING
 
 #ifdef USE_ESP32_WIFI
     void initESP32WifiComs();
     void onWifiConnetionSuccess();
     void onWifiConnectionClosed();
     bool updateWifiConnectionStatus();
-#endif
+#endif // USE_ESP32_WIFI
 
-#if defined(USE_CODE_COMMAND_STREAM) || defined(USE_SD_CARD_COMMAND_STREAM)
-    extern CommandStreamProvider *commandStreamProvider;
-#endif
+//#if defined(USE_CODE_COMMAND_STREAM) || defined(USE_SD_CARD_COMMAND_STREAM)
+//    extern CommandStreamProvider *commandStreamProvider;
+//#endif // USE_CODE_COMMAND_STREAM || USE_SD_CARD_COMMAND_STREAM
 
 #ifdef USE_ESP32_WIFI
     extern WiFiClient client;
-#endif
+#endif // USE_ESP32_WIFI
 
 } // namespace BottangoCore
 

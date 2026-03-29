@@ -4,9 +4,10 @@
 
 #include "AsciiCmdDecoder.h"
 #include "../Errors.h"
-#include "../Outgoing.h"
+#include "../Modules/Outgoing.h"
 #include "../../BottangoArduinoModules.h"
 #include "../BasicCommands.h"
+#include "../System/SystemStatus.h"
 
 void AsciiCmdDecoder::onPhase(Phase p)
 {
@@ -52,7 +53,14 @@ void AsciiCmdDecoder::decode()
 
 bool AsciiCmdDecoder::splitCommand(SplitCommandData* data) const
 {
-#ifdef ALLOW_SYNC_COMMANDS	
+#ifdef RELAY_SUPPORTED
+	if (strncmp_P(data->stringToSplit, BasicCommands::PASS_TO_RELAY, 2) == 0)
+	{
+		return splitRelayCommand(data);
+	}
+#endif
+
+#ifdef ALLOW_SYNC_COMMANDS
 	// Check for sync command. If found, set validCommandAvailable to true and return.
 	// The command is split when calling tryConsumeCommand() next time.
 	if (strncmp_P(data->stringToSplit, BasicCommands::SYNC_COMMAND, 3) == 0)
@@ -63,7 +71,7 @@ bool AsciiCmdDecoder::splitCommand(SplitCommandData* data) const
 		beginSyncCommand(data);
 		return true;
 	}
-#endif
+#endif // ALLOW_SYNC_COMMANDS
 
 	int idxResult = 0;
 	char delimiters[] = ",";
@@ -219,3 +227,77 @@ bool AsciiCmdDecoder::hasMoreFrames(SplitCommandData* data) const
 	return returnValue;
 }
 #endif // ALLOW_SYNC_COMMANDS
+
+#ifdef RELAY_SUPPORTED
+bool AsciiCmdDecoder::splitRelayCommand(SplitCommandData* data) const
+{
+	// Find first comma (after sR)
+	char* firstComma = strchr(data->stringToSplit, ',');
+	if (!firstComma)
+	{
+		return false;
+	}
+
+	// Find second comma (after ID)
+	char* secondComma = strchr(firstComma + 1, ',');
+	if (!secondComma)
+	{
+		return false;
+	}
+
+	// Find last comma (for hash split)
+	char* lastComma = strrchr(secondComma + 1, ',');
+	if (!lastComma || lastComma <= secondComma)
+	{
+		return false;
+	}
+
+	// Set splitCommandBuffer[0] = sR
+	size_t len0 = firstComma - data->stringToSplit;
+	static char sRbuffer[8]; // enough for sR\0
+	strncpy(sRbuffer, data->stringToSplit, len0);
+	sRbuffer[len0] = '\0';
+	data->splitCommandBuffer[0] = sRbuffer;
+
+	// Set splitCommandBuffer[1] = ID
+	size_t len1 = secondComma - (firstComma + 1);
+	static char idBuffer[8]; // enough for id + \0
+	strncpy(idBuffer, firstComma + 1, len1);
+	idBuffer[len1] = '\0';
+	data->splitCommandBuffer[1] = idBuffer;
+
+	if (SystemStatus::systemStatus.ConnectionStatus == SystemStatus::eConnectionStatus::Export_Playback)
+	{
+		// Set splitCommandBuffer[2] = everything after 2nd comma
+		// except trim last char if it's a \n newline
+		static char offlinePayloadBuffer[MAX_COMMAND_LENGTH];
+		strcpy(offlinePayloadBuffer, secondComma + 1);
+
+		size_t payloadLen = strlen(offlinePayloadBuffer);
+		if (payloadLen > 0 && offlinePayloadBuffer[payloadLen - 1] == '\n')
+		{
+			offlinePayloadBuffer[payloadLen - 1] = '\0';
+		}
+
+		data->splitCommandBuffer[2] = offlinePayloadBuffer;
+
+		// Set splitCommandBuffer[3] = to an empty string, since there's no hash in an offline command
+		static char emptyString[] = "";
+		data->splitCommandBuffer[3] = emptyString;
+	}
+	else
+	{
+		// Set splitCommandBuffer[2] = everything between 2nd and last comma
+		size_t len2 = lastComma - (secondComma + 1);
+		static char payloadBuffer[MAX_COMMAND_LENGTH];
+		strncpy(payloadBuffer, secondComma + 1, len2);
+		payloadBuffer[len2] = '\0';
+		data->splitCommandBuffer[2] = payloadBuffer;
+
+		// Set splitCommandBuffer[3] = hash (after last comma)
+		data->splitCommandBuffer[3] = lastComma + 1;
+	}
+
+	return true;
+}
+#endif

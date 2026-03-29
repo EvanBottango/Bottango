@@ -74,6 +74,12 @@ bool Parser::parseCommand(char** splitCommandBuffer, bool sourceIsUsbSerial) con
 	{
 		BasicCommands::stop(splitCommandBuffer);
 	}
+#ifdef RELAY_SUPPORTED
+	else if (strcmp_P(commandName, BasicCommands::PASS_TO_RELAY) == 0)
+	{
+		BasicCommands::passToPeer(splitCommandBuffer);
+	}
+#endif
 	else if (strcmp_P(commandName, BasicCommands::TIME_SYNC) == 0)
 	{
 		BasicCommands::syncTime(splitCommandBuffer);

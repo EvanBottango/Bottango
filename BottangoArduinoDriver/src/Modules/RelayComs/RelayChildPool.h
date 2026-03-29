@@ -49,7 +49,7 @@ public:
 
 	void removePeer(int id);
 
-	void passThroughCommandToPeer(int id, char** commands, byte paramsCount);
+	void passThroughCommandToPeer(int id, char** commands);
 
 	void deregisterAll();
 
@@ -91,7 +91,7 @@ private:
 	unsigned long _lastPollEnqueueTime = 0;
 	unsigned long _lastBootEnqueueTime = 0;
 
-	CircularArray<RelayChild> _relays = CircularArray<RelayChild>(MAX_RELAY_CHILD);
+	CircularArray<RelayChild> _peers = CircularArray<RelayChild>(MAX_RELAY_CHILD);
 
 #ifdef ESP32
 	SemaphoreHandle_t _relayMutex = nullptr;
@@ -107,6 +107,7 @@ private:
 	void enqueuePollBroadcast();
 	void enqueueBootBroadcast();
 
+	// ==== AbstractMultiMessageOutgoingSource implementation ====
 	bool emitNextChunk() override;
 };
 

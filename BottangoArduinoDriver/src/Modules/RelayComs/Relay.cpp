@@ -25,7 +25,7 @@ void Relay::init()
 		SystemStatus::systemStatus.ConnectionStatus = SystemStatus::eConnectionStatus::No_Connection_Peer;
 		initializeAsPeer();
 
-		// Change the default Outgoing messages the relay
+		// Change the default Outgoing messages to "Relay"
 		Outgoing::bind(OutgoingRelay::get());
 
 		Outgoing::printLine();

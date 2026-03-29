@@ -1,48 +1,44 @@
 #include "MACResponder.h"
-#if defined(RELAY_SUPPORTED) && defined(RELAY_COMS_ESPNOW)
+#ifdef RELAY_SUPPORTED
 #include "PersistentConfigUtil.h"
-#include "Outgoing.h"
+#include "Modules/Outgoing.h"
 
-void MACResponder::initializeMultiMessage()
+void MACResponder::onMultiMessageStart()
 {
-    macSent = false;
 }
 
-bool MACResponder::multiMessageisComplete()
+bool MACResponder::emitNextChunk()
 {
-    return macSent && !_hasOutgoingMessage;
-}
+	if (hasEmittedAny())
+	{
+		return false;
+	}
 
-void MACResponder::updateMultiMessage()
-{
-    if (!macSent)
-    {
-        char buffer[15];
-        PersistentConfigUtil::getThisDeviceMacAddress(buffer);
-#ifdef RELAY_SUPPORTED
-        if (_secondary)
-        {
-            Outgoing::setSecondaryPeerOutgoing(true);
-        }
-#endif
-        Outgoing::printOutputStringPROGMEM(REPLY_MAC_ADDRESS);
-        Outgoing::printOutputStringFlash(F(","));
-        Outgoing::printOutputStringMem(buffer);
-        Outgoing::printLine();
-#ifdef RELAY_SUPPORTED
-        if (_secondary)
-        {
-            Outgoing::setSecondaryPeerOutgoing(false);
-        }
-#endif
+	char buffer[15];
+	PersistentConfigUtil::getThisDeviceMacAddress(buffer);
 
-        macSent = true;
-    }
+	// ToDo: Hier muss ein passender switch rein, damit das an den richtigen Kanal gesendet wird
+	/*if (secondary)
+	{
+		Outgoing::setSecondaryPeerOutgoing(true);
+	}*/
+
+	Outgoing::printOutputStringPROGMEM(REPLY_MAC_ADDRESS);
+	Outgoing::printOutputStringFlash(F(","));
+	Outgoing::printOutputStringMem(buffer);
+	Outgoing::printLine();
+
+	/*if (secondary)
+	{
+		Outgoing::setSecondaryPeerOutgoing(false);
+	}*/
+
+	return true;
 }
 
 void MACResponder::cleanUpMultiMessage()
 {
-    delete this;
+	delete this;
 }
 
-#endif
+#endif // RELAY_SUPPORTED

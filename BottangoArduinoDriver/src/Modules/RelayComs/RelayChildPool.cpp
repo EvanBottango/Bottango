@@ -27,7 +27,7 @@ void RelayChildPool::addPeer(RelayChild* newPeer)
 {
 	lockPool();
 
-	if (_relays.size() >= MAX_RELAY_CHILD)
+	if (_peers.size() >= MAX_RELAY_CHILD)
 	{
 		Error::reportError_NoSpaceAvailable(); // todo unique out of space
 		unlockPool();
@@ -51,7 +51,7 @@ void RelayChildPool::addPeer(RelayChild* newPeer)
 			return;
 		}
 		newPeer->stableId = relayId;
-		_relays.pushBack(newPeer);
+		_peers.pushBack(newPeer);
 	}
 
 	unlockPool();
@@ -69,14 +69,14 @@ void RelayChildPool::removePeer(int id)
 		return;
 	}
 
-	_relays.remove(relay);
+	_peers.remove(relay);
 	relay->destroy();
 	delete relay;
 
 	unlockPool();
 }
 
-void RelayChildPool::passThroughCommandToPeer(int id, char** commands, byte paramsCount)
+void RelayChildPool::passThroughCommandToPeer(int id, char** commands)
 {
 	lockPool();
 
@@ -91,13 +91,14 @@ void RelayChildPool::passThroughCommandToPeer(int id, char** commands, byte para
 	char commandBuffer[MAX_COMMAND_LENGTH];
 	commandBuffer[0] = '\0';
 
-	if (paramsCount != 4)
-	{
+	//if (paramsCount != 4)
+	//{
 		// always should come in the exact same format, 4 total params
 		// todo error here
-		unlockPool();
-		return;
-	}
+		// ToDo: We can catch the "not 4 params" way earlier, without the need to pass a static number all the way to here
+	//	unlockPool();
+	//	return;
+	//}
 
 	// skip 0 - relay command
 	// skip 1 - relay identifier
@@ -116,13 +117,13 @@ void RelayChildPool::deregisterAll()
 {
 	lockPool();
 
-	for (int i = 0; i < _relays.size(); i++)
+	for (int i = 0; i < _peers.size(); i++)
 	{
-		RelayChild* relay = _relays.get(i);
+		RelayChild* relay = _peers.get(i);
 		relay->destroy();
-		delete _relays.get(i);
+		delete _peers.get(i);
 	}
-	_relays.clear();
+	_peers.clear();
 
 	unlockPool();
 }
@@ -131,9 +132,9 @@ RelayChild* RelayChildPool::getPeer(const uint8_t* mac_addr) const
 {
 	lockPool();
 	RelayChild* found = nullptr;
-	for (byte i = 0; i < _relays.size(); i++)
+	for (byte i = 0; i < _peers.size(); i++)
 	{
-		RelayChild* iterator = _relays.get(i);
+		RelayChild* iterator = _peers.get(i);
 		if (isMacEqual(mac_addr, iterator->mac_addr))
 		{
 			found = iterator;
@@ -153,9 +154,9 @@ RelayChild* RelayChildPool::getPeer(int id) const
 		return nullptr;
 	}
 	RelayChild* found = nullptr;
-	for (int i = 0; i < _relays.size(); i++)
+	for (int i = 0; i < _peers.size(); i++)
 	{
-		RelayChild* iterator = _relays.get(i);
+		RelayChild* iterator = _peers.get(i);
 		if (iterator != nullptr && iterator->stableId == id)
 		{
 			found = iterator;
@@ -185,10 +186,10 @@ void RelayChildPool::update()
 	int snapshotCount = 0;
 
 	lockPool();
-	int relayCount = _relays.size();
-	for (int i = 0; i < relayCount && i < MAX_RELAY_CHILD; i++)
+	int peerCount = _peers.size();
+	for (int i = 0; i < peerCount && i < MAX_RELAY_CHILD; i++)
 	{
-		snapshot[snapshotCount] = _relays.get(i);
+		snapshot[snapshotCount] = _peers.get(i);
 		snapshotCount++;
 	}
 	unlockPool();
@@ -210,6 +211,7 @@ void RelayChildPool::update()
 		}
 	}
 
+	// Ping connected peers on a timer to prompt them to respond with "RLY_ACK", confirming they're still there and giving us an opportunity to detect lost peers that didn't cleanly disconnect
 	if (now - _lastPollEnqueueTime >= RELAY_POLL_INTERVAL_AS_BRIDGE && !_toPeerQueue.full())
 	{
 		int connectedCount = 0;
@@ -228,6 +230,7 @@ void RelayChildPool::update()
 		}
 	}
 
+	// Bridge came active AFTER some peers already booted. To catch those peers, we can broadcast a boot message on a timer, prompting them to respond with "sBoot"
 	if (now - _lastBootEnqueueTime >= RELAY_BOOT_INTERVAL_AS_BRIDGE && !_toPeerQueue.full())
 	{
 		int unconnectedCount = 0;
@@ -276,25 +279,6 @@ int RelayChildPool::getIdForPeer(RelayChild* relayChild) const
 	return id;
 }
 
-bool RelayChildPool::emitNextChunk()
-{
-	if (_relayIdToReport < 0 || hasEmittedAny())
-	{
-		return false;
-	}
-
-	Outgoing::printOutputStringPROGMEM(RELAY_ID_RESPONSE_PREFIX);	// rlyId,
-	Outgoing::printOutputStringMem(_relayIdToReport);				// rlyId,2
-	Outgoing::printLine();											// rlyId,2\n
-	_relayIdToReport = -1;
-	return true;
-}
-
-void RelayChildPool::cleanUpMultiMessage()
-{
-	_relayIdToReport = -1;
-}
-
 void RelayChildPool::setPeerIdToReport(int id)
 {
 	_relayIdToReport = id;
@@ -304,9 +288,9 @@ bool RelayChildPool::bridgeIsConnectedToAllPeers() const
 {
 	lockPool();
 
-	for (byte i = 0; i < _relays.size(); i++)
+	for (byte i = 0; i < _peers.size(); i++)
 	{
-		RelayChild* iterator = _relays.get(i);
+		RelayChild* iterator = _peers.get(i);
 		if (!iterator->connected)
 		{
 			unlockPool();
@@ -418,6 +402,7 @@ void RelayChildPool::enqueuePollBroadcast()
 		return;
 	}
 
+	// ToDo: This buffer size seems excessive for a simple poll command. This call chain uses 3x MAX_COMMAND_LENGTH of RAM!
 	char payloadBuffer[MAX_COMMAND_LENGTH];
 	payloadBuffer[0] = '\0';
 	strcat(payloadBuffer, BasicCommands::RELAY_POLL_REQUEST);
@@ -428,6 +413,7 @@ void RelayChildPool::enqueuePollBroadcast()
 		return;
 	}
 
+	// ToDo: enqueueBroadcastPassThrough() packs the command AGAIN into [Command],h[Hash]\n format, which is unnecessary since buildPassThroughCommand already does this. Why?
 	enqueueBroadcastPassThrough(payloadBuffer, MessageIntent::Poll, TargetGroup::BroadcastConnected);
 }
 
@@ -493,9 +479,9 @@ void RelayChildPool::getConnectedPeerIds(int* outIds, uint8_t& outCount) const
 	lockPool();
 
 	outCount = 0;
-	for (int i = 0; i < _relays.size(); i++)
+	for (int i = 0; i < _peers.size(); i++)
 	{
-		RelayChild* peer = _relays.get(i);
+		RelayChild* peer = _peers.get(i);
 		if (peer != nullptr && peer->connected)
 		{
 			outIds[outCount] = peer->stableId;
@@ -515,9 +501,9 @@ void RelayChildPool::getUnconnectedPeerIds(int* outIds, uint8_t& outCount) const
 	lockPool();
 
 	outCount = 0;
-	for (int i = 0; i < _relays.size(); i++)
+	for (int i = 0; i < _peers.size(); i++)
 	{
-		RelayChild* peer = _relays.get(i);
+		RelayChild* peer = _peers.get(i);
 		if (peer != nullptr && !peer->connected)
 		{
 			outIds[outCount] = peer->stableId;
@@ -560,13 +546,35 @@ void RelayChildPool::markPeerPollOutstanding(int peerId)
 
 void RelayChildPool::reportLostPeer(int peerId)
 {
-	Outgoing::printOutputStringFlash(F("ERR: Lost peer "));
-	Outgoing::printOutputStringMem(peerId);
-	Outgoing::printLine();
+	OutgoingSerial::printOutputStringFlash(F("ERR: Lost peer "));
+	OutgoingSerial::printOutputStringMem(peerId);
+	OutgoingSerial::printLine();
 
-	Outgoing::printOutputStringPROGMEM(BasicCommands::LOST_PEER);
-	Outgoing::printOutputStringMem(peerId);
-	Outgoing::printLine();
+	OutgoingSerial::printOutputStringPROGMEM(BasicCommands::LOST_PEER);
+	OutgoingSerial::printOutputStringMem(peerId);
+	OutgoingSerial::printLine();
+}
+
+// ==== AbstractMultiMessageOutgoingSource implementation ====
+void RelayChildPool::cleanUpMultiMessage()
+{
+	_relayIdToReport = -1;
+}
+
+bool RelayChildPool::emitNextChunk()
+{
+	if (_relayIdToReport < 0 || hasEmittedAny())
+	{
+		return false;
+	}
+
+	// ToDo: This should only ever be called from Bottango itself or from Offline (SD-Card...) setup
+	// Because of this, we can use OutgoingSerial all the time
+	OutgoingSerial::printOutputStringPROGMEM(RELAY_ID_RESPONSE_PREFIX);		// rlyId,
+	OutgoingSerial::printOutputStringMem(_relayIdToReport);					// rlyId,2
+	OutgoingSerial::printLine();											// rlyId,2\n
+	_relayIdToReport = -1;
+	return true;
 }
 
 #endif

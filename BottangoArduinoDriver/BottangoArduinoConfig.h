@@ -89,12 +89,12 @@
 
 
 #define AVR_STEPPER_FIXED                           // in order to keep up with the demands of stepper motors, AVR boards (Arduino Uno, Nano, Mega, etc) use
-                                                    // fixed evaluation overriding the above default. Comment this line out to use the default curve evaluation on avr steppers
+													// fixed evaluation overriding the above default. Comment this line out to use the default curve evaluation on avr steppers
 
 #define VELOCITY_SEGMENT_MS 67                      // Velocity effectors (IE steppers) will segment curves into chunks of velocity. This field defines how long each chunk is in MS.
-                                                    // lower number means more segments. More segments will be more accurate to the curve, but slower to process and less smooth stepper movement
-                                                    // If you wanted to target 15 segments per second (the default) divide 1000 by 15: 1000 / 15 = 66.666, so rounded to 67
-                                                    // 30 segments per second would be 33, etc.
+													// lower number means more segments. More segments will be more accurate to the curve, but slower to process and less smooth stepper movement
+													// If you wanted to target 15 segments per second (the default) divide 1000 by 15: 1000 / 15 = 66.666, so rounded to 67
+													// 30 segments per second would be 33, etc.
 
 #define STEPPER_SYNC_SPEED 2                        // steppers will sync at 1/X percent of max speed. IE, 2 == 50% max speed, 4 == 25% max Speed, etc.
 
@@ -125,15 +125,15 @@
 // sd card configuration
 #if defined(USE_SD_CARD_COMMAND_STREAM) || defined(AUDIO_SD_I2S)
 #define MAX_FILE_PATH_SIZE 30                               // max character count of a file path
-inline const char SD_ANIMATION_PATH[] PROGMEM = "/anim/";          // file path to look for animation directories on sd card.
-inline const char SD_AUDIO_PATH[] PROGMEM = "/audio/";             // file path to look for audio files
-inline const char SD_SETUP_PATH[] PROGMEM = "setup/";              // file path to look for initial set up data
-inline const char SD_DATA_ANIMDATA[] PROGMEM = "data.txt";         // file name of animation data
-inline const char SD_DATA_LOOPDATA[] PROGMEM = "loop.txt";         // file name of loop data
-inline const char SD_HASH_FORMAT[] PROGMEM = "hash.txt";           // file format name of hash file name
+const char SD_ANIMATION_PATH[] PROGMEM = "/anim/";          // file path to look for animation directories on sd card.
+const char SD_AUDIO_PATH[] PROGMEM = "/audio/";             // file path to look for audio files
+const char SD_SETUP_PATH[] PROGMEM = "setup/";              // file path to look for initial set up data
+const char SD_DATA_ANIMDATA[] PROGMEM = "data.txt";         // file name of animation data
+const char SD_DATA_LOOPDATA[] PROGMEM = "loop.txt";         // file name of loop data
+const char SD_HASH_FORMAT[] PROGMEM = "hash.txt";           // file format name of hash file name
 #define FILE_HASH_LENGTH 32                                 // character count of a file hash code
-inline const char SD_DATA_CONFIGDATA[] PROGMEM = "config.txt";     // file name of config data
-inline const char SD_AUDIO_FORMAT[] PROGMEM = ".wav";              // file format name of audio file
+const char SD_DATA_CONFIGDATA[] PROGMEM = "config.txt";     // file name of config data
+const char SD_AUDIO_FORMAT[] PROGMEM = ".wav";              // file format name of audio file
 #define SD_CARD_REMOUNT_TIME 2000                           // time to wait in MS before next attempt to remount
 #define SD_ANIM_PREREAD_MS 25                               // ms early to cache execute curves from sd card
 #define SD_ANIM_PREREAD_MS_RELAY 250                        // ms early to cache execute curves from sd card when relay bridge
@@ -222,15 +222,17 @@ inline const char SD_AUDIO_FORMAT[] PROGMEM = ".wav";              // file forma
 
 #ifdef RELAY_COMS_RS485
 #define RELAY_RS485_RESPONSE_TIMEOUT 75UL                   // how long to wait for a response from a peer on RS485
-#endif // RELAY_COMS_RS485
+#endif
 
-#endif // RELAY_SUPPORTED
+#endif
 
 // ---------------------------------- //
 
 // extra logging
 #define EXPORTED_ANIM_LOGGING                               // extra logging of status of exported animation playback
 // #define RELAY_LOGGING                                    // extra logging of relay status
+#define RELAY_COMMS_LOGGING                              // extra logging of relay comms state machines (RS485, etc)
+// #define RELAY_COMMS_LOGGING_DEBUG                       // extra verbose relay comms logging (payloads, state traces)
 // #define ESP32WIFI_LOGGING                                   // when communicating without serial, enable it for extra logging
 
 // ---------------------------------- //
@@ -251,13 +253,43 @@ inline const char SD_AUDIO_FORMAT[] PROGMEM = ".wav";              // file forma
 // extra Pin Remapping and Low on Launch
 #if defined(PIN_REMAPPING) || defined(PIN_LOW_LAUNCH)
 #define PIN_REMAP_LENGTH 10
-constexpr int inputPins[PIN_REMAP_LENGTH] = {1, 2, 3, 4, 5, 6, 7, 8, 9, 10};
+constexpr int inputPins[PIN_REMAP_LENGTH] = { 1, 2, 3, 4, 5, 6, 7, 8, 9, 10 };
 #ifdef BOTTANGO_IMPULSE
-constexpr int onboardPins[PIN_REMAP_LENGTH] = {32, 33, 25, 26, 27, 14, 13, 15, 17, 5};
+constexpr int onboardPins[PIN_REMAP_LENGTH] = { 32, 33, 25, 26, 27, 14, 13, 15, 17, 5 };
 #elif defined(BOTTANGO_SOLAR)
-constexpr int onboardPins[PIN_REMAP_LENGTH] = {15, 21, 22, 13, 14, 27, 26, 33, 32, 12};
+constexpr int onboardPins[PIN_REMAP_LENGTH] = { 15, 21, 22, 13, 14, 27, 26, 33, 32, 12 };
 #endif
 #endif
+
+// ---------------------------------- //
+
+// RS485
+#if defined(BOTTANGO_NOVA)
+#define RS485_RX_PIN 33
+#define RS485_DE_PIN 12
+#define RS485_TX_PIN 32
+#elif defined(BOTTANGO_IMPULSE)
+#define RS485_RX_PIN 16
+#define RS485_DE_PIN 19
+#define RS485_TX_PIN 23
+#elif defined(BOTTANGO_SOLAR)
+#define RS485_RX_PIN 34
+#define RS485_DE_PIN 12
+#define RS485_TX_PIN 32
+#else
+#define RS485_RX_PIN 34
+#define RS485_DE_PIN 12
+#define RS485_TX_PIN 32
+#endif
+
+#define RS485_BAUD 1000000
+#define RS485_SERIAL Serial2
+
+#define RS485_SOH '\x01'     // start id header
+#define RS485_STX '\x02'     // start message payload
+#define RS485_EOT '\x04'     // end of tx
+#define RS485_ENQ '\x05'     // start of boot request header
+#define RS485_PEERACK '\x06' // start of peer ack response header
 
 // ---------------------------------- //
 

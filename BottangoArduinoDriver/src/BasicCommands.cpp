@@ -102,7 +102,8 @@ namespace BasicCommands
 			Relay* relay = BottangoCore::mMaster.getModule<Relay>(Modules::RelayComs);
 			if (relay->getRole() == Relay::RelayRole::Peer)
 			{
-				relay->setLastHeartbeatTime(millis());
+				//relay->setLastHeartbeatTime(millis());
+				BottangoCore::lastPollTimeAsPeer = millis();
 			}
 		}
 #endif // RELAY_SUPPORTED
@@ -534,7 +535,7 @@ namespace BasicCommands
 		Relay* relay = BottangoCore::mMaster.getModule<Relay>(Modules::RelayComs);
 		if (relay->getRole() != Relay::RelayRole::Bridge)
 		{
-			OutgoingSerial::printOutputStringFlash(F("Aborting register relay, Not bridge"));
+			OutgoingSerial::printOutputStringFlash(F("Aborting register peer, Not bridge"));
 			OutgoingSerial::printLine();
 			return;
 		}
@@ -565,12 +566,16 @@ namespace BasicCommands
 			BottangoCore::activeOutgoingMultimessage = nullptr;
 		}
 		BottangoCore::activeOutgoingMultimessage = relay->getPeerPool();
-#ifdef RELAY_SUPPORTED
+
+		// ToDo: Was passiert hier genau mit secondaryPeerOutgoing? Warum muss das hier jetzt über die Serielle Schnittstelle geschickt werden?
+		// Wann muss das über "Relay" geschickt werden? Wird das hier nur gedreht, weil wir als Relay default Outgoing = Relay haben?
+		// registerPeer() sollte immer nur von Bottango direkt angesprochen werden, oder über Offline (SD-Karte...) setup
+/*#ifdef RELAY_SUPPORTED
 		if (Outgoing::secondaryPeerOutgoing)
 		{
 			BottangoCore::activeOutgoingMultimessage->setSecondary();
 		}
-#endif // RELAY_SUPPORTED
+#endif // RELAY_SUPPORTED*/
 		BottangoCore::activeOutgoingMultimessage->initializeMultiMessage();
 	}
 
@@ -585,10 +590,10 @@ namespace BasicCommands
 		BottangoCore::mMaster.getModule<Relay>(Modules::RelayComs)->getPeerPool()->deregisterAll();
 	}
 
-	void passToPeer(char** args, byte paramsCount)
+	void passToPeer(char** args)
 	{
 		int id = atoi(args[1]);
-		BottangoCore::mMaster.getModule<Relay>(Modules::RelayComs)->getPeerPool()->passThroughCommandToPeer(id, args, paramsCount);
+		BottangoCore::mMaster.getModule<Relay>(Modules::RelayComs)->getPeerPool()->passThroughCommandToPeer(id, args);
 	}
 
 	void requestBoot(char** args)

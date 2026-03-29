@@ -42,6 +42,10 @@ public:
 
 private:
 	void decode() override;
+
+#ifdef RELAY_SUPPORTED
+	bool splitRelayCommand(SplitCommandData* data) const;
+#endif
 };
 
 #endif

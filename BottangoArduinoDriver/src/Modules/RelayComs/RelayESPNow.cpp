@@ -45,7 +45,7 @@ namespace
 #ifdef RELAY_LOGGING
 #ifdef TOGGLE_DEBUG
 			if (PersistentConfigUtil::debugEnabled() || ALWAYS_LOG_ERROR_CASE)
-#endif
+#endif // TOGGLE_DEBUG
 			{
 				//Outgoing::toggleOnSecondaryOutgoing();
 				OutgoingSerial::printOutputStringFlash(F("WARN: Dropped msg, no relay for id "));
@@ -53,7 +53,7 @@ namespace
 				OutgoingSerial::printLine();
 				//Outgoing::endToggleOnSecondaryOutgoing();
 			}
-#endif
+#endif // RELAY_LOGGING
 			return EspNowSendResult::NoPeer;
 		}
 
@@ -78,7 +78,7 @@ namespace
 #ifdef RELAY_LOGGING
 #ifdef TOGGLE_DEBUG
 		if (PersistentConfigUtil::debugEnabled() || ALWAYS_LOG_ERROR_CASE)
-#endif
+#endif // TOGGLE_DEBUG
 		{
 			//Outgoing::toggleOnSecondaryOutgoing();
 			OutgoingSerial::printOutputStringFlash(F("ESP-NOW send failed for id "));
@@ -88,7 +88,7 @@ namespace
 			OutgoingSerial::printLine();
 			//Outgoing::endToggleOnSecondaryOutgoing();
 		}
-#endif
+#endif // RELAY_LOGGING
 		return EspNowSendResult::QueuedFail;
 	}
 }
@@ -199,16 +199,16 @@ void RelayCommsESPNow::espNowTxRxTask(void* pvParameters)
 					// Get peer, and hold the pool lock only long enough to resolve and pass up,
 					// so pointer lifetime is safe but the lock window is tiny.
 					pool->lockPool();
-					RelayChild* relay = pool->getPeer(rxPacket.mac);
-					if (relay != nullptr)
+					RelayChild* peer = pool->getPeer(rxPacket.mac);
+					if (peer != nullptr)
 					{
-						relay->passUpCommands(rxPacket.payload);
+						peer->passUpCommands(rxPacket.payload);
 					}
 					pool->unlockPool();
 
 					// log error case if we can't get a peer for the id
 #ifdef RELAY_LOGGING
-					if (relay == nullptr)
+					if (peer == nullptr)
 					{
 #ifdef TOGGLE_DEBUG
 						if (PersistentConfigUtil::debugEnabled() || ALWAYS_LOG_ERROR_CASE)
@@ -395,15 +395,12 @@ void RelayCommsESPNow::espNowTxRxTask(void* pvParameters)
 #if ESP_ARDUINO_VERSION >= ESP_ARDUINO_VERSION_VAL(3, 0, 0)
 // Arduino-ESP32 3.x (IDF 5.x): first param is wifi_tx_info_t*
 void RelayCommsESPNow::OnDataSent(const wifi_tx_info_t* tx_info, esp_now_send_status_t status)
-#else
-// Arduino-ESP32 2.x and earlier
-void RelayCommsESPNow::OnDataSent(const uint8_t* mac_addr, esp_now_send_status_t status)
-#endif
-#else
-// Fallback for environments without version macros
-void RelayCommsESPNow::OnDataSent(const uint8_t* mac_addr, esp_now_send_status_t status)
-#endif
 {
+#else
+void RelayCommsESPNow::OnDataSent(const uint8_t* mac_addr, esp_now_send_status_t status)
+{
+#endif // ESP_ARDUINO_VERSION >= 3
+#endif // ESP_ARDUINO_VERSION_MAJOR
 	if (status == ESP_NOW_SEND_SUCCESS)
 	{
 		return;
@@ -429,8 +426,9 @@ void RelayCommsESPNow::OnDataRecv(const esp_now_recv_info_t* recv_info, const ui
 #else
 void RelayCommsESPNow::OnDataRecv(const uint8_t * mac_addr, const uint8_t * data, int data_len)
 {
-#endif
-#endif
+#endif // ESP_ARDUINO_VERSION >= 3
+#endif // ESP_ARDUINO_VERSION_MAJOR
+
 	// Keep callback lightweight: copy into RX queue and return.
 	QueueHandle_t rxQueue = nullptr;
 	volatile bool* rxDropPending = nullptr;
@@ -647,7 +645,7 @@ void RelayCommsESPNow::initConnection()
 #ifdef RELAY_LOGGING
 #ifdef TOGGLE_DEBUG
 		if (PersistentConfigUtil::debugEnabled() || ALWAYS_LOG_ERROR_CASE)
-#endif
+#endif // TOGGLE_DEBUG
 		{
 			//Outgoing::toggleOnSecondaryOutgoing();
 			OutgoingSerial::printOutputStringFlash(F("Error initializing WiFi: "));
@@ -657,8 +655,7 @@ void RelayCommsESPNow::initConnection()
 			OutgoingSerial::printLine();
 			//Outgoing::endToggleOnSecondaryOutgoing();
 		}
-
-#endif
+#endif // RELAY_LOGGING
 		return;
 	}
 
@@ -668,7 +665,7 @@ void RelayCommsESPNow::initConnection()
 #ifdef RELAY_LOGGING
 #ifdef TOGGLE_DEBUG
 		if (PersistentConfigUtil::debugEnabled() || ALWAYS_LOG_ERROR_CASE)
-#endif
+#endif // TOGGLE_DEBUG
 		{
 			//Outgoing::toggleOnSecondaryOutgoing();
 			OutgoingSerial::printOutputStringFlash(F("Error setting WiFi mode: "));
@@ -678,8 +675,7 @@ void RelayCommsESPNow::initConnection()
 			OutgoingSerial::printLine();
 			//Outgoing::endToggleOnSecondaryOutgoing();
 		}
-
-#endif
+#endif // RELAY_LOGGING
 		return;
 	}
 
@@ -690,7 +686,7 @@ void RelayCommsESPNow::initConnection()
 #ifdef RELAY_LOGGING
 #ifdef TOGGLE_DEBUG
 		if (PersistentConfigUtil::debugEnabled() || ALWAYS_LOG_ERROR_CASE)
-#endif
+#endif // TOGGLE_DEBUG
 		{
 			//Outgoing::toggleOnSecondaryOutgoing();
 			OutgoingSerial::printOutputStringFlash(F("Error starting WiFi: "));
@@ -700,8 +696,7 @@ void RelayCommsESPNow::initConnection()
 			OutgoingSerial::printLine();
 			//Outgoing::endToggleOnSecondaryOutgoing();
 		}
-
-#endif
+#endif // RELAY_LOGGING
 		return;
 	}
 
@@ -714,7 +709,7 @@ void RelayCommsESPNow::initConnection()
 #ifdef RELAY_LOGGING
 #ifdef TOGGLE_DEBUG
 		if (PersistentConfigUtil::debugEnabled() || ALWAYS_LOG_ERROR_CASE)
-#endif
+#endif // TOGGLE_DEBUG
 		{
 			//Outgoing::toggleOnSecondaryOutgoing();
 			OutgoingSerial::printOutputStringFlash(F("Error initializing ESP-NOW: "));
@@ -724,8 +719,7 @@ void RelayCommsESPNow::initConnection()
 			OutgoingSerial::printLine();
 			//Outgoing::endToggleOnSecondaryOutgoing();
 		}
-
-#endif
+#endif // RELAY_LOGGING
 		return;
 	}
 
@@ -735,14 +729,14 @@ void RelayCommsESPNow::initConnection()
 #ifdef RELAY_LOGGING
 #ifdef TOGGLE_DEBUG
 	if (PersistentConfigUtil::debugEnabled())
-#endif
+#endif // TOGGLE_DEBUG
 	{
 		//Outgoing::toggleOnSecondaryOutgoing();
 		OutgoingSerial::printOutputStringFlash(F("ESP-NOW radio initialized"));
 		OutgoingSerial::printLine();
 		//Outgoing::endToggleOnSecondaryOutgoing();
 	}
-#endif
+#endif // RELAY_LOGGING
 
 	_wifiInitialized = true;
 }
@@ -838,7 +832,7 @@ void RelayCommsESPNow::peerPrint(const char* str)
 		_peerState->txBuffer->addTxt(str);
 	}
 
-	// flush whole buffer to espnow if newline in this text
+	// flush whole buffer to ESP-Now if newline in this text
 	bool shouldFlush = false;
 	size_t len = strlen(str);
 	for (int i = 0; i < len; i++)
@@ -890,13 +884,12 @@ void RelayCommsESPNow::peerFlush()
 		// Send message via ESP-NOW
 		esp_err_t result = esp_now_send(_peerInfo.peer_addr, (uint8_t*)message, strlen(message));
 
+#ifdef RELAY_LOGGING
 		if (result != ESP_OK)
 		{
-
-#ifdef RELAY_LOGGING
 #ifdef TOGGLE_DEBUG
 			if (PersistentConfigUtil::debugEnabled() || ALWAYS_LOG_ERROR_CASE)
-#endif
+#endif // TOGGLE_DEBUG
 			{
 				//Outgoing::setSecondaryPeerOutgoing(true);
 				OutgoingSerial::printOutputStringFlash(F("Sent with Failure: "));
@@ -904,9 +897,8 @@ void RelayCommsESPNow::peerFlush()
 				OutgoingSerial::printLine();
 				//Outgoing::setSecondaryPeerOutgoing(false);
 			}
-
-#endif
 		}
+#endif // RELAY_LOGGING
 	}
 }
 

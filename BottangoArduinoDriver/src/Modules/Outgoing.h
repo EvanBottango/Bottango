@@ -1,13 +1,8 @@
 #pragma once
 
 #include <Arduino.h>
-#include "OutgoingSerial.h"
-
 #include "../BottangoArduinoModules.h"
 
-#if defined(RELAY_SUPPORTED)
-#include "OutgoingRelay.h"
-#endif // RELAY_SUPPORTED
 
 class OutgoingBase
 {

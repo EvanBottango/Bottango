@@ -3,7 +3,7 @@
 
 // ToDo: AudioBinaryUtil currently disabled (unfinished feature)
 //#if defined(AUDIO_SD_I2S)
-#include "Outgoing.h"
+#include "Modules/Outgoing.h"
 #include "BasicCommands.h"
 #include "HexDataDownloadUtil.h"
 

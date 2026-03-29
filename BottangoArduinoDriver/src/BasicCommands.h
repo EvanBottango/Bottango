@@ -331,7 +331,7 @@ namespace BasicCommands
 
 	void deregisterAllPeers(char** args);
 
-	void passToPeer(char** args, byte paramsCount);
+	void passToPeer(char** args);
 
 	void requestBoot(char** args);
 
