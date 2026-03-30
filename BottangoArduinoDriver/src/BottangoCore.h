@@ -21,10 +21,6 @@
 #include "PersistentConfigUtil.h"
 #endif
 
-/*#if defined(USE_CODE_COMMAND_STREAM) || defined(USE_SD_CARD_COMMAND_STREAM)
-#include "CommandStreamProvider.h"
-#endif*/
-
 namespace BottangoCore
 {
     void bottangoSetup();
@@ -50,8 +46,8 @@ namespace BottangoCore
 
 	extern char delimiters[];
 
-    bool rcvAvailable(bool secondary);
-    char readNextChar(bool secondary);
+    //bool rcvAvailable(bool secondary);
+    //char readNextChar(bool secondary);
 
 #if defined(RELAY_SUPPORTED)
 	extern unsigned long lastPollTimeAsPeer;
@@ -68,9 +64,6 @@ namespace BottangoCore
     bool updateWifiConnectionStatus();
 #endif // USE_ESP32_WIFI
 
-//#if defined(USE_CODE_COMMAND_STREAM) || defined(USE_SD_CARD_COMMAND_STREAM)
-//    extern CommandStreamProvider *commandStreamProvider;
-//#endif // USE_CODE_COMMAND_STREAM || USE_SD_CARD_COMMAND_STREAM
 
 #ifdef USE_ESP32_WIFI
     extern WiFiClient client;

@@ -4,7 +4,7 @@
 #include "../Modules/AnimationConfiguration.h"
 #include "../DataSource/DataSource.h"
 
-class StaticSecondaryDataSource : public DataSource
+class OfflineDataSource : public DataSource
 {
 public:
 	/**

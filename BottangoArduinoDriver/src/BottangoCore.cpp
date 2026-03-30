@@ -7,10 +7,6 @@
 #include "I2SAudioEffector.h"
 #include "Modules/RelayComs/Relay.h"
 
-/*#if defined(RELAY_SUPPORTED) && defined(RELAY_COMS_ESPNOW)
-#include "ESPNOWUtil.h"
-#endif*/
-
 namespace BottangoCore
 {
 	EffectorPool effectorPool = EffectorPool();
@@ -37,10 +33,6 @@ namespace BottangoCore
 #if defined(RELAY_SUPPORTED)
 	unsigned long lastPollTimeAsPeer;
 #endif // RELAY_SUPPORTED
-//#endif
-
-//#if defined(USE_CODE_COMMAND_STREAM) || defined(USE_SD_CARD_COMMAND_STREAM)
-//	CommandStreamProvider* commandStreamProvider = nullptr;
 //#endif
 
 #if !defined(RELAY_SUPPORTED) && defined(USE_ESP32_WIFI)
@@ -455,29 +447,16 @@ namespace BottangoCore
 
 		if (SystemStatus::systemStatus.initialized)
 		{
-
-			/*#ifdef ENABLE_DYNAMIC_ANIMATION_SOURCE_SWITCH
-						if (isOffline())
-			#endif
-			#if defined(USE_CODE_COMMAND_STREAM) || defined(USE_SD_CARD_COMMAND_STREAM)
-						{
-							if (commandStreamProvider != nullptr)
-							{
-								commandStreamProvider->updateOnLoop();
-							}
-						}
-			#endif*/
-
 			// update effector pool
-			effectorPool.updateAllDriveTargets();
+			//effectorPool.updateAllDriveTargets();
 
 			// update relay pool
 #ifdef RELAY_SUPPORTED
-			if (mMaster.getModule<Relay>(Modules::RelayComs)->isBridge())
+			/*if (mMaster.getModule<Relay>(Modules::RelayComs)->isBridge())
 			{
 				mMaster.getModule<Relay>(Modules::RelayComs)->getPeerPool()->update();
-			}
-			else if (mMaster.getModule<Relay>(Modules::RelayComs)->isPeer() && millis() - lastPollTimeAsPeer > RELAY_POLL_TIMEOUT_AS_PEER)
+			}*/
+			if (mMaster.getModule<Relay>(Modules::RelayComs)->isPeer() && millis() - lastPollTimeAsPeer > RELAY_POLL_TIMEOUT_AS_PEER)
 			{
 				//Outgoing::toggleOnSecondaryOutgoing();
 				OutgoingSerial::printOutputStringFlash(F("Lost Bridge!"));

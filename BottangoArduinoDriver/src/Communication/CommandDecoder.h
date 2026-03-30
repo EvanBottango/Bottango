@@ -47,11 +47,21 @@ public:
 	 */
 	virtual void setDataSource(DataSource* src);
 
+#if defined(RELAY_SUPPORTED)
 	/**
 	 * @brief Set the secondary data source for the command decoder.
 	 * @param src Pointer to the secondary data source.
 	 */
 	virtual void setSecondaryDataSource(DataSource* src);
+#endif
+
+#if defined(USE_SD_CARD_COMMAND_STREAM) || defined(USE_CODE_COMMAND_STREAM)
+	/**
+	 * @brief Set the offline data source for the command decoder.
+	 * @param src Pointer to the secondary data source.
+	 */
+	virtual void setOfflineDataSource(DataSource* src);
+#endif
 
 	/**
 	 * @brief Splits a command string into components in-place.
@@ -105,10 +115,21 @@ protected:
 	 */
 	DataSource* _source;
 
+
+#if defined(RELAY_SUPPORTED)
 	/**
-	 * @brief The secondary source of data. Like SD-Card, RS485 or something else
+	 * @brief The secondary source of data. Like ESP-Now, RS485 or something else
 	 */
-	DataSource* _secondarySource;
+	DataSource* _secondarySource = nullptr;
+#endif
+
+#if defined(USE_SD_CARD_COMMAND_STREAM) || defined(USE_CODE_COMMAND_STREAM)
+	/**
+	 * @brief The offline source of data. Like SD-Card, or export to code.
+	 */
+	DataSource* _offlineSource = nullptr;
+#endif
+
 	SplitCommandData _splitData;
 };
 

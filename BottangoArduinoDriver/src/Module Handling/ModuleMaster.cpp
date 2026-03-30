@@ -26,15 +26,17 @@
 
 void ModuleMaster::setupModules()
 {
+	// ==== Serial data source ====
 	// The serial data source is always present and active
 	SerialSource* serialSource = registerModule<SerialSource>(Modules::DataSource_Serial);
 	serialSource->setActiveSource(true);
 
-
+	// ==== Offline Playback Control ====
 #if defined(USE_SD_CARD_COMMAND_STREAM) || defined(USE_CODE_COMMAND_STREAM)
 	registerModule<AnimationPlaybackControl>(Modules::AnimPlaybackCntrl);
 #endif
 
+	// ==== Relay Modules ====
 #if defined(RELAY_SUPPORTED)
 	registerModule<Relay>(Modules::RelayComs);
 
@@ -44,14 +46,18 @@ void ModuleMaster::setupModules()
 	outgoingRelay.setRelayComs(getModule<Relay>(Modules::RelayComs));
 #endif
 
+	// ==== Command Decoder ====
 	AsciiCmdDecoder* asciiDecoder = registerModule<AsciiCmdDecoder>(Modules::Decoder);
 	asciiDecoder->setDataSource(serialSource);
 
+	// ==== Command Parser ====
 	Parser* parser = registerModule<Parser>(Modules::Parser);
 	parser->setCommandDecoder(asciiDecoder);
 
+	// ==== Effector Pool ====
 	_modules[(int)Modules::EffectorPool] = &BottangoCore::effectorPool;
 
+	// ===== Optional Modules ====
 #ifdef STOP_BUTTON_SUPPORTED
 	registerModule<StopButtonModule>(Modules::StopButton);
 #endif // STOP_BUTTON_SUPPORTED
@@ -66,6 +72,7 @@ void ModuleMaster::setupModules()
 	InterfaceRegistry::registerInterface(Modules::AudioI2S, static_cast<IAudioPlayback*>(&audioModule));
 #endif
 
+	// ==== Setup Output bindings ====
 	// Serial Output
 	static OutgoingSerialImpl outgoingSerialImpl;
 	OutgoingSerial::bind(&outgoingSerialImpl);

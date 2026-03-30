@@ -416,7 +416,7 @@ bool Parser::commandIsAllowed(char* commandName, bool sourceIsUsbSerial) const
 	bool limitiedCmdSet = false;
 
 #if defined(USE_CODE_COMMAND_STREAM) || defined(USE_SD_CARD_COMMAND_STREAM)
-	if (SystemStatus::systemStatus.ConnectionStatus == SystemStatus::eConnectionStatus::Export_Playback)
+	if (sourceIsUsbSerial && SystemStatus::systemStatus.ConnectionStatus == SystemStatus::eConnectionStatus::Export_Playback)
 	{
 		limitiedCmdSet = true;
 	}

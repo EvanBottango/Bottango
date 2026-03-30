@@ -139,6 +139,17 @@ namespace
 	};
 }
 
+void RelayCommsESPNow::onPhase(Phase p)
+{
+	if (p != Phase::Communication)
+		return;
+
+	if (_relayPool != nullptr)
+	{
+		_relayPool->update();
+	}
+}
+
 // Combined RX/TX task:
 // - Drains RX queue so callbacks stay minimal/non-blocking, for both peer and bridge
 // - Handles TX only for bridge (peers send via peerFlush)

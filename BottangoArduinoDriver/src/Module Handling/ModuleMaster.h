@@ -69,6 +69,29 @@ public:
 		return &moduleInstance;
 	}
 
+#if defined(USE_SD_CARD_COMMAND_STREAM) || defined(USE_CODE_COMMAND_STREAM)
+	/**
+	 * @brief Register a data source into the offline data source slot and initialize it by calling init(). The old instance in the slot will be destroyed gracefully using the destructor.
+	 * Static storage duration is used for the module instance, so it will be automatically destroyed when the program ends.
+	 * @tparam T The concrete data source module type to place in the offline data source slot.
+	 * @return Pointer to the newly created/placed module instance (T*), which is also stored in the modules registry.
+	 */
+	template <typename T>
+	T* registerModuleInOfflineDataSlot()
+	{
+		// Note: we could add our own implementation of std::is_base_of. Or we just try to catch wrongfull use in Code Review.
+		//static_assert(std::is_base_of<DataSource, T>::value, "T must be derived from DataSource");
+
+		T* moduleInstance = _slotOfflineDataSource.place<T>();
+
+		// Call init immediately to ensure the module is ready for use right after registration
+		moduleInstance->init(); 
+		_modules[(int)Modules::DataSource_Offline] = moduleInstance;
+		return moduleInstance;
+	}
+#endif
+
+#if defined(RELAY_SUPPORTED)
 	/**
 	 * @brief Register a data source into the secondary data source slot and initialize it by calling init(). The old instance in the slot will be destroyed gracefully using the destructor.
 	 * Static storage duration is used for the module instance, so it will be automatically destroyed when the program ends.
@@ -84,10 +107,11 @@ public:
 		T* moduleInstance = _slotSecondaryDataSource.place<T>();
 
 		// Call init immediately to ensure the module is ready for use right after registration
-		moduleInstance->init(); 
+		moduleInstance->init();
 		_modules[(int)Modules::DataSource_Secondary] = moduleInstance;
 		return moduleInstance;
 	}
+#endif
 
 private:
 	/**
@@ -95,10 +119,19 @@ private:
 	 */
 	LoopModule* _modules[(int)Modules::Max] = {};
 
+#if defined(USE_SD_CARD_COMMAND_STREAM) || defined(USE_CODE_COMMAND_STREAM)
+	/**
+	 * @brief A module slot sized for the biggest possible offline data source module.
+	 */
+	ModuleSlot<SlotSize<Modules::DataSource_Offline>::value> _slotOfflineDataSource;
+#endif
+
+#if defined(RELAY_SUPPORTED)
 	/**
 	 * @brief A module slot sized for the biggest possible secondary data source module.
 	 */
 	ModuleSlot<SlotSize<Modules::DataSource_Secondary>::value> _slotSecondaryDataSource;
+#endif
 };
 
 /**

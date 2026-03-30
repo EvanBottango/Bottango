@@ -27,7 +27,7 @@ void AnimationPlaybackControl::onPhase(Phase p)
 	// Note: Das sollte eigtl. auch mit EXPORTED_ANIM funktionieren
 
 	// Check, if we are playing from PC or from a secondary data source
-	if (_secondarySource && _secondarySource->isActiveSource())
+	if (_offlineSource && _offlineSource->isActiveSource())
 	{
 		// Ready for next command: prepare the next command
 		if (readyForNextCommand())
@@ -55,7 +55,7 @@ void AnimationPlaybackControl::onPhase(Phase p)
 			char nextCommand[MAX_COMMAND_LENGTH];
 			nextCommand[0] = '\0';
 
-			if (_secondarySource->peekNextCommand(nextCommand))
+			if (_offlineSource->peekNextCommand(nextCommand))
 			{
 				LOG_DEBUG("APC", "onPhase()", "Next Command: %s", nextCommand);
 				// If the next commands runs longer than the current longest command, update the longest command end time
@@ -66,11 +66,11 @@ void AnimationPlaybackControl::onPhase(Phase p)
 				}
 
 				// Prepare the next command for the parser
-				_secondarySource->prepareNextCommand();
+				_offlineSource->prepareNextCommand();
 
 				// Peek the command after the upcoming command, to retrieve its startTime
 				nextCommand[0] = '\0';
-				if (_secondarySource->peekNextCommand(nextCommand))
+				if (_offlineSource->peekNextCommand(nextCommand))
 				{
 					_timeStartOfNextCommand = _parser->getStartTime(nextCommand);
 				}
@@ -89,12 +89,12 @@ void AnimationPlaybackControl::init()
 
 	// Setup the secondary data source module, if any
 #ifdef USE_SD_CARD_COMMAND_STREAM
-	_secondarySource = static_cast<StaticSecondaryDataSource*>(BottangoCore::mMaster.registerModuleInSecondaryDataSlot<SdCardSource>());
+	_offlineSource = static_cast<OfflineDataSource*>(BottangoCore::mMaster.registerModuleInOfflineDataSlot<SdCardSource>());
 	loadConfig();
-	_secondarySource->openSetup();
+	_offlineSource->openSetup();
 	_setupIsRunning = true;
 
-	BottangoCore::mMaster.getModule<CommandDecoder>(Modules::Decoder)->setSecondaryDataSource(_secondarySource);
+	BottangoCore::mMaster.getModule<CommandDecoder>(Modules::Decoder)->setOfflineDataSource(_offlineSource);
 #elif USE_CODE_COMMAND_STREAM
 	// ToDo for USE_CODE_COMMAND_STREAM
 	// BottangoCore::mMaster.registerModuleInSecondaryDataSlot<ExportedCodeSource>();
@@ -128,11 +128,11 @@ void AnimationPlaybackControl::init()
 #endif // ENABLE_DYNAMIC_ANIMATION_SOURCE_SWITCH
 
 	// Activate the secondary data source, if it exists
-	if (BottangoCore::mMaster.getModule<DataSource>(Modules::DataSource_Secondary) != nullptr)
+	if (BottangoCore::mMaster.getModule<DataSource>(Modules::DataSource_Offline) != nullptr)
 	{
 		SystemStatus::systemStatus.ConnectionStatus = SystemStatus::eConnectionStatus::Export_Playback;
 		SystemStatus::systemStatus.PlaybackStatus = SystemStatus::ePlaybackStatus::NotPlaying;
-		BottangoCore::mMaster.getModule<DataSource>(Modules::DataSource_Secondary)->setActiveSource(true);
+		BottangoCore::mMaster.getModule<DataSource>(Modules::DataSource_Offline)->setActiveSource(true);
 	}
 }
 
@@ -148,9 +148,9 @@ void AnimationPlaybackControl::stop()
 	_timeEndOfLongestCommand = 0;
 
 
-	if (_secondarySource)
+	if (_offlineSource)
 	{
-		_secondarySource->resetBuffer();
+		_offlineSource->resetBuffer();
 	}
 
 #ifdef RELAY_SUPPORTED
@@ -244,7 +244,7 @@ void AnimationPlaybackControl::updatePlaybackStatus()
 					Outgoing::printLine();
 				}
 #endif // EXPORTED_ANIM_LOGGING
-				_secondarySource->openAnimation(_idleAnimIndex, true);
+				_offlineSource->openAnimation(_idleAnimIndex, true);
 				SystemStatus::systemStatus.PlaybackStatus = SystemStatus::ePlaybackStatus::PlayingIdleAnimation;
 				_currentPlayingIndex = _idleAnimIndex;
 			}
@@ -259,7 +259,7 @@ void AnimationPlaybackControl::loadConfig()
 	for (int i = 0; i < MAX_EXPORTED_ANIMATIONS; i++)
 	{
 		AnimationConfiguration* config = new AnimationConfiguration();
-		if (!_secondarySource->getConfigurationForAnimation(i, config))
+		if (!_offlineSource->getConfigurationForAnimation(i, config))
 		{
 			delete config;
 			continue;
@@ -319,7 +319,7 @@ bool AnimationPlaybackControl::readyForNextCommand()
 		if (currentConfig != nullptr)
 		{
 			shouldLoop = ANIM_IS_LOOPING(currentConfig->flags);
-			dataComplete = _secondarySource->dataComplete();
+			dataComplete = _offlineSource->dataComplete();
 		}
 	}
 
@@ -404,13 +404,13 @@ bool AnimationPlaybackControl::complete()
 	}
 
 	auto debugTime = 0;
-	bool complete = _secondarySource->dataComplete();
-	if (_secondarySource->dataComplete() && Time::getCurrentTimeInMs() >= _timeEndOfLongestCommand)
+	bool complete = _offlineSource->dataComplete();
+	if (_offlineSource->dataComplete() && Time::getCurrentTimeInMs() >= _timeEndOfLongestCommand)
 	{
 		return true;
 	}
 
-	return _secondarySource->dataComplete() && Time::getCurrentTimeInMs() >= _timeEndOfLongestCommand;
+	return _offlineSource->dataComplete() && Time::getCurrentTimeInMs() >= _timeEndOfLongestCommand;
 }
 
 int AnimationPlaybackControl::getIndexOfAnimationToTrigger() const
@@ -504,7 +504,7 @@ void AnimationPlaybackControl::playAnimation(int index, bool loop)
 	stop();
 	LOG_DEBUG("APC", "playAnimation()", "Playing animation index %d, loop: %d", index, loop);
 	SystemStatus::systemStatus.Signal = SystemStatus::eSignal::OfflinePlayback;
-	_secondarySource->openAnimation(index, loop);
+	_offlineSource->openAnimation(index, loop);
 	Time::syncTime(0);
 }
 

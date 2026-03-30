@@ -12,14 +12,21 @@
 #include "BottangoCore.h"
 #include <freertos/queue.h>
 
+// ToDo:
+// Mir gefällt nicht, dass diese Klasse hier Bridge UND Peer darstellt. Das sollte getrennt werden.
+// Auch die Relay Grundklasse enthält schon beides.
+// Der Overhead ist zwar minimal, aber es ist konzeptionell sauberer, wenn es zwei Klassen gibt, die von Relay erben: RelayCommsESPNowBridge und RelayCommsESPNowPeer
 class RelayCommsESPNow : public Relay
 {
 public:
-	// ==== Relay ====
+	void onPhase(Phase p) override;
+
+	// ==== Bridge ====
 	void initializeAsBridge() override;
 	void registerPeer(const uint8_t* udid) override;
 	void deregisterPeer(const uint8_t* udid) override;
 
+	// ==== Peer ====
 	void initializeAsPeer() override;
 	void peerPrint(const char* str) override;
 	void peerPrint(const __FlashStringHelper* str) override;

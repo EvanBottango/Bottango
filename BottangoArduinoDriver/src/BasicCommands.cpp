@@ -27,7 +27,7 @@
 #include "Modules/RelayComs/RelayChild.h"
 #include "Modules/RelayComs/UDIDHelper.h"
 #include "Modules/RelayComs/Relay.h"
-#include "MACResponder.h"
+#include "Modules/RelayComs/MACResponder.h"
 #endif
 
 #ifdef ENABLE_STATUS_LIGHTS

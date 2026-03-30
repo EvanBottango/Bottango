@@ -19,10 +19,6 @@ void CharStreamedSource::processData(char incomingChar)
 
 		if (checkHash(_serialCommandBuffer))
 		{
-			// ToDo: There is a bug in Bottagno Desktop app during the handshake.
-			// If the READY response is sent before the Handshake Response, the Handshake is processed, but it hangs in a weird state between "Handshake OK" and "Not OK"
-			// Command is moved for the time being at the end of Parser.cpp onPhase() function.
-			//Outgoing::printOutputStringPROGMEM(BasicCommands::READY);
 			_validDataAvailable = true;
 		}
 		else

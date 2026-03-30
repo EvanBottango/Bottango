@@ -25,7 +25,7 @@ enum class SdCmdType : uint8_t
 	Stop,
 };
 
-class SdCardSource : public StaticSecondaryDataSource
+class SdCardSource : public OfflineDataSource
 {
 public:
 	struct SdCommand

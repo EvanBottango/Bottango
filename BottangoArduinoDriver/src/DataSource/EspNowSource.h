@@ -8,6 +8,7 @@
 
 class EspNowSource : public CharStreamedSource
 {
+public:
 	void onPhase(Phase p) override;
 	void init() override;
 	void readData() override;

@@ -50,9 +50,9 @@ protected:
 /**
  * @brief Generic static accessor for any outgoing channel.
  * Static forwarding methods are defined ONCE here.
- * New channel  → new Tag struct + using alias (2 lines).
- * New method   → add here + in Outgoing (2 places).
- * @tparam Tag  Empty marker struct that makes each instantiation unique.
+ * New channel  → new Tag struct + using alias.
+ * New method   → add here + in Outgoing.
+ * @tparam Tag Empty marker struct that makes each instantiation unique.
  */
 template<typename Tag>
 class OutgoingChannelAccessor
@@ -83,8 +83,11 @@ namespace OutgoingTag { struct Host {}; struct Serial {}; struct Relay {}; }
 // Channel aliases – add new channels here as needed
 // Usage: Use Outgoing::printLine() for the currently active 'host' channel, or OutgoingSerial::printLine() to specifically target the serial channel, etc.
 // Use Outgoing::bind(OutgoingRelay::get()) to set the relay as 'host' channel
-// Host was choosen over primary for naming, because the Modules use "Primary" to refer to the serial data source.
+// 'Host' was choosen over 'primary' for naming, because the modules use 'Primary' to refer to the serial data source.
 // 'Host' referes to the main output channel back to the host, which can be switched between Serial, Relay, or others in the future.
 using Outgoing = OutgoingChannelAccessor<OutgoingTag::Host>;
 using OutgoingSerial = OutgoingChannelAccessor<OutgoingTag::Serial>;
+
+#if defined(RELAY_SUPPORTED)
 using OutgoingRelay = OutgoingChannelAccessor<OutgoingTag::Relay>;
+#endif // RELAY_SUPPORTED

@@ -29,15 +29,24 @@ void AsciiCmdDecoder::decode()
 {
 	char* stringToSplit = nullptr;
 
-	// Check both sources, but the primary source always has priority
+	// Check all sources, arranged by priority. The first one to return data wins, and the data is consumed. If no source has data, return.
+	// Priority order: Primary source (USB Serial) > Offline source (e.g. SD card) > Secondary source (e.g. ESP-Now, RS485, etc.)
 	if (_source->tryConsumeData(&stringToSplit))
 	{
 		_sourceIsUsbSerial = true;
 	}
+#if defined(USE_SD_CARD_COMMAND_STREAM) || defined(USE_CODE_COMMAND_STREAM)
+	else if (_offlineSource && _offlineSource->tryConsumeData(&stringToSplit))
+	{
+		_sourceIsUsbSerial = false;
+	}
+#endif
+#ifdef RELAY_SUPPORTED
 	else if (_secondarySource && _secondarySource->tryConsumeData(&stringToSplit))
 	{
 		_sourceIsUsbSerial = false;
 	}
+#endif
 	else
 	{
 		return;

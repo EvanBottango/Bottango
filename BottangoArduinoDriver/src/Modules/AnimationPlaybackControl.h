@@ -40,7 +40,7 @@ private:
 	bool _setupIsRunning = false;
 
 	Parser* _parser = nullptr;
-	StaticSecondaryDataSource* _secondarySource = nullptr;
+	OfflineDataSource* _offlineSource = nullptr;
 
 	int getIndexOfAnimationToTrigger() const;
 

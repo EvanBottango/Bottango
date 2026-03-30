@@ -1,5 +1,6 @@
 #include "EspNowSource.h"
-//#include "../Modules/RelayComs/ESPNOWUtil.h"
+#include "Modules/RelayComs/Relay.h"
+#include "BottangoCore.h"
 
 void EspNowSource::onPhase(Phase p)
 {
@@ -18,6 +19,13 @@ void EspNowSource::init()
 
 void EspNowSource::readData()
 {
+	Relay* relay = BottangoCore::mMaster.getModule<Relay>(Modules::RelayComs);
+
+	while (relay->peerRecvAvailable())
+	{
+		processData(relay->peerReadNextChar());
+	}
+
 	/*while (ESPNowUtil::peerRecvAvailable())
 	{
 		processData(ESPNowUtil::peerReadNextChar());

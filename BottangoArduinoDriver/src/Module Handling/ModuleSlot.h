@@ -20,7 +20,8 @@
 enum class Modules : uint8_t
 {
 	DataSource_Serial,			// [Mandatory] Primary data source, always present and active
-	DataSource_Secondary,		// [Optinal] Secondary data source, can be switched between different modules (e.g. SD card, RS485, etc.)
+	DataSource_Offline,			// [Optinal] Offline data source, can be switched between different modules (e.g. SD card, Export to code)
+	DataSource_Secondary,		// [Optinal] Secondary data source, can be switched between different modules (e.g. ESP-Now, RS485, etc.)
 	RelayComs,					// [Optinal] Relay communication module, if supported
 	Decoder,					// [Mandatory] Command decoder, parses raw data into commands. Can be switched between different decoders (e.g. ASCII, binary, etc.)
 	Parser,						// [Mandatory] Command parser, takes parsed commands and executes them
@@ -38,10 +39,17 @@ struct SlotSize;
 // Note: the sizeof() calls can be guarded with #ifdef, as the max() function takes any amount of arguments
 // Any new DataSource needs to be added here, in order to make sure its size is taken into account
 // This is needed, to get the correct size for the buffer in the ModuleSlot, to make sure any of the possible modules that can be placed in the slot will fit.
-template <> struct SlotSize<Modules::DataSource_Secondary>
+template <> struct SlotSize<Modules::DataSource_Offline>
 {
 	static constexpr size_t value = std::max({
 		sizeof(SdCardSource),
+		//sizeof(ExportedCodeSource) // ToDo for USE_CODE_COMMAND_STREAM
+		});
+};
+
+template <> struct SlotSize<Modules::DataSource_Secondary>
+{
+	static constexpr size_t value = std::max({
 		sizeof(RS485Source),
 		sizeof(EspNowSource)
 		});
