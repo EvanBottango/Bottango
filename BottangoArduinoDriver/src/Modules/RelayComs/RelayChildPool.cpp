@@ -570,9 +570,9 @@ bool RelayChildPool::emitNextChunk()
 
 	// ToDo: This should only ever be called from Bottango itself or from Offline (SD-Card...) setup
 	// Because of this, we can use OutgoingSerial all the time
-	OutgoingSerial::printOutputStringPROGMEM(RELAY_ID_RESPONSE_PREFIX);		// rlyId,
-	OutgoingSerial::printOutputStringMem(_relayIdToReport);					// rlyId,2
-	OutgoingSerial::printLine();											// rlyId,2\n
+	_outgoing->printOutputStringPROGMEM(RELAY_ID_RESPONSE_PREFIX);		// rlyId,
+	_outgoing->printOutputStringMem(_relayIdToReport);					// rlyId,2
+	_outgoing->printLine();												// rlyId,2\n
 	_relayIdToReport = -1;
 	return true;
 }

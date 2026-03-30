@@ -3,7 +3,7 @@
 // 
 
 #include "SerialSource.h"
-#include "../Outgoing.h"
+#include "Modules/Outgoing.h"
 #include "../BasicCommands.h"
 
 void SerialSource::onPhase(Phase p)

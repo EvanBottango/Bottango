@@ -5,7 +5,7 @@
 #include "Parser.h"
 #include "../BasicCommands.h"
 #include "../System/SystemStatus.h"
-#include "../Modules/OutgoingSerial.h"
+#include "../Modules/Outgoing.h"
 
 #ifdef RELAY_SUPPORTED
 #include "../BottangoCore.h"
@@ -23,7 +23,7 @@ void Parser::onPhase(Phase p)
 
 	char** splitCommandBuffer = _decoder->tryConsumeCommand();
 	bool sourceIsUsbSerial = _decoder->isSourceUsbSerial();
-	bool sendRead = false;
+	bool sendReady = false;
 
 	if (splitCommandBuffer != nullptr)
 	{
@@ -31,13 +31,13 @@ void Parser::onPhase(Phase p)
 		{
 			if (commandIsAllowed(splitCommandBuffer[0], sourceIsUsbSerial))
 			{
-				sendRead = parseCommand(splitCommandBuffer, sourceIsUsbSerial);
+				sendReady = parseCommand(splitCommandBuffer, sourceIsUsbSerial);
 			}
 			
 			splitCommandBuffer = _decoder->tryConsumeCommand();
 		}
 
-		if (sendRead)
+		if (sendReady)
 		{
 			Outgoing::printOutputStringPROGMEM(BasicCommands::READY);
 		}
@@ -55,6 +55,22 @@ bool Parser::parseCommand(char** splitCommandBuffer, bool sourceIsUsbSerial) con
 	{
 		return false;
 	}
+
+	bool sendReady = true;
+
+#ifdef RELAY_SUPPORTED
+	// In order to answer to the correct channel, we need to switch according to the source
+	OutgoingBase* outRecovery = Outgoing::get();	
+
+	if (sourceIsUsbSerial)
+	{
+		Outgoing::bind(OutgoingSerial::get());
+	}
+	else
+	{
+		Outgoing::bind(OutgoingRelay::get());
+	}
+#endif // RELAY_SUPPORTED
 
 	// ToDo: LEDs and stuff
 	//SystemStatus::systemStatus.CommandStatus = SystemStatus::eCommandStatus::NewCommand;
@@ -206,7 +222,7 @@ bool Parser::parseCommand(char** splitCommandBuffer, bool sourceIsUsbSerial) con
 	else if (strcmp_P(commandName, BasicCommands::RELAY_POLL_REQUEST) == 0)
 	{
 		BasicCommands::requestPoll(splitCommandBuffer);
-		return false;
+		sendReady = false;
 	}
 	else if (strcmp_P(commandName, BasicCommands::REQUEST_PEER_BOOT) == 0)
 	{
@@ -226,7 +242,12 @@ bool Parser::parseCommand(char** splitCommandBuffer, bool sourceIsUsbSerial) con
 	}
 #endif // ENABLE_DYNAMIC_ANIMATION_SOURCE_SWITCH || RELAY_SUPPORTED
 
-	return true;
+#ifdef RELAY_SUPPORTED
+	// Recover outgoing channel to previous value
+	Outgoing::bind(outRecovery);
+#endif
+
+	return sendReady;
 }
 
 unsigned long Parser::getStartTime(char* command) const

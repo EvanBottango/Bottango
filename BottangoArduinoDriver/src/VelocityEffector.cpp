@@ -1,5 +1,5 @@
 #include "VelocityEffector.h"
-#include "Outgoing.h"
+#include "Modules/Outgoing.h"
 
 VelocityEffector::VelocityEffector(int minSignal, int maxSignal, int maxSignalPerSec, int startingSignal) : AbstractEffector(minSignal, maxSignal)
 {
@@ -75,7 +75,7 @@ void VelocityEffector::updateSync(int delta)
 
 void VelocityEffector::notifyEndAutoSync()
 {
-    Outgoing::outgoing_notifySyncComplete();
+    Outgoing::printOutputStringPROGMEM(BasicCommands::SYNC_COMPLETE);
     char effectorIdentifier[9];
     getIdentifier(effectorIdentifier, 9);
     Outgoing::printOutputStringMem(effectorIdentifier);

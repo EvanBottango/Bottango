@@ -2,6 +2,7 @@
 #include "Modules/Outgoing.h"
 #include "BottangoCore.h"
 #include <limits.h>
+#include "Modules/RelayComs/Relay.h"
 
 void ModulesResponder::onMultiMessageStart()
 {

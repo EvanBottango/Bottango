@@ -17,6 +17,7 @@ const char REPLY_MAC_ADDRESS[] PROGMEM = "sMAC";
 
 class MACResponder : public AbstractMultiMessageOutgoingSource
 {
+public:
 	virtual void cleanUpMultiMessage() override; // cleanup if aborting...
 
 private:

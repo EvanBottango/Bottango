@@ -179,11 +179,6 @@ void OutgoingBase::outgoing_requestStartPlay()
 	printLine();
 }
 
-void OutgoingBase::outgoing_notifySyncComplete()
-{
-	printOutputStringPROGMEM(BasicCommands::SYNC_COMPLETE);
-}
-
 void OutgoingBase::flush()
 {
 	flush_Implementation();

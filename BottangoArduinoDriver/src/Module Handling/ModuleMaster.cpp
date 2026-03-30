@@ -69,6 +69,8 @@ void ModuleMaster::setupModules()
 	// Serial Output
 	static OutgoingSerialImpl outgoingSerialImpl;
 	OutgoingSerial::bind(&outgoingSerialImpl);
+
+	// Host Output (default to Serial)
 	Outgoing::bind(&outgoingSerialImpl);
 }
 

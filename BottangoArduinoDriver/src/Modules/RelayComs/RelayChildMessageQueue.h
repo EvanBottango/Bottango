@@ -66,7 +66,7 @@ public:
 		{
 			Outgoing::printOutputStringFlash(F("To Queue "));
 			Outgoing::printOutputStringMem(txt);
-			Outgoing::printLine;
+			Outgoing::printLine();
 		}
 #endif // RELAY_LOGGING
 

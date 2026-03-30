@@ -1,5 +1,5 @@
 #include "EspNowSource.h"
-#include "../Modules/RelayComs/ESPNOWUtil.h"
+//#include "../Modules/RelayComs/ESPNOWUtil.h"
 
 void EspNowSource::onPhase(Phase p)
 {
@@ -18,10 +18,10 @@ void EspNowSource::init()
 
 void EspNowSource::readData()
 {
-	while (ESPNowUtil::peerRecvAvailable())
+	/*while (ESPNowUtil::peerRecvAvailable())
 	{
 		processData(ESPNowUtil::peerReadNextChar());
-	}
+	}*/
 
 	checkTimeout();
 }

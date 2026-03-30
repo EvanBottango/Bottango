@@ -8,6 +8,7 @@
 #include "UDIDHelper.h"
 #include "System/SystemStatus.h"
 #include "Module Handling/ModuleMaster.h"
+#include "Modules/RelayComs/Relay.h"
 
 const char RELAY_PASS_UP[] PROGMEM = "uR,";
 

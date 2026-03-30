@@ -9,8 +9,9 @@
 #include "../PersistentConfigUtil.h"
 #include "../DataSource/SdCardSource.h"
 #include "../Module Handling/ModuleMaster.h"
-#include "../Outgoing.h"
+#include "Modules/Outgoing.h"
 #include "../Communication/CommandDecoder.h"
+#include "Modules/RelayComs/Relay.h"
 
 #include "../System/SystemStatus.h"
 
@@ -153,9 +154,9 @@ void AnimationPlaybackControl::stop()
 	}
 
 #ifdef RELAY_SUPPORTED
-	if (BottangoCore::isRelayBridge)
+	if (BottangoCore::mMaster.getModule<Relay>(Modules::RelayComs)->isBridge())
 	{
-		BottangoCore::relayPool->clearCurvesOnConnectedPeers();
+		BottangoCore::mMaster.getModule<Relay>(Modules::RelayComs)->getPeerPool()->clearCurvesOnConnectedPeers();
 	}
 #endif
 

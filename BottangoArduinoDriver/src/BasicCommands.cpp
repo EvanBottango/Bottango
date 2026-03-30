@@ -120,8 +120,7 @@ namespace BasicCommands
 			BottangoCore::activeOutgoingMultimessage = nullptr;
 		}
 		BottangoCore::activeOutgoingMultimessage = new ModulesResponder();
-
-		BottangoCore::activeOutgoingMultimessage->initializeMultiMessage();
+		BottangoCore::activeOutgoingMultimessage->initializeMultiMessage(Outgoing::get());
 	}
 
 	void continueInProgressMultiMessageResponse(char* args[])
@@ -566,17 +565,7 @@ namespace BasicCommands
 			BottangoCore::activeOutgoingMultimessage = nullptr;
 		}
 		BottangoCore::activeOutgoingMultimessage = relay->getPeerPool();
-
-		// ToDo: Was passiert hier genau mit secondaryPeerOutgoing? Warum muss das hier jetzt über die Serielle Schnittstelle geschickt werden?
-		// Wann muss das über "Relay" geschickt werden? Wird das hier nur gedreht, weil wir als Relay default Outgoing = Relay haben?
-		// registerPeer() sollte immer nur von Bottango direkt angesprochen werden, oder über Offline (SD-Karte...) setup
-/*#ifdef RELAY_SUPPORTED
-		if (Outgoing::secondaryPeerOutgoing)
-		{
-			BottangoCore::activeOutgoingMultimessage->setSecondary();
-		}
-#endif // RELAY_SUPPORTED*/
-		BottangoCore::activeOutgoingMultimessage->initializeMultiMessage();
+		BottangoCore::activeOutgoingMultimessage->initializeMultiMessage(Outgoing::get());
 	}
 
 	void deregisterPeer(char** args)
@@ -642,11 +631,7 @@ namespace BasicCommands
 			BottangoCore::activeOutgoingMultimessage = nullptr;
 		}
 		BottangoCore::activeOutgoingMultimessage = new MACResponder();
-		if (Outgoing::secondaryPeerOutgoing)
-		{
-			BottangoCore::activeOutgoingMultimessage->setSecondary();
-		}
-		BottangoCore::activeOutgoingMultimessage->initializeMultiMessage();
+		BottangoCore::activeOutgoingMultimessage->initializeMultiMessage(Outgoing::get());
 	}
 #endif // RELAY_SUPPORTED
 

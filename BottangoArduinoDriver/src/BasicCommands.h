@@ -127,40 +127,40 @@ namespace BasicCommands
 	 * Command to register a relay controller
 	 * [0]identifier, [1] relay connection type, additional tokens connection type dependent
 	 */
-	const char REGISTER_RELAY[] PROGMEM = "rCtrl";
+	inline const char REGISTER_RELAY[] PROGMEM = "rCtrl";
 
 	/**
 	 * Command to deregister a relay controller
 	 * [0]identifier
 	 */
-	const char DEREGISTER_RELAY[] PROGMEM = "xUCtrl";
+	inline const char DEREGISTER_RELAY[] PROGMEM = "xUCtrl";
 
 	/**
 	 * Command to deregister all relay controllers
 	 * [0]identifier
 	 */
-	const char DEREGISTER_ALL_RELAY[] PROGMEM = "xCtrl";
+	inline const char DEREGISTER_ALL_RELAY[] PROGMEM = "xCtrl";
 
 	/**
 	 * Command to identify a relay command
 	 * [0]identifier of relay controller, the rest of tokens are the command to be passed.
 	 */
-	const char PASS_TO_RELAY[] PROGMEM = "sR";
+	inline const char PASS_TO_RELAY[] PROGMEM = "sR";
 
 	/**
 	 * Command from bridge to peer to check if it's connectable via a BOOT print
 	 */
-	const char REQUEST_PEER_BOOT[] PROGMEM = "rBOOT";
+	inline const char REQUEST_PEER_BOOT[] PROGMEM = "rBOOT";
 
 	/**
 	 * reply From Peer that is now booted and can connect
 	 */
-	const char REPLY_PEER_BOOT[] PROGMEM = "sBOOT";
+	inline const char REPLY_PEER_BOOT[] PROGMEM = "sBOOT";
 
 	/**
 	 * Command to get ESPNOW mac address
 	 */
-	const char GET_MAC_ADDRESS[] PROGMEM = "rMAC";
+	inline const char GET_MAC_ADDRESS[] PROGMEM = "rMAC";
 #endif // RELAY_SUPPORTED
 
 #ifdef ALLOW_SYNC_COMMANDS
@@ -239,38 +239,38 @@ namespace BasicCommands
 
 	/// outgoing command strings, these will be sent back to Bot Tango from the Arudino
 	/** The arduino has (re-)started */
-	const char BOOT[] PROGMEM = "BOOT";
+	inline const char BOOT[] PROGMEM = "BOOT";
 
 	/** Confirmation that the serial port opened is the correct one */
-	const char HANDSHAKE[] PROGMEM = "btngoHSK";
+	inline const char HANDSHAKE[] PROGMEM = "btngoHSK";
 
 	/** The version code of this driver */
-	const char DRIVER_VERSION[] PROGMEM = "0.7.1p7a";
+	inline const char DRIVER_VERSION[] PROGMEM = "0.7.1p7a";
 
 	/** Arduino is ready for the next command */
-	const char READY[] PROGMEM = "OK\n";
+	inline const char READY[] PROGMEM = "OK\n";
 
-	const char HASH_FAIL[] PROGMEM = "HASH_FAIL\n";
+	inline const char HASH_FAIL[] PROGMEM = "HASH_FAIL\n";
 
-	const char TIMEOUT[] PROGMEM = "TIMEOUT\n";
+	inline const char TIMEOUT[] PROGMEM = "TIMEOUT\n";
 
-	const char LOST_PEER[] PROGMEM = "LOST_PEER,";
+	inline const char LOST_PEER[] PROGMEM = "LOST_PEER,";
 
 	/** Request E Stop */
-	const char ESTOP[] PROGMEM = "reqStop\n";
+	inline const char ESTOP[] PROGMEM = "reqStop\n";
 
 	/** Request pause anim */
-	const char STOP_PLAY[] PROGMEM = "reqPause\n";
+	inline const char STOP_PLAY[] PROGMEM = "reqPause\n";
 
 	/** Request start anim */
-	const char START_PLAY[] PROGMEM = "reqPlay,";
+	inline const char START_PLAY[] PROGMEM = "reqPlay,";
 
 #ifdef ONLINE_BUTTON_ACTIONS
-	const char START_PLAY_BUTTON[] PROGMEM = "reqPlayBtn,";
+	inline const char START_PLAY_BUTTON[] PROGMEM = "reqPlayBtn,";
 #endif
 
 	/** Stepper/Custom Motor Auto Sync is Complete */
-	const char SYNC_COMPLETE[] PROGMEM = "sycMDone,";
+	inline const char SYNC_COMPLETE[] PROGMEM = "sycMDone,";
 
 	void sendHandshakeResponse(char* args[], bool sourceIsUsbSerial);
 

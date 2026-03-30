@@ -5,6 +5,7 @@
 #include "DataSource/DataSource.h"
 #include "System/SystemStatus.h"
 #include "I2SAudioEffector.h"
+#include "Modules/RelayComs/Relay.h"
 
 /*#if defined(RELAY_SUPPORTED) && defined(RELAY_COMS_ESPNOW)
 #include "ESPNOWUtil.h"
@@ -27,11 +28,15 @@ namespace BottangoCore
 	char* secondaryPeerCommandBuffer = nullptr;
 	int secondaryCommandIdx = 0;
 	unsigned long secondaryTimeOfLastChar = 0;*/
-	unsigned long lastHeartbeatTime = 0;
+	//unsigned long lastHeartbeatTime = 0;
 	//bool secondaryCommandInProgress = false;
 #ifdef RELAY_LOGGING
 	unsigned long lastWaitForConnectLog = 0;
 #endif
+
+#if defined(RELAY_SUPPORTED)
+	unsigned long lastPollTimeAsPeer;
+#endif // RELAY_SUPPORTED
 //#endif
 
 //#if defined(USE_CODE_COMMAND_STREAM) || defined(USE_SD_CARD_COMMAND_STREAM)

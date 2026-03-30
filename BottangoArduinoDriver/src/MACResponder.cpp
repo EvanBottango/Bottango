@@ -23,10 +23,10 @@ bool MACResponder::emitNextChunk()
 		Outgoing::setSecondaryPeerOutgoing(true);
 	}*/
 
-	Outgoing::printOutputStringPROGMEM(REPLY_MAC_ADDRESS);
-	Outgoing::printOutputStringFlash(F(","));
-	Outgoing::printOutputStringMem(buffer);
-	Outgoing::printLine();
+	_outgoing->printOutputStringPROGMEM(REPLY_MAC_ADDRESS);
+	_outgoing->printOutputStringFlash(F(","));
+	_outgoing->printOutputStringMem(buffer);
+	_outgoing->printLine();
 
 	/*if (secondary)
 	{

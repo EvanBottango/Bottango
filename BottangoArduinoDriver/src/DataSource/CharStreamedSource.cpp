@@ -3,7 +3,7 @@
 // 
 
 #include "CharStreamedSource.h"
-#include "../Outgoing.h"
+#include "../Modules/Outgoing.h"
 #include "../BasicCommands.h"
 
 void CharStreamedSource::processData(char incomingChar)

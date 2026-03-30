@@ -1,5 +1,5 @@
 #include "PersistentConfigUtil.h"
-#include "Outgoing.h"
+#include "Modules/Outgoing.h"
 #include "../BottangoArduinoConfig.h"
 #include "BoardDefs.h"
 
@@ -413,9 +413,9 @@ namespace PersistentConfigUtil
 
 	void toggleDebugEnabled()
 	{
-#ifdef RELAY_SUPPORTED
+/*#ifdef RELAY_SUPPORTED
 		Outgoing::toggleOnSecondaryOutgoing();
-#endif
+#endif*/
 		begin();
 		bool newVal = !(debugEnabled());
 #ifdef ESP32
@@ -432,13 +432,13 @@ namespace PersistentConfigUtil
 
 		end();
 
-		Outgoing::printOutputStringFlash(F("Set Debug State To: "));
-		Outgoing::printOutputStringMem(newVal);
-		Outgoing::printLine();
+		OutgoingSerial::printOutputStringFlash(F("Set Debug State To: "));
+		OutgoingSerial::printOutputStringMem(newVal);
+		OutgoingSerial::printLine();
 
-#ifdef RELAY_SUPPORTED
+/*#ifdef RELAY_SUPPORTED
 		Outgoing::endToggleOnSecondaryOutgoing();
-#endif
+#endif*/
 
 		cachedDebugState = !cachedDebugState;
 	}

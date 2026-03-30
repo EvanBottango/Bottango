@@ -3,7 +3,7 @@
 
 #include "SDCardUtil.h"
 #include "../../BottangoArduinoConfig.h"
-#include "../Outgoing.h"
+#include "Modules/Outgoing.h"
 #include "../System/SystemStatus.h"
 
 //#ifdef ENABLE_STATUS_LIGHTS

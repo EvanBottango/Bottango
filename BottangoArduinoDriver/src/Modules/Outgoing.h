@@ -18,9 +18,6 @@ public:
 	void outgoing_requestStartPlayViaButton(int btnIdex);
 #endif
 
-	/** User request to notify that a stepper is now syncronized*/
-	void outgoing_notifySyncComplete();
-
 	/** direct output char array string*/
 	void printOutputStringMem(const char* targetOutput);
 

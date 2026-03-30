@@ -3,23 +3,29 @@
 
 #include <Arduino.h>
 #include "../BottangoArduinoModules.h"
+#include "Modules/Outgoing.h"
 
+/**
+ * @brief A base class for multi-message responses. Manages timing and flow control, derived classes implement chunk generation.
+ */
 class AbstractMultiMessageOutgoingSource
 {
 public:
-	// Multi-message flow:
-	// 1) initializeMultiMessage() resets state, calls onMultiMessageStart(), and marks a pending emit.
-	// 2) After the device sends OK, emitPending() sends the next chunk (emitNextChunk()).
-	// 3) If emitNextChunk() returns true, we wait for setRecievedContinue() (host OK).
-	// 4) setRecievedContinue() marks a pending emit for the next OK window.
-	// 5) If emitNextChunk() returns false, the response ends (no further chunks).
-	// 6) updateMultiMessage() only checks for timeout while waiting; timeout ends the response.
+	/**
+	 * @par Multi-message flow:
+	 * -# initializeMultiMessage() resets state, calls onMultiMessageStart(), and marks a pending emit.
+	 * -# After the device sends OK, emitPending() sends the next chunk (emitNextChunk()).
+	 * -# If emitNextChunk() returns true, we wait for setRecievedContinue() (host OK).
+	 * -# setRecievedContinue() marks a pending emit for the next OK window.
+	 * -# If emitNextChunk() returns false, the response ends (no further chunks).
+	 * -# updateMultiMessage() only checks for timeout while waiting; timeout ends the response.
+	 */
 
 	// caller received a "continue" from the requester (ex: OK)
 	void setRecievedContinue();
 
 	// start a new multi-message response, next chunk is emitted after device OK is sent
-	void initializeMultiMessage();
+	void initializeMultiMessage(OutgoingBase* outgoing);
 
 	// true when no more chunks are expected
 	bool multiMessageisComplete() const;
@@ -32,9 +38,12 @@ public:
 
 	virtual void cleanUpMultiMessage() = 0; // cleanup if aborting...
 
+	void setOutgoing(OutgoingBase* outgoing) { _outgoing = outgoing; }
+
 protected:
 	unsigned long _lastMessageTime = 0;
 	bool _hasOutgoingMessage = false;
+	OutgoingBase* _outgoing = Outgoing::get();
 
 	// initialize responder state (iterator, flags, etc.)
 	virtual void onMultiMessageStart() {};

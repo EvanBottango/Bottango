@@ -3,7 +3,7 @@
 #include "../BottangoArduinoConfig.h"
 #include "Errors.h"
 
-void AbstractMultiMessageOutgoingSource::initializeMultiMessage()
+void AbstractMultiMessageOutgoingSource::initializeMultiMessage(OutgoingBase* outgoing)
 {
 	_hasOutgoingMessage = false;
 	_lastMessageTime = 0;

@@ -26,18 +26,18 @@ public:
 	void init() override;
 
 	// Bridge
-	virtual void initializeAsBridge() = 0;
-	virtual void registerPeer(const uint8_t* udid) = 0;
-	virtual void deregisterPeer(const uint8_t* udid) = 0;
+	virtual void initializeAsBridge() {}
+	virtual void registerPeer(const uint8_t* udid) {}
+	virtual void deregisterPeer(const uint8_t* udid) {}
 
 	// Peer
-	virtual void initializeAsPeer() = 0;
-	virtual void peerPrint(const char* str) = 0;
-	virtual void peerPrint(const __FlashStringHelper* str) = 0;
-	virtual void peerPrintln() = 0;
-	virtual void peerFlush() = 0;
-	virtual bool peerRecvAvailable() = 0;
-	virtual char peerReadNextChar() = 0;
+	virtual void initializeAsPeer() {}
+	virtual void peerPrint(const char* str) {}
+	virtual void peerPrint(const __FlashStringHelper* str) {}
+	virtual void peerPrintln() {}
+	virtual void peerFlush() {}
+	virtual bool peerRecvAvailable() { return false; }
+	virtual char peerReadNextChar() { return '\0'; }
 
 	RelayChildPool* getPeerPool() const { return _relayPool; }
 

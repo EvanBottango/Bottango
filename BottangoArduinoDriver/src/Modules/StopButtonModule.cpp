@@ -4,7 +4,7 @@
 
 #include "StopButtonModule.h"
 #include "../BottangoCore.h"
-#include "../Outgoing.h"
+#include "Modules/Outgoing.h"
 
 void StopButtonModule::init()
 {
