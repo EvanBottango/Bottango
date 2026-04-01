@@ -45,7 +45,7 @@ namespace BottangoCore
 
 	void bottangoSetup()
 	{
-		PersistentConfigUtil::setUseExportedCommandStream(true);
+		//PersistentConfigUtil::setUseExportedCommandStream(true);
 
 		// Set the initial connection status. This can be overwritten by a module during initModules()
 		SystemStatus::systemStatus.PowerStatus = SystemStatus::ePowerStatus::Ok;
