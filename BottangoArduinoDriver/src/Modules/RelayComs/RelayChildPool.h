@@ -17,7 +17,7 @@
 // Forward declaration of RelayChild
 class RelayChild;
 
-const char RELAY_ID_RESPONSE_PREFIX[] PROGMEM = "rlyId,";
+inline const char RELAY_ID_RESPONSE_PREFIX[] PROGMEM = "rlyId,";
 
 class RelayChildPool : public AbstractMultiMessageOutgoingSource
 {

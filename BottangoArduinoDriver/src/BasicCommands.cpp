@@ -433,7 +433,7 @@ namespace BasicCommands
 		{
 			startTime += startTimeParsed;
 		}
-		// ToDo: We need to do something about this special case with the offset. This adds #ifdef clutter we want (and need) to avoid.
+		// Note: We need to do something about this special case with the offset. This adds #ifdef clutter we want (and need) to avoid.
 		// But since this is a bit deeper down in the general workings of everything, I'm not sure how to best refactor this right now.
 #ifdef AUDIO_SD_I2S
 		unsigned long offset = atol(args[3]);
@@ -678,7 +678,7 @@ namespace BasicCommands
 #endif // ENABLE_ESP_OTA_UPDATE
 
 #ifdef AUDIO_SD_I2S
-	// ToDo: AudioBinaryUtil currently disabled (unfinished feature)
+	// Note: AudioBinaryUtil currently disabled (unfinished feature)
 		//void processAudioBinary(char** args)
 		//{
 			/*char binaryMessageType = args[1][0];

@@ -13,7 +13,7 @@
 #include "../DataSource/StaticSecondaryDataSource.h"
 #include "../Communication/Parser.h"
 #include "AnimationConfiguration.h"
-
+#include "Modules/RelayComs/Relay.h"
 
 
 class AnimationPlaybackControl : public LoopModule
@@ -38,9 +38,15 @@ private:
 	int _idleAnimIndex = -1;
 	int _startingAnim = -1;
 	bool _setupIsRunning = false;
+	bool _peerSetupDone = false;
+	bool _registeredAllPeers = false;
 
 	Parser* _parser = nullptr;
 	OfflineDataSource* _offlineSource = nullptr;
+
+#ifdef RELAY_SUPPORTED
+	Relay* _relay = nullptr;
+#endif // RELAY_SUPPORTED
 
 	int getIndexOfAnimationToTrigger() const;
 

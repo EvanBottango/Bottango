@@ -12,7 +12,6 @@ bool CommandDecoder::hasCommand()
 
 char** CommandDecoder::tryConsumeCommand()
 {
-	// ToDo: Hier ist irgendwas seltsam? Wo ist splitCommandBuffer?
 	if (_validCommandAvailable)
 	{
 		_validCommandAvailable = false;

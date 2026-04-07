@@ -8,7 +8,7 @@
 #include "../Module Handling/ModuleMaster.h"
 #include "Modules/Outgoing.h"
 #include "../Communication/CommandDecoder.h"
-#include "Modules/RelayComs/Relay.h"
+
 
 #include "../System/SystemStatus.h"
 
@@ -24,63 +24,115 @@ void AnimationPlaybackControl::onPhase(Phase p)
 	// Note: Das sollte eigtl. auch mit EXPORTED_ANIM funktionieren
 
 	// Check, if we are playing from PC or from a secondary data source
-	if (_offlineSource && _offlineSource->isActiveSource())
+	if (_offlineSource == nullptr || !_offlineSource->isActiveSource())
 	{
-		// Ready for next command: prepare the next command
-		if (readyForNextCommand())
-		{			
+		return;
+	}
+
+	// Ready for next command: prepare the next command
+	if (readyForNextCommand())
+	{
 #ifdef USE_SD_CARD_COMMAND_STREAM
-			if (complete())
-			{
+		if (complete())
+		{
 #ifdef EXPORTED_ANIM_LOGGING
 #ifdef TOGGLE_DEBUG
-				if (PersistentConfigUtil::debugEnabled())
+			if (PersistentConfigUtil::debugEnabled())
 #endif // TOGGLE_DEBUG
-				{
-					Outgoing::printOutputStringFlash(F("stream complete"));
-					Outgoing::printLine();
-				}
+			{
+				Outgoing::printOutputStringFlash(F("stream complete"));
+				Outgoing::printLine();
+			}
 #endif // EXPORTED_ANIM_LOGGING
 
-				LOG_DEBUG("APC", "onPhase()", "Command stream complete, stopping playback");
-				_setupIsRunning = false;
-				stop();
+			LOG_DEBUG("APC", "onPhase()", "Command stream complete, stopping playback");
+			_setupIsRunning = false;
+			stop();
+			return;
+		}
+
+#ifdef RELAY_SUPPORTED
+		if (_relay->isBridge())
+		{
+			// need to wait for the to peer queue to clear out?
+			if (_relay->getPeerPool()->toPeerQueueFull())
+			{
 				return;
 			}
 
-			// Peek the upcoming command to retrieve the endTime
-			char nextCommand[MAX_COMMAND_LENGTH];
-			nextCommand[0] = '\0';
-
-			if (_offlineSource->peekNextCommand(nextCommand))
+			// Do not continue during setup when not all peers are connected yet
+			if (_setupIsRunning && _registeredAllPeers && !_relay->getPeerPool()->bridgeIsConnectedToAllPeers())
 			{
-				LOG_DEBUG("APC", "onPhase()", "Next Command: %s", nextCommand);
-				// If the next commands runs longer than the current longest command, update the longest command end time
-				unsigned long longestEndTime = _parser->getEndTime(nextCommand);
-				if (longestEndTime > _timeEndOfLongestCommand)
-				{
-					_timeEndOfLongestCommand = longestEndTime;
-				}
+				return;
+			}
+		}
+#endif // RELAY_SUPPORTED
 
-				// Prepare the next command for the parser
-				_offlineSource->prepareNextCommand();
+		// Peek the upcoming command to retrieve the endTime
+		char nextCommand[MAX_COMMAND_LENGTH];
+		nextCommand[0] = '\0';
 
-				// Peek the command after the upcoming command, to retrieve its startTime
-				nextCommand[0] = '\0';
-				if (_offlineSource->peekNextCommand(nextCommand))
+		if (_offlineSource->peekNextCommand(nextCommand))
+		{
+#ifdef RELAY_SUPPORTED
+			if (_setupIsRunning && !_registeredAllPeers)
+			{
+				// The first lines are always REGISTER_RELAY commands. If we encounter a different command, we can assume that all peers have been registered
+				if (strncmp(nextCommand, BasicCommands::REGISTER_RELAY, sizeof(BasicCommands::REGISTER_RELAY) - 1) != 0)
 				{
-					_timeStartOfNextCommand = _parser->getStartTime(nextCommand);
+					_registeredAllPeers = true;
+					return;
 				}
 			}
-#endif // USE_SD_CARD_COMMAND_STREAM
-		}
+#endif // RELAY_SUPPORTED
 
-		updatePlaybackStatus();
+			LOG_DEBUG("APC", "onPhase()", "Next Command: %s", nextCommand);
+			// If the next commands runs longer than the current longest command, update the longest command end time
+			unsigned long longestEndTime = _parser->getEndTime(nextCommand);
+			if (longestEndTime > _timeEndOfLongestCommand)
+			{
+				_timeEndOfLongestCommand = longestEndTime;
+			}
+
+			// Prepare the next command for the parser
+			// The parser will retrieve the command during its own logic phase
+			_offlineSource->prepareNextCommand();
+
+			// Peek the command after the upcoming command, to retrieve its startTime
+			nextCommand[0] = '\0';
+			if (_offlineSource->peekNextCommand(nextCommand))
+			{
+				_timeStartOfNextCommand = _parser->getStartTime(nextCommand);
+			}
+		}
+#endif // USE_SD_CARD_COMMAND_STREAM
 	}
+
+	updatePlaybackStatus();
+
+#ifdef RELAY_SUPPORTED
+	// If we're a relay bridge, we need to check if we should resume time on connected peers after setup
+	if (!_peerSetupDone && !_setupIsRunning && _relay->isBridge() && _relay->getPeerPool()->bridgeIsConnectedToAllPeers())
+	{
+		_relay->getPeerPool()->resumeTimeConnectedPeers(false);
+		Time::syncTime(0);
+		_peerSetupDone = true;
+	}
+#endif // RELAY_SUPPORTED
 }
 
 void AnimationPlaybackControl::init()
-{	
+{
+#ifdef RELAY_SUPPORTED
+	_relay = BottangoCore::mMaster.getModule<Relay>(Modules::RelayComs);
+
+	// We are no bridge, so we can skip all the setup
+	if (!_relay->isBridge())
+	{
+		return;
+	}
+#endif // RELAY_SUPPORTED
+
 	// Note: Unsure about the best place for this. Normaly it should live in the ModuleMaster.
 	// But it also feels like it would fit here perfectly
 
@@ -144,15 +196,19 @@ void AnimationPlaybackControl::stop()
 	_timeStartOfNextCommand = 0;
 	_timeEndOfLongestCommand = 0;
 
-
 	if (_offlineSource)
 	{
 		_offlineSource->resetBuffer();
 	}
 
+	// ToDo: A approach is needed when loosing one peer after initial setup
+	//_offlineSource->openSetup();
+	//_setupIsRunning = true;
+
 #ifdef RELAY_SUPPORTED
 	if (BottangoCore::mMaster.getModule<Relay>(Modules::RelayComs)->isBridge())
 	{
+		//_peerSetupDone = false; // ToDo: A approach is needed when loosing one peer after initial setup
 		BottangoCore::mMaster.getModule<Relay>(Modules::RelayComs)->getPeerPool()->clearCurvesOnConnectedPeers();
 	}
 #endif
@@ -326,15 +382,19 @@ bool AnimationPlaybackControl::readyForNextCommand()
 		// reset to beginning
 		BottangoCore::effectorPool.clearAllCurves();
 
-		/*#ifdef RELAY_SUPPORTED
-				if (BottangoCore::isRelayBridge)
-				{
-					// Reset curves and time at end of loop before reset
-					BottangoCore::relayPool->clearCurvesOnConnectedPeers();
-					BottangoCore::relayPool->resumeTimeConnectedPeers(true);
-				}
-		#endif*/
-		//dataSource->reset(); // ToDo: dataSource zurücksetzen
+#ifdef RELAY_SUPPORTED
+		if (_relay->isBridge())
+		{
+			// Reset curves and time at end of loop before reset
+			_relay->getPeerPool()->clearCurvesOnConnectedPeers();
+			_relay->getPeerPool()->resumeTimeConnectedPeers(true);
+		}
+#endif
+		/*if (_offlineSource)
+		{
+			_offlineSource->resetBuffer();
+		}*/
+
 		_timeStartOfNextCommand = 0;
 		_timeEndOfLongestCommand = 0;
 
@@ -349,19 +409,19 @@ bool AnimationPlaybackControl::readyForNextCommand()
 	}*/
 
 #ifdef USE_SD_CARD_COMMAND_STREAM
-	/*#ifdef RELAY_SUPPORTED
-		// not ready for next if esp comms pool is full
-		if (BottangoCore::isRelayBridge && BottangoCore::relayPool->toPeerQueueFull())
-		{
-			return false;
-		}
+#ifdef RELAY_SUPPORTED
+	// not ready for next if esp comms pool is full
+	if (_relay->isBridge() && _relay->getPeerPool()->toPeerQueueFull())
+	{
+		return false;
+	}
 
-		// check pre read time?
-		if (timeOfNextCommand > SD_ANIM_PREREAD_MS_RELAY)
-		{
-			return Time::getCurrentTimeInMs() >= timeOfNextCommand - SD_ANIM_PREREAD_MS;
-		}
-	#else*/
+	// check pre read time?
+	if (_timeStartOfNextCommand > SD_ANIM_PREREAD_MS_RELAY)
+	{
+		return Time::getCurrentTimeInMs() >= _timeStartOfNextCommand - SD_ANIM_PREREAD_MS;
+	}
+#else
 	if (_timeStartOfNextCommand > SD_ANIM_PREREAD_MS)
 	{
 		return Time::getCurrentTimeInMs() >= _timeStartOfNextCommand - SD_ANIM_PREREAD_MS;
@@ -386,8 +446,8 @@ bool AnimationPlaybackControl::readyForNextCommand()
 			return false;
 		}
 	#endif
-		return Time::getCurrentTimeInMs() >= timeOfNextCommand;
-	#endif*/
+		return Time::getCurrentTimeInMs() >= timeOfNextCommand;*/
+#endif
 
 	return false;
 }
@@ -502,6 +562,21 @@ void AnimationPlaybackControl::playAnimation(int index, bool loop)
 	LOG_DEBUG("APC", "playAnimation()", "Playing animation index %d, loop: %d", index, loop);
 	SystemStatus::systemStatus.Signal = SystemStatus::eSignal::OfflinePlayback;
 	_offlineSource->openAnimation(index, loop);
+
+#ifdef RELAY_SUPPORTED
+	if (BottangoCore::mMaster.getModule<Relay>(Modules::RelayComs)->isBridge())
+	{
+		// ToDo: Do we always send the whole setup again for each animation we play, or should this be a one-time only?
+		// There should be a check, if we lost a peer in the meantime, to only resend setup data if needed
+		// Next: Warum hat das alles vorher geklappt? "stopTime" ist hier jetzt "neu" (nach Vorlage vom original-code).
+		// Ist das drin, läuft die Animation nicht. Kommentiere ich das ganze aus, läuft die Animation wieder, aber nur auf der Bridge. Der Client bleibt weiterhin im stopp.
+		// Das war vorher nicht so? Was ist jetzt anders? Warum wird die Zeit nicht fortgesetzt?
+		Time::stopTime();
+		BottangoCore::mMaster.getModule<Relay>(Modules::RelayComs)->getPeerPool()->stopTimeOnConnectedPeers();
+		return;
+	}
+#endif // RELAY_SUPPORTED
+
 	Time::syncTime(0);
 }
 

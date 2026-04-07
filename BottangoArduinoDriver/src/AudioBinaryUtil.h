@@ -1,6 +1,6 @@
 #include "../BottangoArduinoModules.h"
 
-// ToDo: AudioBinaryUtil currently disabled (unfinished feature)
+// Note: AudioBinaryUtil currently disabled (unfinished feature)
 //#if defined(AUDIO_SD_I2S)
 
 #ifndef AUDIO_BINARY_UTIL_H
