@@ -121,6 +121,7 @@ namespace PersistentConfigUtil
 	bool debugEnabled();
 	bool getDebugEnabledFromPersistent();
 	void toggleDebugEnabled();
+	void setDebugEnabled(bool enabled);
 #endif
 
 #ifdef DYNAMIC_STOP_BUTTON_BEHAVIOR

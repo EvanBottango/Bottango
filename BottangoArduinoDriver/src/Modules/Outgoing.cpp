@@ -126,29 +126,8 @@ void OutgoingBase::printOutputStringMem(bool value)
 
 void OutgoingBase::printLine()
 {
-	printStringFlash_Implementation(F("\n"));
 	printLine_Implementation();
-/*#ifdef RELAY_SUPPORTED
-	if (BottangoCore::isRelayPeer)
-	{
-		if (secondaryPeerOutgoing)
-		{
-			Serial.print('\n');
-		}
-		else
-		{
-			if (BottangoCore::relayComs != nullptr)
-			{
-				BottangoCore::relayComs->peerPrintln();
-			}
-		}
-	}
-	else
-	{
-		Serial.print('\n');
-	}
-#elif defined(USE_USB_SERIAL)
-	Serial.println();
+/*
 #elif defined(USE_ESP32_WIFI)
 	BottangoCore::client.println();
 #endif*/

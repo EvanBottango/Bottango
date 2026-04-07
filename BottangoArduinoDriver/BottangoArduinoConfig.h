@@ -168,7 +168,7 @@ inline const char SD_AUDIO_FORMAT[] PROGMEM = ".wav";              // file forma
 #define STOP_READ_ACTIVE_MAX 250                            // max analog read to fire
 #else
 #define STOP_READ_TYPE_DIGITAL                              // nova/impulse/custom is digital
-#define STOP_READ_ACTIVE LOW                                // fire on high or low?
+#define STOP_READ_ACTIVE HIGH                               // fire on high or low?
 #endif
 
 #endif
@@ -202,9 +202,9 @@ inline const char SD_AUDIO_FORMAT[] PROGMEM = ".wav";              // file forma
 #ifdef RELAY_SUPPORTED
 
 #define MAX_RELAY_CHILD 16                                  // max number of controllers to relay commands to
-#define RELAY_BOOT_INTERVAL_AS_BRIDGE 500UL                 // how often bridge sends a boot request to check if a peer has come online
-#define RELAY_POLL_INTERVAL_AS_BRIDGE 500UL                // how often bridge enqueues a poll request
-#define RELAY_POLL_TIMEOUT_AS_PEER 3000UL                   // how long a peer should wait without a poll before rebooting due to lost bridge
+#define RELAY_BOOT_INTERVAL_AS_BRIDGE 5000UL                 // how often bridge sends a boot request to check if a peer has come online
+#define RELAY_POLL_INTERVAL_AS_BRIDGE 5000UL                // how often bridge enqueues a poll request
+#define RELAY_POLL_TIMEOUT_AS_PEER 8000UL                   // how long a peer should wait without a poll before rebooting due to lost bridge
 
 #define TXT_BUFFER_SIZE_RX_FROM_PEER 512                    // num chars to store in per peer (as bridge) in espnow recv buffers in Relay Child class
 #define OUT_MESSAGE_QUEUE_DEPTH 6                           // max num full commands to store for transmission to peers via comms (as bridge)

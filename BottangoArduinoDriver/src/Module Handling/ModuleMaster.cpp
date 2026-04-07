@@ -17,7 +17,7 @@
 #include "../Modules/StatusLightsModule.h"
 #include "../Modules/Audio/I2SAudioModule.h"
 #include "../Modules/AnimationPlaybackControl.h"
-#include "../Modules/RelayComs/Relay.h"
+#include "../Modules/RelayComs/RelayESPNow.h"
 #include "../Modules/OutgoingSerial.h"
 
 #ifdef RELAY_COMS_ESPNOW
@@ -38,7 +38,7 @@ void ModuleMaster::setupModules()
 
 	// ==== Relay Modules ====
 #if defined(RELAY_SUPPORTED)
-	registerModule<Relay>(Modules::RelayComs);
+	registerModule<RelayESPNow>(Modules::RelayComs);
 
 	// Relay Output
 	static OutgoingRelayImpl outgoingRelay;

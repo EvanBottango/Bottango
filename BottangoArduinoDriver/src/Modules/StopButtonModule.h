@@ -14,7 +14,7 @@
  * @detail This module checks the state of a configured stop button during the Input phase of the main loop.
  * The input can be a digital or a analog read, depending on the setup.
  * If the button is pressed, it triggers a stop action. This stop action can either stop all ongoing movements, or disconnect communcation to Bottango.
- * The button is logic-wise an outliner, as it triggers its action immediatley when pressed, regardless of the current loop phase.
+ * The button triggers its action immediatley when pressed, regardless of the current loop phase.
  */
 class StopButtonModule : public LoopModule
 {
@@ -30,7 +30,7 @@ private:
 	 * 
 	 * @return true if the button is pressed, false otherwise.
 	 */
-	bool isButtonPressed();
+	bool isButtonPressed() const;
 
 	/**
 	 * @brief Handles the action to be taken when the stop button is pressed.

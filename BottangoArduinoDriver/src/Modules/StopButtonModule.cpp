@@ -31,7 +31,7 @@ void StopButtonModule::onPhase(Phase p)
 	lastPressTime = now;
 }
 
-bool StopButtonModule::isButtonPressed()
+bool StopButtonModule::isButtonPressed() const
 {
 #ifdef STOP_READ_TYPE_DIGITAL
 	return digitalRead(STOP_BUTTON_PIN) == STOP_READ_ACTIVE;

@@ -442,6 +442,26 @@ namespace PersistentConfigUtil
 
 		cachedDebugState = !cachedDebugState;
 	}
+
+	void setDebugEnabled(bool enabled)
+	{
+		begin();
+#ifdef ESP32
+		prefs.putBool(ESP32_PREFS_KEY_TOGGLE_DEBUG, enabled);
+#elif defined(EEPROM_FALLBACK)
+		if (config.debugEnabled != enabled)
+		{
+			config.debugEnabled = enabled;
+			SaveToEeprom(config);
+		}
+#else
+#error "No persistent storage backend selected"
+#endif // ESP32
+		end();
+		cachedDebugState = enabled;
+	}
+
+	
 #endif
 
 #ifdef DYNAMIC_STOP_BUTTON_BEHAVIOR

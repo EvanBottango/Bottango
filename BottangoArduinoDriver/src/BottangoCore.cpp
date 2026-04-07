@@ -46,6 +46,7 @@ namespace BottangoCore
 	void bottangoSetup()
 	{
 		//PersistentConfigUtil::setUseExportedCommandStream(true);
+		PersistentConfigUtil::setDebugEnabled(false);
 
 		// Set the initial connection status. This can be overwritten by a module during initModules()
 		SystemStatus::systemStatus.PowerStatus = SystemStatus::ePowerStatus::Ok;
@@ -462,7 +463,9 @@ namespace BottangoCore
 				OutgoingSerial::printOutputStringFlash(F("Lost Bridge!"));
 				OutgoingSerial::printLine();
 				//Outgoing::endToggleOnSecondaryOutgoing();
-				BasicCommands::reboot(false);
+				
+				//BasicCommands::reboot(false);
+				lastPollTimeAsPeer = millis();
 			}
 #endif
 		}

@@ -94,7 +94,7 @@ namespace
 }
 
 // ----- minimal glue so ESP-NOW C callbacks from initializing espnow can land on "this" -----
-static RelayCommsESPNow* gEspNowInstance = nullptr;
+static RelayESPNow* gEspNowInstance = nullptr;
 
 #if defined(ESP_ARDUINO_VERSION_MAJOR) && (ESP_ARDUINO_VERSION >= ESP_ARDUINO_VERSION_VAL(3, 0, 0))
 static void EspNow_OnDataSentThunk(const wifi_tx_info_t* tx_info, esp_now_send_status_t status)
@@ -139,7 +139,7 @@ namespace
 	};
 }
 
-void RelayCommsESPNow::onPhase(Phase p)
+void RelayESPNow::onPhase(Phase p)
 {
 	if (p != Phase::Communication)
 		return;
@@ -153,10 +153,10 @@ void RelayCommsESPNow::onPhase(Phase p)
 // Combined RX/TX task:
 // - Drains RX queue so callbacks stay minimal/non-blocking, for both peer and bridge
 // - Handles TX only for bridge (peers send via peerFlush)
-void RelayCommsESPNow::espNowTxRxTask(void* pvParameters)
+void RelayESPNow::espNowTxRxTask(void* pvParameters)
 {
 	// set up bridge vs peer state fields
-	RelayCommsESPNow* comms = static_cast<RelayCommsESPNow*>(pvParameters);
+	RelayESPNow* comms = static_cast<RelayESPNow*>(pvParameters);
 	RelayChildPool* pool = comms->_relayPool;
 	RelayChildMessageQueue& outQueue = pool->getOutgoingQueue();
 	OutgoingMessage msg;
@@ -172,8 +172,8 @@ void RelayCommsESPNow::espNowTxRxTask(void* pvParameters)
 		}
 
 		const bool isBridge = comms->getRole() == RelayRole::Bridge;
-		RelayCommsESPNow::BridgeState* bridgeState = comms->_bridgeState;
-		RelayCommsESPNow::PeerState* peerState = comms->_peerState;
+		RelayESPNow::BridgeState* bridgeState = comms->_bridgeState;
+		RelayESPNow::PeerState* peerState = comms->_peerState;
 
 		// Role state must exist for the active role.
 		if (isBridge)
@@ -405,10 +405,10 @@ void RelayCommsESPNow::espNowTxRxTask(void* pvParameters)
 #ifdef ESP_ARDUINO_VERSION_MAJOR
 #if ESP_ARDUINO_VERSION >= ESP_ARDUINO_VERSION_VAL(3, 0, 0)
 // Arduino-ESP32 3.x (IDF 5.x): first param is wifi_tx_info_t*
-void RelayCommsESPNow::OnDataSent(const wifi_tx_info_t* tx_info, esp_now_send_status_t status)
+void RelayESPNow::OnDataSent(const wifi_tx_info_t* tx_info, esp_now_send_status_t status)
 {
 #else
-void RelayCommsESPNow::OnDataSent(const uint8_t* mac_addr, esp_now_send_status_t status)
+void RelayESPNow::OnDataSent(const uint8_t* mac_addr, esp_now_send_status_t status)
 {
 #endif // ESP_ARDUINO_VERSION >= 3
 #endif // ESP_ARDUINO_VERSION_MAJOR
@@ -430,12 +430,12 @@ void RelayCommsESPNow::OnDataSent(const uint8_t* mac_addr, esp_now_send_status_t
 // Callback when data is received
 #ifdef ESP_ARDUINO_VERSION_MAJOR
 #if ESP_ARDUINO_VERSION >= ESP_ARDUINO_VERSION_VAL(3, 0, 0)
-void RelayCommsESPNow::OnDataRecv(const esp_now_recv_info_t* recv_info, const uint8_t* data, int data_len)
+void RelayESPNow::OnDataRecv(const esp_now_recv_info_t* recv_info, const uint8_t* data, int data_len)
 {
 	// Access the MAC address from recv_info->src_addr
 	const uint8_t* mac_addr = recv_info->src_addr;
 #else
-void RelayCommsESPNow::OnDataRecv(const uint8_t * mac_addr, const uint8_t * data, int data_len)
+void RelayESPNow::OnDataRecv(const uint8_t * mac_addr, const uint8_t * data, int data_len)
 {
 #endif // ESP_ARDUINO_VERSION >= 3
 #endif // ESP_ARDUINO_VERSION_MAJOR
@@ -493,12 +493,12 @@ void RelayCommsESPNow::OnDataRecv(const uint8_t * mac_addr, const uint8_t * data
 	}
 }
 
-bool RelayCommsESPNow::hasRoleState()
+bool RelayESPNow::hasRoleState()
 {
 	return _bridgeState != nullptr || _peerState != nullptr;
 }
 
-void RelayCommsESPNow::initializeAsBridge()
+void RelayESPNow::initializeAsBridge()
 {
 	if (hasRoleState())
 	{
@@ -533,7 +533,7 @@ void RelayCommsESPNow::initializeAsBridge()
 		nullptr);
 }
 
-void RelayCommsESPNow::initializeAsPeer()
+void RelayESPNow::initializeAsPeer()
 {
 	if (hasRoleState())
 	{
@@ -614,7 +614,7 @@ void RelayCommsESPNow::initializeAsPeer()
 		nullptr);
 }
 
-void RelayCommsESPNow::initConnection()
+void RelayESPNow::initConnection()
 {
 	gEspNowInstance = this;
 
@@ -753,7 +753,7 @@ void RelayCommsESPNow::initConnection()
 }
 
 // peer management, as bridge
-void RelayCommsESPNow::registerPeer(const uint8_t * mac_addr)
+void RelayESPNow::registerPeer(const uint8_t * mac_addr)
 {
 	if (!hasRoleState())
 	{
@@ -790,7 +790,7 @@ void RelayCommsESPNow::registerPeer(const uint8_t * mac_addr)
 	// peer added success
 }
 
-void RelayCommsESPNow::deregisterPeer(const uint8_t * mac_addr)
+void RelayESPNow::deregisterPeer(const uint8_t * mac_addr)
 {
 	// Deregister peer
 
@@ -818,7 +818,7 @@ void RelayCommsESPNow::deregisterPeer(const uint8_t * mac_addr)
 }
 
 // comms, as peer
-void RelayCommsESPNow::peerPrint(const char* str)
+void RelayESPNow::peerPrint(const char* str)
 {
 	if (_peerState != nullptr && _peerState->txBuffer && _peerState->txBuffer->isFull())
 	{
@@ -860,7 +860,7 @@ void RelayCommsESPNow::peerPrint(const char* str)
 	}
 }
 
-void RelayCommsESPNow::peerPrint(const __FlashStringHelper * str)
+void RelayESPNow::peerPrint(const __FlashStringHelper * str)
 {
 	char command[MAX_COMMAND_LENGTH];
 	strncpy_P(command, (PGM_P)str, sizeof(command));
@@ -868,12 +868,12 @@ void RelayCommsESPNow::peerPrint(const __FlashStringHelper * str)
 	peerPrint(command);
 }
 
-void RelayCommsESPNow::peerPrintln()
+void RelayESPNow::peerPrintln()
 {
 	peerPrint("\n");
 }
 
-void RelayCommsESPNow::peerFlush()
+void RelayESPNow::peerFlush()
 {
 	while (_peerState != nullptr && _peerState->txBuffer && _peerState->txBuffer->available())
 	{
@@ -913,12 +913,12 @@ void RelayCommsESPNow::peerFlush()
 	}
 }
 
-bool RelayCommsESPNow::peerRecvAvailable()
+bool RelayESPNow::peerRecvAvailable()
 {
 	return _peerState != nullptr && _peerState->rxBuffer && _peerState->rxBuffer->available();
 }
 
-char RelayCommsESPNow::peerReadNextChar()
+char RelayESPNow::peerReadNextChar()
 {
 	return (_peerState != nullptr && _peerState->rxBuffer) ? _peerState->rxBuffer->getNextChar() : '\0';
 }

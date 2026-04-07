@@ -1,5 +1,8 @@
 #pragma once
 
+#include "../../BottangoArduinoModules.h"
+#if defined(USE_SD_CARD_COMMAND_STREAM) || defined(USE_CODE_COMMAND_STREAM)
+
 #include <Arduino.h>
 
 #define ANIM_PLAY_ON_START_FLAG 0x01
@@ -10,13 +13,13 @@
 #define ANIM_PLAY_ON_PIN_HIGH_FLAG 0x20
 #define ANIM_PLAY_ON_PIN_ANALOG_FLAG 0x40
 
-#define ANIM_PLAY_ON_START(flags) ((flags & ANIM_PLAY_ON_START_FLAG) > 0)
-#define ANIM_LOOP_ON_START(flags) ((flags & ANIM_LOOP_ON_START_FLAG) > 0)
-#define ANIM_IS_IDLE_ANIM(flags) ((flags & ANIM_IDLE_FLAG) > 0)
-#define ANIM_IS_LOOPING(flags) ((flags & ANIM_LOOPING_FLAG) > 0)
-#define ANIM_PLAY_ON_PIN_LOW(flags) ((flags & ANIM_PLAY_ON_PIN_LOW_FLAG) > 0)
-#define ANIM_PLAY_ON_PIN_HIGH(flags) ((flags & ANIM_PLAY_ON_PIN_HIGH_FLAG) > 0)
-#define ANIM_PLAY_ON_PIN_ANALOG(flags) ((flags & ANIM_PLAY_ON_PIN_ANALOG_FLAG) > 0)
+#define ANIM_PLAY_ON_START(flags) ((flags & ANIM_PLAY_ON_START_FLAG) > 0)				// Play on start (if play on start is enabled, will play once on startup)
+#define ANIM_LOOP_ON_START(flags) ((flags & ANIM_LOOP_ON_START_FLAG) > 0)				// Loop when playing on start (if play on start is enabled, this will determine if it loops or not)
+#define ANIM_IS_IDLE_ANIM(flags) ((flags & ANIM_IDLE_FLAG) > 0)							// Play as an idle animation when nothing else is playing
+#define ANIM_IS_LOOPING(flags) ((flags & ANIM_LOOPING_FLAG) > 0)						// Loop when playing
+#define ANIM_PLAY_ON_PIN_LOW(flags) ((flags & ANIM_PLAY_ON_PIN_LOW_FLAG) > 0)			// Play on pin LOW
+#define ANIM_PLAY_ON_PIN_HIGH(flags) ((flags & ANIM_PLAY_ON_PIN_HIGH_FLAG) > 0)			// Play on pin HIGH
+#define ANIM_PLAY_ON_PIN_ANALOG(flags) ((flags & ANIM_PLAY_ON_PIN_ANALOG_FLAG) > 0)		// Play on analog read range (if play on pin is enabled, this will determine if it plays when the pin is in the range given by buttonLadderMin and buttonLadderMax)
 
 struct AnimationConfiguration
 {
@@ -31,3 +34,5 @@ public:
 	uint16_t buttonLadderMin = 0;	// min for button ladder
 	uint16_t buttonLadderMax = 0;	// max for button ladder
 };
+
+#endif // (USE_SD_CARD_COMMAND_STREAM) || defined(USE_CODE_COMMAND_STREAM)

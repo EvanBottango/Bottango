@@ -10,6 +10,7 @@ void AbstractMultiMessageOutgoingSource::initializeMultiMessage(OutgoingBase* ou
 	_complete = false;
 	_emittedAny = false;
 	_pendingEmit = true;
+	_outgoing = outgoing;
 	onMultiMessageStart();
 }
 

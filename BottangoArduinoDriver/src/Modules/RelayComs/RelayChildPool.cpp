@@ -568,13 +568,16 @@ bool RelayChildPool::emitNextChunk()
 		return false;
 	}
 
-	// ToDo: This should only ever be called from Bottango itself or from Offline (SD-Card...) setup
-	// Because of this, we can use OutgoingSerial all the time
 	_outgoing->printOutputStringPROGMEM(RELAY_ID_RESPONSE_PREFIX);		// rlyId,
 	_outgoing->printOutputStringMem(_relayIdToReport);					// rlyId,2
 	_outgoing->printLine();												// rlyId,2\n
 	_relayIdToReport = -1;
-	return true;
+
+	// ToDo: Bottango does not answer to rlyId with any OK\n.
+	// Workaround: return false, this will end the multi-message response immediately after sending the rlyId
+	return false;
+
+	//return true;
 }
 
 #endif

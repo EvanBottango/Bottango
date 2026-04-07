@@ -272,7 +272,7 @@ void RelayChild::update()
 #endif // RELAY_LOGGING
 		}
 
-		OutgoingRelay::printOutputStringMem(passUpCommand);
+		OutgoingSerial::printOutputStringMem(passUpCommand);
 	}
 
 	// any pass down to child holding buffer if any
