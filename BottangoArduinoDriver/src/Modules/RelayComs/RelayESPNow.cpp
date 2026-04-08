@@ -147,6 +147,17 @@ void RelayESPNow::onPhase(Phase p)
 	if (_relayPool != nullptr)
 	{
 		_relayPool->update();
+
+		if (isBridge())
+		{
+			// was stopping all peers, and the queue is now empty
+			if (_relayPool->isUninitializing && _relayPool->toPeerQueueEmpty())
+			{
+				// try stop again, and actually shut down
+				// because the queue is empty, it won't abort out
+				BottangoCore::request_eStop();
+			}
+		}
 	}
 }
 

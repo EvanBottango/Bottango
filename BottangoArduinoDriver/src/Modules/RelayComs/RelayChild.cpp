@@ -33,7 +33,6 @@ RelayChild::RelayChild(char* macAddress)
 		//BottangoCore::relayPool->sendHandshakeCommand(this);
 		BottangoCore::mMaster.getModule<Relay>(Modules::RelayComs)->getPeerPool()->sendHandshakeCommand(this);
 	}
-
 	// ToDo: The child should not register itself - it should not know anything about the pool
 	BottangoCore::mMaster.getModule<Relay>(Modules::RelayComs)->registerPeer(this->mac_addr);
 }
@@ -56,22 +55,22 @@ void RelayChild::onReboot()
 	_pollOutstanding = false;
 }
 
-void RelayChild::passDownCommands(char* commands)
+void RelayChild::passDownCommands(char* commands, MessageIntent intent)
 {
 	// connected and to peer queue has space?
 	// send away!
-	//if (connected && !BottangoCore::relayPool->toPeerQueueFull())
+	bool enqueSucceded = false;
 	if (connected && !BottangoCore::mMaster.getModule<Relay>(Modules::RelayComs)->getPeerPool()->toPeerQueueFull())
 	{
-		//BottangoCore::relayPool->enqueueUnicastToPeerQueue(this, commands);
-		BottangoCore::mMaster.getModule<Relay>(Modules::RelayComs)->getPeerPool()->enqueueUnicastToPeerQueue(this, commands);
+		enqueSucceded = BottangoCore::mMaster.getModule<Relay>(Modules::RelayComs)->getPeerPool()->enqueueUnicastToPeerQueue(this, commands, intent);
 	}
+
 	// otherwise...
-	else
+	if (!enqueSucceded)
 	{
 		// something already in the holding buffer until ready to send?
 		// if so, it needs to be tossed
-		if (_disconnectedMessageHoldingBuffer[0] != '\0')
+		if (_singleMessageHoldingBuffer[0] != '\0')
 		{
 #ifdef RELAY_LOGGING
 #ifdef TOGGLE_DEBUG
@@ -79,12 +78,13 @@ void RelayChild::passDownCommands(char* commands)
 #endif // TOGGLE_DEBUG
 			{
 				OutgoingSerial::printOutputStringFlash(F("Toss prev in holding buffer "));
-				OutgoingSerial::printOutputStringMem(_disconnectedMessageHoldingBuffer);
+				OutgoingSerial::printOutputStringMem(_singleMessageHoldingBuffer);
 				OutgoingSerial::printLine();
 			}
 
 #endif // RELAY_LOGGING
-			_disconnectedMessageHoldingBuffer[0] = '\0';
+			_singleMessageHoldingBuffer[0] = '\0';
+			_singleMessageHoldingIntent = MessageIntent::Normal;
 		}
 
 #ifdef RELAY_LOGGING
@@ -98,7 +98,8 @@ void RelayChild::passDownCommands(char* commands)
 #endif // RELAY_LOGGING
 
 		// hold it until connected and space is available
-		strcpy(_disconnectedMessageHoldingBuffer, commands);
+		strcpy(_singleMessageHoldingBuffer, commands);
+		_singleMessageHoldingIntent = intent;
 	}
 }
 
@@ -218,7 +219,6 @@ void RelayChild::update()
 #endif
 		}
 
-		//int id = BottangoCore::relayPool->getIdForRelay(this);
 		int id = BottangoCore::mMaster.getModule<Relay>(Modules::RelayComs)->getPeerPool()->getIdForPeer(this);
 		char idStr[10];
 		itoa(id, idStr, 10);
@@ -278,17 +278,20 @@ void RelayChild::update()
 	// any pass down to child holding buffer if any
 	if (connected)
 	{
-		if (_disconnectedMessageHoldingBuffer[0] != '\0' && !BottangoCore::mMaster.getModule<Relay>(Modules::RelayComs)->getPeerPool()->toPeerQueueFull())
+		if (_singleMessageHoldingBuffer[0] != '\0' && !BottangoCore::mMaster.getModule<Relay>(Modules::RelayComs)->getPeerPool()->toPeerQueueFull())
 		{
-			BottangoCore::mMaster.getModule<Relay>(Modules::RelayComs)->getPeerPool()->enqueueUnicastToPeerQueue(this, _disconnectedMessageHoldingBuffer);
-			_disconnectedMessageHoldingBuffer[0] = '\0';
+			bool enqueued = BottangoCore::mMaster.getModule<Relay>(Modules::RelayComs)->getPeerPool()->enqueueUnicastToPeerQueue(this, _singleMessageHoldingBuffer, _singleMessageHoldingIntent);
+			if (enqueued)
+			{
+				_singleMessageHoldingBuffer[0] = '\0';
+				_singleMessageHoldingIntent = MessageIntent::Normal;
+			}
 		}
 	}
 }
 
 void RelayChild::destroy()
 {
-	//BottangoCore::relayComs->deregisterPeer(this->mac_addr);
 	BottangoCore::mMaster.getModule<Relay>(Modules::RelayComs)->deregisterPeer(this->mac_addr);
 }
 
@@ -307,10 +310,14 @@ void RelayChild::onConnectionComplete()
 	}
 #endif // RELAY_LOGGING
 
-	if (_disconnectedMessageHoldingBuffer[0] != '\0' && !BottangoCore::mMaster.getModule<Relay>(Modules::RelayComs)->getPeerPool()->toPeerQueueFull())
+	if (_singleMessageHoldingBuffer[0] != '\0' && !BottangoCore::mMaster.getModule<Relay>(Modules::RelayComs)->getPeerPool()->toPeerQueueFull())
 	{
-		BottangoCore::mMaster.getModule<Relay>(Modules::RelayComs)->getPeerPool()->enqueueUnicastToPeerQueue(this, _disconnectedMessageHoldingBuffer);
-		_disconnectedMessageHoldingBuffer[0] = '\0';
+		bool enqueued = BottangoCore::mMaster.getModule<Relay>(Modules::RelayComs)->getPeerPool()->enqueueUnicastToPeerQueue(this, _singleMessageHoldingBuffer, _singleMessageHoldingIntent);
+		if (enqueued)
+		{
+			_singleMessageHoldingBuffer[0] = '\0';
+			_singleMessageHoldingIntent = MessageIntent::Normal;
+		}
 	}
 
 	connected = true;
@@ -336,4 +343,4 @@ bool RelayChild::pollOutstandingAndExpired(unsigned long now, unsigned long time
 {
 	return _pollOutstanding && (now - _lastTxTime > timeout);
 }
-#endif
+#endif // RELAY_SUPPORTED

@@ -180,22 +180,19 @@ namespace BasicCommands
     inline const char OTA_UPDATE[] PROGMEM = "ota";
 #endif // ENABLE_ESP_OTA_UPDATE
 
-//#ifdef AUDIO_SD_I2S
+#ifdef AUDIO_SD_I2S
 
     /** Register an audio effector with a [0] identifier, [1] audio file hash */
     //const char REGISTER_AUDIO_EVENT[] PROGMEM = "rAud";
-	inline constexpr const char* I2S_RegisterAudioEvent()
-	{
-		return "rAud";
-	}
+	inline const char REGISTER_AUDIO_EVENT[] PROGMEM = "rAud";
 
     /**
      * Command to transfer in an audio file
      * [0] audio bin message type. s == start, d == data, e == end
      * [1] audio bin param. s is audio file name, d is data in 64 byte or less chunk, e is expected checksum of data
      */
-    //const char AUDIO_BIN[] PROGMEM = "binA";
-//#endif
+	inline const char AUDIO_BIN[] PROGMEM = "binA";
+#endif
 
 #if defined(ENABLE_DYNAMIC_ANIMATION_SOURCE_SWITCH) || defined(RELAY_SUPPORTED)
     /**
@@ -245,7 +242,7 @@ namespace BasicCommands
 	inline const char HANDSHAKE[] PROGMEM = "btngoHSK";
 
 	/** The version code of this driver */
-	inline const char DRIVER_VERSION[] PROGMEM = "0.7.1p7a";
+	inline const char DRIVER_VERSION[] PROGMEM = "0.7.1p8a";
 
 	/** Arduino is ready for the next command */
 	inline const char READY[] PROGMEM = "OK\n";
@@ -267,7 +264,7 @@ namespace BasicCommands
 
 #ifdef ONLINE_BUTTON_ACTIONS
 	inline const char START_PLAY_BUTTON[] PROGMEM = "reqPlayBtn,";
-#endif
+#endif // ONLINE_BUTTON_ACTIONS
 
 	/** Stepper/Custom Motor Auto Sync is Complete */
 	inline const char SYNC_COMPLETE[] PROGMEM = "sycMDone,";

@@ -6,6 +6,7 @@
 #ifdef RELAY_SUPPORTED
 
 #include "../BottangoArduinoConfig.h"
+#include "Modules/Outgoing.h"
 #include <freertos/queue.h>
 #include <cstring>
 
@@ -19,7 +20,8 @@ enum class MessageIntent : uint8_t
 {
 	Normal,
 	Poll,
-	Boot
+	Boot,
+	Teardown
 };
 
 enum class TargetGroup : uint8_t
@@ -49,6 +51,11 @@ public:
 
 	bool enqueueMessage(const int peerId, const char* txt, MessageIntent intent, TargetGroup target)
 	{
+		if (locked)
+		{
+			return false;
+		}
+
 		OutgoingMessage msg;
 		msg.peerId = peerId;
 		msg.intent = intent;
@@ -64,9 +71,9 @@ public:
 		if (PersistentConfigUtil::debugEnabled())
 #endif // TOGGLE_DEBUG
 		{
-			Outgoing::printOutputStringFlash(F("To Queue "));
-			Outgoing::printOutputStringMem(txt);
-			Outgoing::printLine();
+			OutgoingSerial::printOutputStringFlash(F("To Queue "));
+			OutgoingSerial::printOutputStringMem(txt);
+			OutgoingSerial::printLine();
 		}
 #endif // RELAY_LOGGING
 
@@ -99,9 +106,23 @@ public:
 		xQueueReceive(queue, &dummy, 0);
 	}
 
+	void clear()
+	{
+		while (!empty())
+		{
+			pop();
+		}
+	}
+
+	void lock()
+	{
+		locked = true;
+	}
+
 private:
 	QueueHandle_t queue;
+	bool locked = false;
 };
 
-#endif // RELAY_SUPPORTED
+#endif // relay supported
 #endif // OUTGOING_MESSAGE_QUEUE_H

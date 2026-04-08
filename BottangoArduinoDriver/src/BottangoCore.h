@@ -32,22 +32,17 @@ namespace BottangoCore
     /**
 	 * @brief Stops the playback - only use when the source is Serial! Otherwise, use the request_Stop() or request_eStop() functions
      */
-    void stop();
+    void stop(bool doUninitialize);
 
     void uninitialize();
 
     void updateReadBuffer(bool secondary);
-
-    //bool isOffline();
 
     extern EffectorPool effectorPool;
     extern AbstractMultiMessageOutgoingSource *activeOutgoingMultimessage;
 	extern ModuleMaster mMaster;
 
 	extern char delimiters[];
-
-    //bool rcvAvailable(bool secondary);
-    //char readNextChar(bool secondary);
 
 #if defined(RELAY_SUPPORTED)
 	extern unsigned long lastPollTimeAsPeer;

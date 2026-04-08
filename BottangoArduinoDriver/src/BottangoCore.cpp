@@ -33,7 +33,7 @@ namespace BottangoCore
 #if defined(RELAY_SUPPORTED)
 	unsigned long lastPollTimeAsPeer;
 #endif // RELAY_SUPPORTED
-//#endif
+	//#endif
 
 #if !defined(RELAY_SUPPORTED) && defined(USE_ESP32_WIFI)
 	WiFiClient client;
@@ -207,11 +207,19 @@ namespace BottangoCore
 
 #endif
 
-	static void stopPlaybackModule()
+	bool stopPlaybackModule(bool doUninitialize)
 	{
 #if defined(USE_CODE_COMMAND_STREAM) || defined(USE_SD_CARD_COMMAND_STREAM)
-		mMaster.getModule<AnimationPlaybackControl>(Modules::AnimPlaybackCntrl)->stop();
-#endif
+		mMaster.getModule<AnimationPlaybackControl>(Modules::AnimPlaybackCntrl)->stop(doUninitialize);
+#endif // USE_CODE_COMMAND_STREAM || USE_SD_CARD_COMMAND_STREAM
+
+#if defined(RELAY_SUPPORTED)
+		if (mMaster.getModule<Relay>(Modules::RelayComs)->stop(doUninitialize))
+		{
+			return false;
+		}
+#endif // RELAY_SUPPORTED
+		return true;
 	}
 
 	static void hardStop()
@@ -221,25 +229,33 @@ namespace BottangoCore
 
 #ifdef ENABLE_STATUS_LIGHTS
 #ifdef RELAY_SUPPORTED
-		if (mMaster.getModule<Relay>(Modules::RelayComs)->getRole() == Relay::RelayRole::Peer)
+		// peers reboot after getting stop
+		if (mMaster.getModule<Relay>(Modules::RelayComs)->isPeer())
 		{
-			SystemStatus::eConnectionStatus::No_Connection_Peer;
+			BasicCommands::reboot(false);
 		}
 		else
 		{
-			SystemStatus::eConnectionStatus::No_Connection_Serial;
+			if (mMaster.getModule<Relay>(Modules::RelayComs)->isBridge())
+			{
+				SystemStatus::systemStatus.ConnectionStatus = SystemStatus::eConnectionStatus::Red;
+			}
+			else
+			{
+				SystemStatus::systemStatus.ConnectionStatus = SystemStatus::eConnectionStatus::No_Connection_Serial;
+			}			
 		}
-#else
+#else 
 		SystemStatus::systemStatus.ConnectionStatus = SystemStatus::eConnectionStatus::No_Connection_Serial;
-#endif
-#endif
+#endif // RELAY_SUPPORTED
+#endif // ENABLE_STATUS_LIGHTS
 	}
 
 	void request_Stop()
 	{
 		if (SystemStatus::systemStatus.ConnectionStatus == SystemStatus::eConnectionStatus::Export_Playback)
 		{
-			stopPlaybackModule();
+			stopPlaybackModule(false);
 		}
 		else
 		{
@@ -251,8 +267,10 @@ namespace BottangoCore
 	{
 		if (SystemStatus::systemStatus.ConnectionStatus == SystemStatus::eConnectionStatus::Export_Playback)
 		{
-			stopPlaybackModule();
-			hardStop();
+			if (stopPlaybackModule(true))
+			{
+				hardStop();
+			}			
 		}
 		else
 		{
@@ -260,113 +278,14 @@ namespace BottangoCore
 		}
 	}
 
-	void stop()
+	void stop(bool doUninitialize)
 	{
-		if (SystemStatus::systemStatus.ConnectionStatus == SystemStatus::eConnectionStatus::Export_Playback)
+		// ToDo: doUninitialize is more or less unused with this version of stop(). Its only called from the Parser and is always true
+		if (stopPlaybackModule(doUninitialize) && doUninitialize)
 		{
-			stopPlaybackModule();
+			hardStop();
 		}
-		hardStop();
 	}
-
-	/*bool splitIntoBuffer(char* stringToSplit, byte& paramsCount)
-	{
-#ifdef RELAY_SUPPORTED
-		// Special case if first token is relay pass through if is relay bridge
-		// first token is sR, second is peer id, third token is all of the command, fourth is the hash
-		if (isRelayBridge
-			&& strncmp(stringToSplit, BasicCommands::PASS_TO_RELAY, strlen(BasicCommands::PASS_TO_RELAY)) == 0
-			&& stringToSplit[strlen(BasicCommands::PASS_TO_RELAY)] == ',')
-		{
-			// Find first comma (after sR)
-			char* firstComma = strchr(stringToSplit, ',');
-			if (!firstComma)
-			{
-				return false;
-			}
-
-			// Find second comma (after ID)
-			char* secondComma = strchr(firstComma + 1, ',');
-			if (!secondComma)
-			{
-				return false;
-			}
-
-			// Find last comma (for hash split)
-			char* lastComma = strrchr(secondComma + 1, ',');
-			if (!lastComma || lastComma <= secondComma)
-			{
-				return false;
-			}
-
-			// Set splitCommandBuffer[0] = sR
-			size_t len0 = firstComma - stringToSplit;
-			static char sRbuffer[8]; // enough for sR\0
-			strncpy(sRbuffer, stringToSplit, len0);
-			sRbuffer[len0] = '\0';
-			splitCommandBuffer[0] = sRbuffer;
-
-			// Set splitCommandBuffer[1] = ID
-			size_t len1 = secondComma - (firstComma + 1);
-			static char idBuffer[8]; // enough for id + \0
-			strncpy(idBuffer, firstComma + 1, len1);
-			idBuffer[len1] = '\0';
-			splitCommandBuffer[1] = idBuffer;
-
-			if (isOffline())
-			{
-				// Set splitCommandBuffer[2] = everything after 2nd comma
-				// except trim last char if it's a \n newline
-				static char offlinePayloadBuffer[MAX_COMMAND_LENGTH];
-				strcpy(offlinePayloadBuffer, secondComma + 1);
-
-				size_t payloadLen = strlen(offlinePayloadBuffer);
-				if (payloadLen > 0 && offlinePayloadBuffer[payloadLen - 1] == '\n')
-				{
-					offlinePayloadBuffer[payloadLen - 1] = '\0';
-				}
-
-				splitCommandBuffer[2] = offlinePayloadBuffer;
-
-				// Set splitCommandBuffer[3] = to an empty string, since there's no hash in an offline command
-				static char emptyString[] = "";
-				splitCommandBuffer[3] = emptyString;
-			}
-			else
-			{
-				// Set splitCommandBuffer[2] = everything between 2nd and last comma
-				size_t len2 = lastComma - (secondComma + 1);
-				static char payloadBuffer[MAX_COMMAND_LENGTH];
-				strncpy(payloadBuffer, secondComma + 1, len2);
-				payloadBuffer[len2] = '\0';
-				splitCommandBuffer[2] = payloadBuffer;
-
-				// Set splitCommandBuffer[3] = hash (after last comma)
-				splitCommandBuffer[3] = lastComma + 1;
-			}
-
-			paramsCount = 4;
-			return true;
-		}
-#endif*/
-		// Regular tokenization
-		/*byte idxResult = 0;
-		char *token = strtok(stringToSplit, delimiters);
-
-		while (token != NULL)
-		{
-			if (idxResult >= COMMANDS_PARAMS_SIZE) // Check buffer capacity
-			{
-				Error::reportError_TooManyParams(idxResult);
-				return false;
-			}
-			splitCommandBuffer[idxResult++] = token;
-			token = strtok(NULL, delimiters);
-		}
-
-		paramsCount = idxResult;*/
-		//return true;
-	//}
 
 	bool checkHash(char* cmdString)
 	{
@@ -448,22 +367,13 @@ namespace BottangoCore
 
 		if (SystemStatus::systemStatus.initialized)
 		{
-			// update effector pool
-			//effectorPool.updateAllDriveTargets();
-
 			// update relay pool
 #ifdef RELAY_SUPPORTED
-			/*if (mMaster.getModule<Relay>(Modules::RelayComs)->isBridge())
-			{
-				mMaster.getModule<Relay>(Modules::RelayComs)->getPeerPool()->update();
-			}*/
 			if (mMaster.getModule<Relay>(Modules::RelayComs)->isPeer() && millis() - lastPollTimeAsPeer > RELAY_POLL_TIMEOUT_AS_PEER)
 			{
-				//Outgoing::toggleOnSecondaryOutgoing();
 				OutgoingSerial::printOutputStringFlash(F("Lost Bridge!"));
 				OutgoingSerial::printLine();
-				//Outgoing::endToggleOnSecondaryOutgoing();
-				
+
 				//BasicCommands::reboot(false);
 				lastPollTimeAsPeer = millis();
 			}
@@ -496,12 +406,10 @@ namespace BottangoCore
 #ifdef TOGGLE_DEBUG
 		if (PersistentConfigUtil::debugEnabled())
 #endif // TOGGLE_DEBUG
-		{			
+		{
 			if (mMaster.getModule<Relay>(Modules::RelayComs)->isPeer() && !SystemStatus::systemStatus.initialized && Time::getCurrentTimeInMs() - lastWaitForConnectLog >= 1000)
 			{
-				//Outgoing::toggleOnSecondaryOutgoing();
 				OutgoingSerial::printOutputStringFlash(F("Waiting for bridge...\n"));
-				//Outgoing::endToggleOnSecondaryOutgoing();
 				lastWaitForConnectLog = Time::getCurrentTimeInMs();
 			}
 		}

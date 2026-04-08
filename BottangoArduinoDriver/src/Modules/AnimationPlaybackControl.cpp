@@ -47,7 +47,7 @@ void AnimationPlaybackControl::onPhase(Phase p)
 
 			LOG_DEBUG("APC", "onPhase()", "Command stream complete, stopping playback");
 			_setupIsRunning = false;
-			stop();
+			BottangoCore::request_Stop();
 			return;
 		}
 
@@ -110,7 +110,7 @@ void AnimationPlaybackControl::onPhase(Phase p)
 
 	updatePlaybackStatus();
 
-#ifdef RELAY_SUPPORTED
+/*#ifdef RELAY_SUPPORTED
 	// If we're a relay bridge, we need to check if we should resume time on connected peers after setup
 	if (!_peerSetupDone && !_setupIsRunning && _relay->isBridge() && _relay->getPeerPool()->bridgeIsConnectedToAllPeers())
 	{
@@ -118,7 +118,7 @@ void AnimationPlaybackControl::onPhase(Phase p)
 		Time::syncTime(0);
 		_peerSetupDone = true;
 	}
-#endif // RELAY_SUPPORTED
+#endif*/ // RELAY_SUPPORTED
 }
 
 void AnimationPlaybackControl::init()
@@ -185,16 +185,24 @@ void AnimationPlaybackControl::init()
 	}
 }
 
-void AnimationPlaybackControl::stop()
+void AnimationPlaybackControl::stop(bool allowSetupStop)
 {
-	if (SystemStatus::systemStatus.ConnectionStatus != SystemStatus::eConnectionStatus::Export_Playback)
+	// Don't stop if we're not playing from the offline source or if we're in the middle of setup and not allowed to stop it
+	if (SystemStatus::systemStatus.ConnectionStatus != SystemStatus::eConnectionStatus::Export_Playback
+		|| (_setupIsRunning && !allowSetupStop))
 	{
 		return;
+	}
+
+	if (allowSetupStop)
+	{
+		setInvalidState();
 	}
 
 	BottangoCore::effectorPool.clearAllCurves();
 	_timeStartOfNextCommand = 0;
 	_timeEndOfLongestCommand = 0;
+	_currentPlayingIndex = -1;
 
 	if (_offlineSource)
 	{
@@ -205,13 +213,13 @@ void AnimationPlaybackControl::stop()
 	//_offlineSource->openSetup();
 	//_setupIsRunning = true;
 
-#ifdef RELAY_SUPPORTED
+/*#ifdef RELAY_SUPPORTED
 	if (BottangoCore::mMaster.getModule<Relay>(Modules::RelayComs)->isBridge())
 	{
 		//_peerSetupDone = false; // ToDo: A approach is needed when loosing one peer after initial setup
 		BottangoCore::mMaster.getModule<Relay>(Modules::RelayComs)->getPeerPool()->clearCurvesOnConnectedPeers();
 	}
-#endif
+#endif*/
 
 	SystemStatus::systemStatus.PlaybackStatus = SystemStatus::ePlaybackStatus::NotPlaying;
 	SystemStatus::systemStatus.Signal = SystemStatus::eSignal::OfflineReady;
@@ -321,11 +329,11 @@ void AnimationPlaybackControl::loadConfig()
 #ifdef EXPORTED_ANIM_LOGGING
 #ifdef TOGGLE_DEBUG
 		if (PersistentConfigUtil::debugEnabled())
-#endif
+#endif // TOGGLE_DEBUG
 		{
 			logConfig(config);
 		}
-#endif		
+#endif // EXPORTED_ANIM_LOGGING
 
 		// set up pins if needed
 		if (config->playOnPin > 0)
@@ -542,7 +550,7 @@ int AnimationPlaybackControl::getIndexOfAnimationToTrigger() const
 
 void AnimationPlaybackControl::playAnimation(int index, bool loop)
 {
-	if (SystemStatus::systemStatus.ConnectionStatus != SystemStatus::eConnectionStatus::Export_Playback)
+	if (SystemStatus::systemStatus.ConnectionStatus != SystemStatus::eConnectionStatus::Export_Playback || _invalidState)
 	{
 		return;
 	}
@@ -550,15 +558,15 @@ void AnimationPlaybackControl::playAnimation(int index, bool loop)
 #ifdef EXPORTED_ANIM_LOGGING
 #ifdef TOGGLE_DEBUG
 	if (PersistentConfigUtil::debugEnabled())
-#endif
+#endif // TOGGLE_DEBUG
 	{
 		Outgoing::printOutputStringFlash(F("Start anim: "));
 		Outgoing::printOutputStringMem(index);
 		Outgoing::printLine();
 	}
-#endif
+#endif // EXPORTED_ANIM_LOGGING
 
-	stop();
+	BottangoCore::request_Stop();
 	LOG_DEBUG("APC", "playAnimation()", "Playing animation index %d, loop: %d", index, loop);
 	SystemStatus::systemStatus.Signal = SystemStatus::eSignal::OfflinePlayback;
 	_offlineSource->openAnimation(index, loop);
@@ -568,16 +576,23 @@ void AnimationPlaybackControl::playAnimation(int index, bool loop)
 	{
 		// ToDo: Do we always send the whole setup again for each animation we play, or should this be a one-time only?
 		// There should be a check, if we lost a peer in the meantime, to only resend setup data if needed
-		// Next: Warum hat das alles vorher geklappt? "stopTime" ist hier jetzt "neu" (nach Vorlage vom original-code).
-		// Ist das drin, läuft die Animation nicht. Kommentiere ich das ganze aus, läuft die Animation wieder, aber nur auf der Bridge. Der Client bleibt weiterhin im stopp.
-		// Das war vorher nicht so? Was ist jetzt anders? Warum wird die Zeit nicht fortgesetzt?
-		Time::stopTime();
-		BottangoCore::mMaster.getModule<Relay>(Modules::RelayComs)->getPeerPool()->stopTimeOnConnectedPeers();
-		return;
+
+		//Time::stopTime();
+		//BottangoCore::mMaster.getModule<Relay>(Modules::RelayComs)->getPeerPool()->stopTimeOnConnectedPeers();
+
+		_relay->getPeerPool()->resumeTimeConnectedPeers(false);
+		//Time::syncTime(0);
+		//return;
 	}
 #endif // RELAY_SUPPORTED
 
 	Time::syncTime(0);
+}
+
+void AnimationPlaybackControl::setInvalidState()
+{
+	_invalidState = true;
+	SystemStatus::systemStatus.Signal = SystemStatus::eSignal::SDError;
 }
 
 #ifdef EXPORTED_ANIM_LOGGING

@@ -64,22 +64,29 @@ public:
 
 	void clearCurvesOnConnectedPeers();
 
+	void beginPoolTeardown();
+
 	RelayChild* getPeer(int id) const;
 	RelayChild* getPeer(const uint8_t* mac_addr) const;
 	int getIdForPeer(RelayChild* relayChild) const;	
 
+	bool toPeerQueueFull() const { return _toPeerQueue.full(); }
+	bool toPeerQueueEmpty() const { return _toPeerQueue.empty(); }
+
 	void setPeerIdToReport(int id);
 
-	bool enqueueUnicastToPeerQueue(RelayChild* peer, char* commandString);	
+	bool enqueueUnicastToPeerQueue(RelayChild* peer, char* commandString, MessageIntent intent = MessageIntent::Normal);
 
-	void getConnectedPeerIds(int* outIds, uint8_t& outCount) const;
+	RelayChildMessageQueue& getOutgoingQueue() { return _toPeerQueue; }
+
+	void getConnectedPeerIds(int* outIds, uint8_t& outCount, bool includeTeardown = false) const;
 	void getUnconnectedPeerIds(int* outIds, uint8_t& outCount) const;
 	void markPeerTx(int peerId);
 	void markPeerPollOutstanding(int peerId);
+	void markRelayTeardownReadyToFinalize(int peerId);
 	void reportLostPeer(int peerId);
 
-	bool toPeerQueueFull() const { return _toPeerQueue.full(); }
-	RelayChildMessageQueue& getOutgoingQueue() { return _toPeerQueue; }
+	bool isUninitializing = false;
 
 	// ==== AbstractMultiMessageOutgoingSource implementation ====
 	virtual void cleanUpMultiMessage() override;
@@ -106,6 +113,7 @@ private:
 	bool enqueueBroadcastPassThrough(char* commandString, MessageIntent intent, TargetGroup target);
 	void enqueuePollBroadcast();
 	void enqueueBootBroadcast();
+	void finalizeRelayTeardown(int peerId);
 
 	// ==== AbstractMultiMessageOutgoingSource implementation ====
 	bool emitNextChunk() override;

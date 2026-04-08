@@ -1,10 +1,12 @@
 #include "../BottangoArduinoModules.h"
+
 #if defined(RELAY_SUPPORTED)
 
 #include "RelayChildPool.h"
 #include "RelayChild.h"
 #include "BasicCommands.h"
 #include <limits.h>
+#include "System/SystemStatus.h"
 #ifdef TOGGLE_DEBUG
 #include "PersistentConfigUtil.h"
 #endif // TOGGLE_DEBUG
@@ -34,9 +36,9 @@ void RelayChildPool::addPeer(RelayChild* newPeer)
 		return;
 	}
 
-	RelayChild* existingRelay = getPeer(newPeer->mac_addr);
+	RelayChild* existingPeer = getPeer(newPeer->mac_addr);
 
-	if (existingRelay != nullptr)
+	if (existingPeer != nullptr)
 	{
 		Error::reportError_RelayCollision(newPeer->mac_addr);
 		unlockPool();
@@ -69,9 +71,24 @@ void RelayChildPool::removePeer(int id)
 		return;
 	}
 
-	_peers.remove(relay);
-	relay->destroy();
-	delete relay;
+	// enque a teardown message for the relay
+	char commandBuffer[MAX_COMMAND_LENGTH];
+	commandBuffer[0] = '\0';
+	strcat(commandBuffer, BasicCommands::STOP);
+	char passThroughCommandBuffer[MAX_COMMAND_LENGTH];
+	if (!buildPassThroughCommand(passThroughCommandBuffer, commandBuffer))
+	{
+		unlockPool();
+		return;
+	}
+
+	// flag the peer as being torn down
+	// that will stop all outgoing messages except stop
+	// and it will eventually finalize teardown once stop is actually tx
+	relay->teardown = true;
+	relay->clearPollOutstanding();
+
+	relay->passDownCommands(passThroughCommandBuffer, MessageIntent::Teardown);
 
 	unlockPool();
 }
@@ -84,6 +101,12 @@ void RelayChildPool::passThroughCommandToPeer(int id, char** commands)
 	if (relay == nullptr)
 	{
 		Error::reportError_NoRelayForID(id);
+		unlockPool();
+		return;
+	}
+
+	if (relay->teardown)
+	{
 		unlockPool();
 		return;
 	}
@@ -182,9 +205,29 @@ bool RelayChildPool::isMacEqual(const uint8_t* mac1, const uint8_t* mac2) const
 void RelayChildPool::update()
 {
 	unsigned long now = millis();
+
+	// find and finalize teardown on any that are ready to complete teardown
+	int pendingTeardownFinalizeIds[MAX_RELAY_CHILD] = {};
+	int pendingTeardownFinalizeCount = 0;
+	lockPool();
+	for (int i = 0; i < _peers.size() && pendingTeardownFinalizeCount < MAX_RELAY_CHILD; i++)
+	{
+		RelayChild* peer = _peers.get(i);
+		if (peer != nullptr && peer->teardownReadyToFinalize)
+		{
+			pendingTeardownFinalizeIds[pendingTeardownFinalizeCount] = peer->stableId;
+			pendingTeardownFinalizeCount++;
+		}
+	}
+	unlockPool();
+	for (int i = 0; i < pendingTeardownFinalizeCount; i++)
+	{
+		finalizeRelayTeardown(pendingTeardownFinalizeIds[i]);
+	}
+
+	// snapshot the peers so we don't hold the mutex very long in everything that follows
 	RelayChild* snapshot[MAX_RELAY_CHILD] = {};
 	int snapshotCount = 0;
-
 	lockPool();
 	int peerCount = _peers.size();
 	for (int i = 0; i < peerCount && i < MAX_RELAY_CHILD; i++)
@@ -205,7 +248,6 @@ void RelayChildPool::update()
 
 		if (iterator->pollOutstandingAndExpired(now, RELAY_RESPONSE_TIMEOUT))
 		{
-			// TODO decide how to handle a missing poll response
 			iterator->clearPollOutstanding();
 			reportLostPeer(iterator->stableId);
 		}
@@ -329,6 +371,68 @@ void RelayChildPool::clearCurvesOnConnectedPeers()
 	unlockPool();
 }
 
+void RelayChildPool::beginPoolTeardown()
+{
+	if (isUninitializing)
+	{
+		return;
+	}
+
+	isUninitializing = true;
+
+	lockPool();
+
+	// clear the queue, everything is now stale except stop
+	_toPeerQueue.clear();
+
+	// all still-connected peers are now globally tearing down
+	// clear out any unconnected peers
+	RelayChild* unconnectedPeersToRemove[MAX_RELAY_CHILD] = {};
+	int unconnectedPeersToRemoveCount = 0;
+
+	// teardown connected, mark for destroy and remove unconneceted
+	for (int i = 0; i < _peers.size(); i++)
+	{
+		RelayChild* peer = _peers.get(i);
+		if (peer == nullptr)
+		{
+			continue;
+		}
+
+		if (peer->connected)
+		{
+			peer->teardown = true;
+			peer->clearPollOutstanding();
+		}
+		else if (unconnectedPeersToRemoveCount < MAX_RELAY_CHILD)
+		{
+			unconnectedPeersToRemove[unconnectedPeersToRemoveCount] = peer;
+			unconnectedPeersToRemoveCount++;
+		}
+	}
+
+	// destroy unconnected
+	for (int i = 0; i < unconnectedPeersToRemoveCount; i++)
+	{
+		RelayChild* peer = unconnectedPeersToRemove[i];
+		_peers.remove(peer);
+		peer->destroy();
+		delete peer;
+	}
+
+	// enque teardown stop to all connected peers, including peers already marked teardown
+	char commandBuffer[MAX_COMMAND_LENGTH];
+	commandBuffer[0] = '\0';
+	strcat(commandBuffer, BasicCommands::STOP);
+
+	enqueueBroadcastPassThrough(commandBuffer, MessageIntent::Teardown, TargetGroup::BroadcastConnected);
+
+	// lock additional message enqueue
+	_toPeerQueue.lock();
+
+	unlockPool();
+}
+
 void RelayChildPool::sendHandshakeCommand(RelayChild* peer)
 {
 	lockPool();
@@ -437,7 +541,7 @@ void RelayChildPool::enqueueBootBroadcast()
 	enqueueBroadcastPassThrough(payloadBuffer, MessageIntent::Boot, TargetGroup::BroadcastUnconnected);
 }
 
-bool RelayChildPool::enqueueUnicastToPeerQueue(RelayChild* peer, char* commandString)
+bool RelayChildPool::enqueueUnicastToPeerQueue(RelayChild* peer, char* commandString, MessageIntent intent)
 {
 	lockPool();
 
@@ -447,7 +551,7 @@ bool RelayChildPool::enqueueUnicastToPeerQueue(RelayChild* peer, char* commandSt
 		return false;
 	}
 
-	bool enqueued = _toPeerQueue.enqueueMessage(getIdForPeer(peer), commandString, MessageIntent::Normal, TargetGroup::Unicast);
+	bool enqueued = _toPeerQueue.enqueueMessage(getIdForPeer(peer), commandString, intent, TargetGroup::Unicast);
 	unlockPool();
 	return enqueued;
 }
@@ -474,7 +578,7 @@ void RelayChildPool::resumeTimeConnectedPeers(bool clearCurves)
 	unlockPool();
 }
 
-void RelayChildPool::getConnectedPeerIds(int* outIds, uint8_t& outCount) const
+void RelayChildPool::getConnectedPeerIds(int* outIds, uint8_t& outCount, bool includeTeardown) const
 {
 	lockPool();
 
@@ -482,7 +586,7 @@ void RelayChildPool::getConnectedPeerIds(int* outIds, uint8_t& outCount) const
 	for (int i = 0; i < _peers.size(); i++)
 	{
 		RelayChild* peer = _peers.get(i);
-		if (peer != nullptr && peer->connected)
+		if (peer != nullptr && peer->connected && (includeTeardown || !peer->teardown))
 		{
 			outIds[outCount] = peer->stableId;
 			outCount++;
@@ -538,8 +642,44 @@ void RelayChildPool::markPeerPollOutstanding(int peerId)
 	RelayChild* peer = getPeer(peerId);
 	if (peer != nullptr)
 	{
+		if (peer->teardown)
+		{
+			unlockPool();
+			return;
+		}
 		peer->markPollOutstanding();
 	}
+
+	unlockPool();
+}
+
+void RelayChildPool::markRelayTeardownReadyToFinalize(int peerId)
+{
+	lockPool();
+
+	RelayChild* peer = getPeer(peerId);
+	if (peer != nullptr)
+	{
+		peer->teardownReadyToFinalize = true;
+	}
+
+	unlockPool();
+}
+
+void RelayChildPool::finalizeRelayTeardown(int peerId)
+{
+	lockPool();
+
+	RelayChild* peer = getPeer(peerId);
+	if (peer == nullptr)
+	{
+		unlockPool();
+		return;
+	}
+
+	_peers.remove(peer);
+	peer->destroy();
+	delete peer;
 
 	unlockPool();
 }
@@ -553,6 +693,13 @@ void RelayChildPool::reportLostPeer(int peerId)
 	OutgoingSerial::printOutputStringPROGMEM(BasicCommands::LOST_PEER);
 	OutgoingSerial::printOutputStringMem(peerId);
 	OutgoingSerial::printLine();
+
+	//if (BottangoCore::isOffline())
+	if (SystemStatus::systemStatus.ConnectionStatus == SystemStatus::eConnectionStatus::Export_Playback)
+	{
+		Outgoing::printOutputStringFlash(F("Offline ERR: Teardown Bridge"));
+		BottangoCore::request_eStop();
+	}
 }
 
 // ==== AbstractMultiMessageOutgoingSource implementation ====
@@ -580,4 +727,4 @@ bool RelayChildPool::emitNextChunk()
 	//return true;
 }
 
-#endif
+#endif // RELAY_SUPPORTED

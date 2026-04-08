@@ -135,7 +135,7 @@ namespace BasicCommands
 
 	void stop(char* args[])
 	{
-		BottangoCore::stop();
+		BottangoCore::stop(true);
 	}
 
 	void syncTime(char* args[])

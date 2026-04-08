@@ -29,6 +29,7 @@ public:
 	virtual void initializeAsBridge() {}
 	virtual void registerPeer(const uint8_t* udid) {}
 	virtual void deregisterPeer(const uint8_t* udid) {}
+	virtual bool stop(bool doUninitialize);
 
 	// Peer
 	virtual void initializeAsPeer() {}

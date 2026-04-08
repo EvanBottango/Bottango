@@ -3,160 +3,152 @@
 
 AbstractEffector::AbstractEffector(int minSignal, int maxSignal)
 {
-    this->minSignal = minSignal;
-    this->maxSignal = maxSignal;
+	this->minSignal = minSignal;
+	this->maxSignal = maxSignal;
 
-    for (int i = 0; i < MAX_NUM_CURVES; ++i)
-    {
-        curves[i] = NULL;
-    }
+	for (int i = 0; i < MAX_NUM_CURVES; ++i)
+	{
+		curves[i] = NULL;
+	}
 }
 
 void AbstractEffector::setSync(int syncValue)
-{
-}
+{}
 
 void AbstractEffector::setAutoSync(int syncValue)
-{
-}
+{}
 
 void AbstractEffector::updateOnLoop()
-{
-}
+{}
 
 void AbstractEffector::driveOnLoop()
-{
-}
+{}
 
 void AbstractEffector::callbackOnDriveComplete(int currentSignal, bool didChange)
 {
-    Callbacks::effectorSignalOnLoop(this, currentSignal, didChange);
+	Callbacks::effectorSignalOnLoop(this, currentSignal, didChange);
 }
 
 void AbstractEffector::updateSignalBounds(int minSignal, int maxSignal, int signalSpeed)
 {
-    this->minSignal = minSignal;
-    this->maxSignal = maxSignal;
+	this->minSignal = minSignal;
+	this->maxSignal = maxSignal;
 }
 
-void AbstractEffector::addCurve(Curve *curve)
+void AbstractEffector::addCurve(Curve* curve)
 {
 
-    if (curves[curvesIdx] != NULL)
-    {
+	if (curves[curvesIdx] != NULL)
+	{
 
-        // #ifdef TOGGLE_DEBUG
-        //         if (PersistentConfigUtil::debugEnabled() || ALWAYS_LOG_ERROR_CASE)
-        //         {
-        //             unsigned long replacementCurveStartTime = (curves[curvesIdx])->getStartTimeMs();
-        //             long dT = replacementCurveStartTime - Time::getCurrentTimeInMs();
+		// #ifdef TOGGLE_DEBUG
+		//         if (PersistentConfigUtil::debugEnabled() || ALWAYS_LOG_ERROR_CASE)
+		//         {
+		//             unsigned long replacementCurveStartTime = (curves[curvesIdx])->getStartTimeMs();
+		//             long dT = replacementCurveStartTime - Time::getCurrentTimeInMs();
 
-        // #ifdef RELAY_SUPPORTED
-        //             Outgoing::toggleOnSecondaryOutgoing();
-        // #endif
+		// #ifdef RELAY_SUPPORTED
+		//             Outgoing::toggleOnSecondaryOutgoing();
+		// #endif
 
-        //             if (dT >= 0)
-        //             {
-        //                 Outgoing::printOutputStringFlash(F("WARN: Curve dropped at dT "));
-        //                 Outgoing::printOutputStringMem(dT);
-        //                 Outgoing::printLine();
-        //             }
+		//             if (dT >= 0)
+		//             {
+		//                 Outgoing::printOutputStringFlash(F("WARN: Curve dropped at dT "));
+		//                 Outgoing::printOutputStringMem(dT);
+		//                 Outgoing::printLine();
+		//             }
 
-        // #ifdef RELAY_SUPPORTED
-        //             Outgoing::endToggleOnSecondaryOutgoing();
-        // #endif
-        //         }
-        // #endif
+		// #ifdef RELAY_SUPPORTED
+		//             Outgoing::endToggleOnSecondaryOutgoing();
+		// #endif
+		//         }
+		// #endif
 
-        free(curves[curvesIdx]);
-    }
+		delete curves[curvesIdx];
+	}
 
-    curves[curvesIdx] = curve;
+	curves[curvesIdx] = curve;
 
-    curvesIdx = (curvesIdx + 1) % MAX_NUM_CURVES;
+	curvesIdx = (curvesIdx + 1) % MAX_NUM_CURVES;
 }
 
 void AbstractEffector::destroy(bool systemShutdown)
 {
-    stop();
-    clearCurves();
+	stop();
+	clearCurves();
 
-    Callbacks::onEffectorDeregistered(this);
+	Callbacks::onEffectorDeregistered(this);
 }
 
 int AbstractEffector::lerpSignal(float movement)
 {
-    float mapped = ((maxSignal - minSignal) * movement + minSignal);
-    int mappedInt = (int)round(mapped);
+	float mapped = ((maxSignal - minSignal) * movement + minSignal);
+	int mappedInt = (int)round(mapped);
 
-    // account for inverted min/max signal (IE go from 2000 -> 1000)
-    if (maxSignal > minSignal)
-    {
-        if (mappedInt > maxSignal)
-        {
-            mappedInt = maxSignal;
-        }
-        if (mappedInt < minSignal)
-        {
-            mappedInt = minSignal;
-        }
-    }
-    else
-    {
-        if (mappedInt > minSignal)
-        {
-            mappedInt = minSignal;
-        }
-        if (mappedInt < maxSignal)
-        {
-            mappedInt = maxSignal;
-        }
-    }
+	// account for inverted min/max signal (IE go from 2000 -> 1000)
+	if (maxSignal > minSignal)
+	{
+		if (mappedInt > maxSignal)
+		{
+			mappedInt = maxSignal;
+		}
+		if (mappedInt < minSignal)
+		{
+			mappedInt = minSignal;
+		}
+	}
+	else
+	{
+		if (mappedInt > minSignal)
+		{
+			mappedInt = minSignal;
+		}
+		if (mappedInt < maxSignal)
+		{
+			mappedInt = maxSignal;
+		}
+	}
 
-    return mappedInt;
+	return mappedInt;
 }
 
-bool AbstractEffector::respondsToIdentifier(char *identifier)
+bool AbstractEffector::respondsToIdentifier(char* identifier)
 {
-    char myEffectorIdentifier[9];
-    getIdentifier(myEffectorIdentifier, 9);
+	char myEffectorIdentifier[9];
+	getIdentifier(myEffectorIdentifier, 9);
 
-    return strcmp(identifier, myEffectorIdentifier) == 0;
+	return strcmp(identifier, myEffectorIdentifier) == 0;
 }
 
 void AbstractEffector::clearCurves()
 {
-    stop();
-    for (int i = 0; i < MAX_NUM_CURVES; ++i)
-    {
-        free(curves[i]);
-        curves[i] = NULL;
-    }
+	stop();
+	for (int i = 0; i < MAX_NUM_CURVES; ++i)
+	{
+		delete curves[i];
+		curves[i] = NULL;
+	}
 }
 
 void AbstractEffector::stop()
-{
-}
+{}
 
 void AbstractEffector::setHome()
-{
-}
+{}
 
 void AbstractEffector::resetHome()
-{
-}
+{}
 
 bool AbstractEffector::useFloatCurve()
 {
 #if defined(DEFAULT_FLOAT_CURVE)
-    return true;
+	return true;
 #elif defined(DEFAULT_FIXED_CURVE)
-    return false;
+	return false;
 #else
-    retue true;
+	return true;
 #endif
 }
 
 AbstractEffector::~AbstractEffector()
-{
-}
+{}

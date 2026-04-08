@@ -37,3 +37,30 @@ void Relay::init()
 		Outgoing::printLine();
 	}
 }
+
+bool Relay::stop(bool doUninitialize)
+{
+	if (isBridge())
+	{
+		_relayPool->clearCurvesOnConnectedPeers();
+	}
+
+	if (doUninitialize)
+	{
+		// send stop out to all peers if not already stopping (and stop all future messages)
+		// then wait and let loop come back once the queue is empty
+		if (!_relayPool->isUninitializing)
+		{
+			_relayPool->beginPoolTeardown();
+			return false;
+		}
+		// we are uninitializing, but there's still messages to send
+		else if (!_relayPool->toPeerQueueEmpty())
+		{
+			// still wait
+			return false;
+		}
+	}
+
+	return true;
+}

@@ -22,13 +22,15 @@ public:
 	void onPhase(Phase p) override;
 	void init() override;
 
-	void stop();
+	void stop(bool allowSetupStop);
 
 	void updatePlaybackStatus();
 
 	bool readyForNextCommand();
 
 	bool complete();
+
+	void setInvalidState();
 
 private:
 	CircularArray<AnimationConfiguration> _animationConfigs = CircularArray<AnimationConfiguration>(MAX_EXPORTED_ANIMATIONS);
@@ -38,8 +40,8 @@ private:
 	int _idleAnimIndex = -1;
 	int _startingAnim = -1;
 	bool _setupIsRunning = false;
-	bool _peerSetupDone = false;
 	bool _registeredAllPeers = false;
+	bool _invalidState = false;
 
 	Parser* _parser = nullptr;
 	OfflineDataSource* _offlineSource = nullptr;

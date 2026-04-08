@@ -149,52 +149,6 @@ bool SdCardSource::peekNextCommand(char* out)
 	return getNextCommand(out, true);
 }
 
-/*void SdCardSource::checkIsValid()
-{
-	// Validate required files exist before starting buffer operations
-	char path[MAX_FILE_PATH_SIZE];
-	path[0] = '\0';
-	SDCardUtil::SDFileError fileError;
-
-	if (setup)
-	{
-		SDCardUtil::getSetupFilePath(path);
-	}
-	else
-	{
-		SDCardUtil::getAnimationFilePath(index, path, false, false);
-	}
-
-	File fileBuffer = SDCardUtil::openFile(path, fileError);
-	if (fileError != SDCardUtil::SDFileError::ERR_NONE || !fileBuffer)
-	{
-		// fail on data file
-		// todo better error reporting
-		isValid = false;
-		SDCardUtil::closeFile(fileBuffer);
-		return;
-	}
-
-	// Animations also require loop file validation
-	if (!setup)
-	{
-		path[0] = '\0';
-		SDCardUtil::getAnimationFilePath(index, path, true, false);
-
-		File fileBuffer2 = SDCardUtil::openFile(path, fileError);
-		if (fileError != SDCardUtil::SDFileError::ERR_NONE || !fileBuffer2)
-		{
-			// fail on loop data file
-			// todo better error reporting
-			isValid = false;
-			SDCardUtil::closeFile(fileBuffer2);
-			return;
-		}
-	}
-
-	isValid = true;
-}*/
-
 #ifdef ESP32
 void SdCardSource::startFillTask()
 {
