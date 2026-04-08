@@ -26,6 +26,9 @@ namespace Error
     /** register an effector without including the required library */
     void reportError_MissingLibrary(const char *libName);
 
+    /** multi-message response timed out waiting for a continue */
+    void reportError_MultiMessageTimeout();
+
 #ifdef RELAY_SUPPORTED
     void reportError_NoRelayForID(int id);
     void reportError_RelayCollision(byte mac[6]);

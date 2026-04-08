@@ -37,9 +37,10 @@ public:
 
     bool effectorUsesFloatCurve(char *identifier);
 
-    CircularArray<AbstractEffector> effectors = CircularArray<AbstractEffector>(MAX_REGISTERED_EFFECTORS);
-
     AbstractEffector *getEffector(char *identifier);
+
+private:
+    CircularArray<AbstractEffector> effectors = CircularArray<AbstractEffector>(MAX_REGISTERED_EFFECTORS);
 };
 
 #endif // BOTTANGOARDUINO_SERVOPOOL_H

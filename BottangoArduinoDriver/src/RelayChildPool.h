@@ -10,6 +10,10 @@
 #include "AbstractMultiMessageOutgoingSource.h"
 #include "RelayChildMessageQueue.h"
 
+#ifdef ESP32
+#include <freertos/semphr.h>
+#endif
+
 // Forward declaration of RelayChild
 class RelayChild;
 
@@ -20,6 +24,26 @@ class RelayChildPool : public AbstractMultiMessageOutgoingSource
 
 public:
     RelayChildPool();
+
+#ifdef ESP32
+    // lock / unlock relay pool access (task-safe)
+    // Required because ESP-NOW task and main loop both access relay list/lifetime.
+    // Keep lock holds short to avoid stalling the main loop.
+    inline void lockPool()
+    {
+        configASSERT(relayMutex);
+        xSemaphoreTakeRecursive(relayMutex, portMAX_DELAY);
+    }
+
+    inline void unlockPool()
+    {
+        configASSERT(relayMutex);
+        xSemaphoreGiveRecursive(relayMutex);
+    }
+#else
+    inline void lockPool() {}
+    inline void unlockPool() {}
+#endif
 
     void addRelay(RelayChild *relay);
 
@@ -33,54 +57,66 @@ public:
 
     bool bridgeIsConnectedToAllPeers();
 
-    void sendStopTimeCommand(RelayChild *peer);
-    void sendHeartbeat(RelayChild *peer);
     void resumeTimeConnectedPeers(bool clearCurves);
     void stopTimeOnConnectedPeers();
 
     void sendHandshakeCommand(RelayChild *peer);
 
     void clearCurvesOnConnectedPeers();
-    void sendClearCurvesCommand(RelayChild *peer);
+
+    void beginPoolTeardown();
 
     RelayChild *getRelay(int id);
     RelayChild *getRelay(const uint8_t *mac_addr);
     int getIdForRelay(RelayChild *relayChild);
 
     bool toPeerQueueFull() const { return toPeerQueue.full(); }
-
-    virtual void initializeMultiMessage() override; // setup
-
-    virtual bool multiMessageisComplete() override; // when everything is done and responded to, ready to clean up
-
-    virtual void updateMultiMessage() override; // will send if anything to send, will timeout if waiting and no response, will send closing if ready/any
+    bool toPeerQueueEmpty() const { return toPeerQueue.empty(); }
 
     virtual void cleanUpMultiMessage() override;
 
-    bool enqueueToSendQueue(RelayChild *peer, char *commandString);
+    void setRelayIdToReport(int id);
+
+    bool enqueueUnicastToPeerQueue(RelayChild *peer, char *commandString, MessageIntent intent = MessageIntent::Normal);
 
     RelayChildMessageQueue &outgoingQueue() { return toPeerQueue; }
+
+    void getConnectedRelayIds(int *outIds, uint8_t &outCount, bool includeTeardown = false);
+    void getUnconnectedRelayIds(int *outIds, uint8_t &outCount);
+    void markPeerTx(int peerId);
+    void markPeerPollOutstanding(int peerId);
+    void markRelayTeardownReadyToFinalize(int peerId);
+    void reportLostPeer(int peerId);
+
+    bool isUninitializing = false;
 
 private:
     bool isMacEqual(const uint8_t *mac1, const uint8_t *mac2);
     int hash(const char *str);
+    int allocateRelayId();
 
+    bool buildPassThroughCommand(char *outBuffer, const char *commandString);
     void executePassThrough(RelayChild *peer, char *commandString);
+    bool enqueueBroadcastPassThrough(char *commandString, MessageIntent intent, TargetGroup target);
+    void enqueuePollBroadcast();
+    void enqueueBootBroadcast();
+    void finalizeRelayTeardown(int peerId);
 
     RelayChildMessageQueue toPeerQueue;
-
-    enum OutgoingMessageStatus
-    {
-        idle,
-        sendID,
-        waitingForContinue,
-        complete
-    };
     int relayIdToReport = -1;
-    OutgoingMessageStatus messageStatus;
+    int nextRelayId = 0;
+    unsigned long lastPollEnqueueTime = 0;
+    unsigned long lastBootEnqueueTime = 0;
 
     CircularArray<RelayChild>
         relays = CircularArray<RelayChild>(MAX_RELAY_CHILD);
+
+#ifdef ESP32
+    SemaphoreHandle_t relayMutex = nullptr;
+#endif
+
+    void onMultiMessageStart() override;
+    bool emitNextChunk() override;
 };
 
 #endif

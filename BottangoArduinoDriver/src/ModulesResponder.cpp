@@ -3,17 +3,12 @@
 #include "BottangoCore.h"
 #include <limits.h>
 
-void ModulesResponder::initializeMultiMessage()
+void ModulesResponder::onMultiMessageStart()
 {
     iterator = 0;
 }
 
-bool ModulesResponder::multiMessageisComplete()
-{
-    return iterator > MODULES_COUNT && !hasOutgoingMessage;
-}
-
-void ModulesResponder::updateMultiMessage()
+bool ModulesResponder::emitNextChunk()
 {
 #ifdef RELAY_SUPPORTED
     if (secondary)
@@ -21,53 +16,13 @@ void ModulesResponder::updateMultiMessage()
         Outgoing::setSecondaryPeerOutgoing(true);
     }
 #endif
-    // waiting on something that was just sent?
-    if (hasOutgoingMessage)
-    {
-        if (isTimeout())
-        {
-            // TIMEOUT OCCURED!
-            // LOG HERE!
-            iterator--; // try again
-            hasOutgoingMessage = false;
-            // Outgoing::printOutputStringFlash(F("Timeout occured"));
-            // Outgoing::printLine();
-        }
-        else
-        {
-            // just wait...
-
-#ifdef RELAY_SUPPORTED
-            if (secondary)
-            {
-                Outgoing::setSecondaryPeerOutgoing(false);
-            }
-#endif
-            return;
-        }
-    }
-
-    // Already complete?
-    if (iterator > MODULES_COUNT)
-    {
-        // Outgoing::printOutputStringFlash(F("over count"));
-        // Outgoing::printLine();
-#ifdef RELAY_SUPPORTED
-        if (secondary)
-        {
-            Outgoing::setSecondaryPeerOutgoing(false);
-        }
-#endif
-        return;
-    }
 
     // send out modules response based on what's supported
-    bool didSendResponse = false;
-    while (!didSendResponse && iterator < MODULES_COUNT)
+    while (iterator < MODULES_COUNT)
     {
+        bool didSendResponse = false;
         switch (iterator)
         {
-
         // UID Reporting
         case 0:
             didSendResponse = sendUIDResponse();
@@ -113,25 +68,30 @@ void ModulesResponder::updateMultiMessage()
         }
 
         iterator++;
+
+        if (didSendResponse)
+        {
+#ifdef RELAY_SUPPORTED
+            if (secondary)
+            {
+                Outgoing::setSecondaryPeerOutgoing(false);
+            }
+#endif
+            return true;
+        }
     }
 
-    // at end?
-    if (iterator == MODULES_COUNT && !didSendResponse)
+    if (iterator == MODULES_COUNT)
     {
-        // Outgoing::printOutputStringFlash(F("At End"));
-        // Outgoing::printLine();
         sendClosingModuleResponse();
-        setTransmitted();
         iterator++; // Move past MODULES_COUNT to mark completion
-        didSendResponse = true;
-    }
-
-    // mark transmitted if did
-    if (didSendResponse)
-    {
-        // Outgoing::printOutputStringFlash(F("set Transmitted"));
-        // Outgoing::printLine();
-        setTransmitted();
+#ifdef RELAY_SUPPORTED
+        if (secondary)
+        {
+            Outgoing::setSecondaryPeerOutgoing(false);
+        }
+#endif
+        return true;
     }
 
 #ifdef RELAY_SUPPORTED
@@ -140,6 +100,7 @@ void ModulesResponder::updateMultiMessage()
         Outgoing::setSecondaryPeerOutgoing(false);
     }
 #endif
+    return false;
 }
 
 // !! different module response methods !! //
@@ -157,7 +118,7 @@ bool ModulesResponder::sendUIDResponse()
     byte uid[UID_LENGTH];
     PersistentConfigUtil::getUID(uid);
     char uidBuffer[UID_CSTR_SIZE];
-    PersistentConfigUtil::convertUidToCStr(uid, uidBuffer);
+    UDIDHelper::convertUIDToCStr(uid, uidBuffer);
 
     Outgoing::printOutputStringPROGMEM(MODULES_RESPONSE_PREFIX);  // MOD
     Outgoing::printOutputStringPROGMEM(MODULES_PARAM_DELINIATOR); // MOD,
@@ -330,7 +291,7 @@ bool ModulesResponder::sendRelayResponse()
 
         // peer and bridge returns this device Mac
         PersistentConfigUtil::getThisDeviceMacAddress(mac);
-        ESPNowUtil::convertMacToCStr(mac, macStr);
+        UDIDHelper::convertMACToCStr(mac, macStr);
         Outgoing::printOutputStringMem(macStr); // MOD,RLY,2,thisMac
 
         // peer returns bridge mac
@@ -338,7 +299,7 @@ bool ModulesResponder::sendRelayResponse()
         {
             Outgoing::printOutputStringPROGMEM(MODULES_PARAM_DELINIATOR); // MOD,RLY,2,thisMac,
             bool gotBridgeMac = PersistentConfigUtil::getBridgeMacAddress(mac);
-            ESPNowUtil::convertMacToCStr(mac, macStr);
+            UDIDHelper::convertMACToCStr(mac, macStr);
             Outgoing::printOutputStringMem(macStr); // MOD,RLY,2,thisMac,bridgeMac
         }
     }

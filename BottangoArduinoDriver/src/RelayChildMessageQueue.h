@@ -15,11 +15,28 @@
 
 static constexpr int MAX_PAYLOAD = MAX_COMMAND_LENGTH;
 
+enum class MessageIntent : uint8_t
+{
+    Normal,
+    Poll,
+    Boot,
+    Teardown
+};
+
+enum class TargetGroup : uint8_t
+{
+    Unicast,
+    BroadcastConnected,
+    BroadcastUnconnected
+};
+
 struct OutgoingMessage
 {
-    uint8_t mac[6];
+    int peerId;
     uint16_t length;
-    char payload[MAX_PAYLOAD];
+    MessageIntent intent;
+    TargetGroup target;
+    uint8_t payload[MAX_PAYLOAD];
 };
 
 class RelayChildMessageQueue
@@ -31,14 +48,21 @@ public:
         configASSERT(queue);
     }
 
-    bool enqueue(const uint8_t mac[6], const char *txt)
+    bool enqueueMessage(const int peerId, const char *txt, MessageIntent intent, TargetGroup target)
     {
-        OutgoingMessage msg;
+        if (locked)
+        {
+            return false;
+        }
 
-        memcpy(msg.mac, mac, 6);
+        OutgoingMessage msg;
+        msg.peerId = peerId;
+        msg.intent = intent;
+        msg.target = target;
 
         msg.length = strnlen(txt, MAX_PAYLOAD);
 
+        // Heads up! Raw payload buffer, not null-terminated. Relay comms must send by length.
         memcpy(msg.payload, txt, msg.length);
 
 #ifdef RELAY_LOGGING
@@ -81,8 +105,22 @@ public:
         xQueueReceive(queue, &dummy, 0);
     }
 
+    void clear()
+    {
+        while (!empty())
+        {
+            pop();
+        }
+    }
+
+    void lock()
+    {
+        locked = true;
+    }
+
 private:
     QueueHandle_t queue;
+    bool locked = false;
 };
 
 #endif // relay supported

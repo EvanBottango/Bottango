@@ -6,7 +6,7 @@
 // !! Communication type !!
 // select only 1
 #define USE_USB_SERIAL                                      // DEFAULT Use USB serial connection. Comment this line out if using ESP32 Wifi instead 
-//#define USE_ESP32_WIFI                                    // uncomment this line to use WiFi Socket communication on an ESP32 (this is not the realy (wireless) module.
+//#define USE_ESP32_WIFI                                    // uncomment this line to use WiFi Socket communication on an ESP32 (this is not the realy (wireless) module).
 
 // ---------------------------------- //
 
@@ -15,10 +15,11 @@
 // #define RELAY_SUPPORTED                                  // uncomment this line to allow for relay bridge / relay peer behavior
 
 // relay Comms type.                                        // (select only 1 if relay behavior is supported)
-// #define RELAY_COMS_ESPNOW                                // select the kind of communication stack for relay parent <-> child. ESP-Now only supported currently
+// #define RELAY_COMS_ESPNOW                                // ESP-Now communication stack for relay parent <-> child.  only fully supported currently (There's also an RS485 experimental option)
 
-// children will use this and override choice of USB Serial or Wifi and only talk to parent via this relay method
-// parents will still use usb serial or wifi to talk to desktop app, and this setting for child comms.
+
+// peers will use this and override choice of USB Serial or Wifi and only talk to parent via this relay method
+// bridges will still use usb serial or wifi to talk to desktop app, and this setting for bridge to peer comms.
 
 // #define ALLOW_SYNC_COMMANDS                             // parse commands that contain multiple commands wrapped in a single message
 
@@ -29,11 +30,11 @@
 // otherwise select one of the below:
 
 // #define USE_CODE_COMMAND_STREAM                             // uncomment this line to drive animations from exported code instead of live control
-// #define USE_SD_CARD_COMMAND_STREAM                       // uncomment this line to drive animations from files on an SD card instead of live control (Note, arduino Uno / Nano / mega not supported)
+// #define USE_SD_CARD_COMMAND_STREAM                       // uncomment this line to drive animations from files on an SD card instead of live control (Note, Arduino Uno / Nano / mega not supported)
 
 
 // if you have selected one of the above, enable this to dynamically switch between USB or the selected above exported animation source
-// #define ENABLE_DYNAMIC_ANIMATION_SOURCE_SWITCH              // uncomment this line to monitor a pin at boot to switch between live control or saved animation playback.
+// #define ENABLE_DYNAMIC_ANIMATION_SOURCE_SWITCH              // uncomment this line to allow to switch between live control or saved animation playback without reflashing firmware.
 
 
 // ---------------------------------- //

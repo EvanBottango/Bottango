@@ -22,6 +22,7 @@
 // <- OK
 // <- sAud,statusCode
 // -> OK
+// <- OK
 // Complete
 
 const char REPLY_AUD_STATUS[] PROGMEM = "sAud";
@@ -31,18 +32,13 @@ class I2SAudEventStatusResponder : public AbstractMultiMessageOutgoingSource
 public:
     I2SAudEventStatusResponder(byte incomingStatus);
 
-    virtual void initializeMultiMessage() override;
-
-    virtual bool multiMessageisComplete() override; // when everything is done and responded to, ready to clean up
-
-    virtual void updateMultiMessage() override; // will send if anything to send, will timeout if waiting and no response, will send closing if ready/any
-
     virtual void cleanUpMultiMessage() override; // cleanup if aborting...
 
     byte status;
 
 private:
-    bool statusSent = false;
+    void onMultiMessageStart() override;
+    bool emitNextChunk() override;
 };
 
 #endif

@@ -25,6 +25,7 @@
 #endif
 
 #ifdef RELAY_SUPPORTED
+#include "IRelayComms.h"
 #include "RelayChildPool.h"
 #endif
 
@@ -68,15 +69,19 @@ namespace BottangoCore
 
 #if defined(RELAY_SUPPORTED)
     void initRelayComs();
+
     extern RelayChildPool *relayPool;
     extern bool isRelayBridge;
     extern bool isRelayPeer;
+    extern IRelayComms *relayComs;
 
     extern char *secondaryPeerCommandBuffer;
     extern int secondaryCommandIdx;
     extern unsigned long secondaryTimeOfLastChar;
-    extern unsigned long lastHeartbeatTime;
+    extern unsigned long lastPollTimeAsPeer;
     extern bool secondaryCommandInProgress;
+    extern int thisPeerID;
+    extern bool hasPeerId;
 
 #ifdef RELAY_LOGGING
     extern unsigned long lastWaitForConnectLog;

@@ -1,18 +1,18 @@
 #include "../BottangoArduinoModules.h"
 #if defined(RELAY_SUPPORTED)
 #include "RelayChild.h"
-#include "ESPNOWUtil.h"
 #include "BasicCommands.h"
 #include "Errors.h"
 #include "ModulesResponder.h"
 #include "../BottangoArduinoConfig.h"
+#include "UDIDHelper.h"
 
 const char RELAY_PASS_UP[] PROGMEM = "uR,";
 
 RelayChild::RelayChild(char *macAddress)
 {
     connected = false;
-    ESPNowUtil::convertCStrToMac(macAddress, this->mac_addr);
+    (void)UDIDHelper::convertCStrToMAC(macAddress, this->mac_addr);
 
     // Enque handshake into outgoing
     // if this bridge is in export anim mode
@@ -31,7 +31,7 @@ RelayChild::RelayChild(char *macAddress)
         BottangoCore::relayPool->sendHandshakeCommand(this);
     }
 
-    ESPNowUtil::registerPeer(this->mac_addr);
+    BottangoCore::relayComs->registerPeer(this->mac_addr);
 }
 
 void RelayChild::onReboot()
@@ -42,29 +42,32 @@ void RelayChild::onReboot()
 #endif
     {
         char buffer[20];
-        ESPNowUtil::convertMacToCStr(mac_addr, buffer);
+        UDIDHelper::convertMACToCStr(mac_addr, buffer);
         Outgoing::printOutputStringFlash(F("Reboot occured on "));
         Outgoing::printOutputStringMem(buffer);
         Outgoing::printLine();
     }
 #endif
     connected = false;
+    pollOutstanding = false;
 }
 
-void RelayChild::passDownCommands(char *commands)
+void RelayChild::passDownCommands(char *commands, MessageIntent intent)
 {
     // connected and to peer queue has space?
     // send away!
+    bool enqueSucceded = false;
     if (connected && !BottangoCore::relayPool->toPeerQueueFull())
     {
-        BottangoCore::relayPool->enqueueToSendQueue(this, commands);
+        enqueSucceded = BottangoCore::relayPool->enqueueUnicastToPeerQueue(this, commands, intent);
     }
+
     // otherwise...
-    else
+    if (!enqueSucceded)
     {
         // something already in the holding buffer until ready to send?
         // if so, it needs to be tossed
-        if (disconnectedMessageHoldingBuffer[0] != '\0')
+        if (singleMessageHoldingBuffer[0] != '\0')
         {
 #ifdef RELAY_LOGGING
 #ifdef TOGGLE_DEBUG
@@ -72,12 +75,13 @@ void RelayChild::passDownCommands(char *commands)
 #endif
             {
                 Outgoing::printOutputStringFlash(F("Toss prev in holding buffer "));
-                Outgoing::printOutputStringMem(disconnectedMessageHoldingBuffer);
+                Outgoing::printOutputStringMem(singleMessageHoldingBuffer);
                 Outgoing::printLine();
             }
 
 #endif
-            disconnectedMessageHoldingBuffer[0] = '\0';
+            singleMessageHoldingBuffer[0] = '\0';
+            singleMessageHoldingIntent = MessageIntent::Normal;
         }
 
 #ifdef RELAY_LOGGING
@@ -92,7 +96,8 @@ void RelayChild::passDownCommands(char *commands)
 #endif
 
         // hold it until connected and space is available
-        strcpy(disconnectedMessageHoldingBuffer, commands);
+        strcpy(singleMessageHoldingBuffer, commands);
+        singleMessageHoldingIntent = intent;
     }
 }
 
@@ -117,28 +122,10 @@ void RelayChild::passUpCommands(char *commands)
 
 void RelayChild::update()
 {
-    unsigned long now = millis();
-
-#ifdef RELAY_LOGGING
-    char macbuffer[20];
-#ifdef TOGGLE_DEBUG
-    if (PersistentConfigUtil::debugEnabled())
-#endif
-    {
-        ESPNowUtil::convertMacToCStr(mac_addr, macbuffer);
-    }
-#endif
-
     // if not connected yet
     // check if we're ready to be connected
     if (!connected)
     {
-        // have we recieved anything?
-        if (now - lastMsgTime >= RELAY_BOOT_INTERVAL)
-        {
-            requestBoot();
-        }
-
         while (incomingFromPeerBuffer.available())
         {
             // get message out of the buffer
@@ -169,6 +156,8 @@ void RelayChild::update()
                 if (PersistentConfigUtil::debugEnabled() || ALWAYS_LOG_ERROR_CASE)
 #endif
                 {
+                    char macbuffer[20];
+                    UDIDHelper::convertMACToCStr(mac_addr, macbuffer);
                     Outgoing::printOutputStringFlash(F("Toss non connected rcv on peer"));
                     Outgoing::printOutputStringMem(macbuffer);
                     Outgoing::printOutputStringFlash(F(": "));
@@ -199,13 +188,10 @@ void RelayChild::update()
         {
             onReboot();
         }
-        else if (strncmp_P(message, BasicCommands::RELAY_HEARTBEAT_RESPONSE, 7) == 0)
+        else if (strncmp_P(message, BasicCommands::RELAY_POLL_RESPONSE, 7) == 0)
         {
-            if (heartbeatOutstanding)
-            {
-                heartbeatOutstanding = false;
-                return;
-            }
+            pollOutstanding = false;
+            return;
         }
 
         // don't output pass up if in export mode
@@ -234,6 +220,16 @@ void RelayChild::update()
         int id = BottangoCore::relayPool->getIdForRelay(this);
         char idStr[10];
         itoa(id, idStr, 10);
+
+        int prefixLen = (int)sizeof(RELAY_PASS_UP) - 1; // "uR,"
+        int idLen = (int)strlen(idStr);
+        int msgLen = (int)strlen(message);
+        int totalLen = prefixLen + idLen + 1 + msgLen; // + delimiter
+        if (totalLen >= MAX_COMMAND_LENGTH)
+        {
+            Error::reportError_CmdTooLong(totalLen);
+            return;
+        }
 
         // add pass up command, and identifier, then pass up
         char passUpCommand[MAX_COMMAND_LENGTH];
@@ -282,58 +278,22 @@ void RelayChild::update()
     {
         if (!BottangoCore::relayPool->toPeerQueueFull())
         {
-            if (!heartbeatOutstanding && now - lastMsgTime >= RELAY_HEARTBEAT_INTERVAL)
+            if (singleMessageHoldingBuffer[0] != '\0' && !BottangoCore::relayPool->toPeerQueueFull())
             {
-                BottangoCore::relayPool->sendHeartbeat(this);
-                lastMsgTime = now;
-                heartbeatOutstanding = true;
+                bool enqueued = BottangoCore::relayPool->enqueueUnicastToPeerQueue(this, singleMessageHoldingBuffer, singleMessageHoldingIntent);
+                if (enqueued)
+                {
+                    singleMessageHoldingBuffer[0] = '\0';
+                    singleMessageHoldingIntent = MessageIntent::Normal;
+                }
             }
-            if (disconnectedMessageHoldingBuffer[0] != '\0' && !BottangoCore::relayPool->toPeerQueueFull())
-            {
-                BottangoCore::relayPool->enqueueToSendQueue(this, disconnectedMessageHoldingBuffer);
-                disconnectedMessageHoldingBuffer[0] = '\0';
-            }
-        }
-
-        // timeout on the heartbeat response
-        if (heartbeatOutstanding && now - lastMsgTime > RELAY_HEARTBEAT_TIMEOUT)
-        {
-            Outgoing::printOutputStringPROGMEM(BasicCommands::LOST_PEER);
-            Outgoing::printOutputStringMem(BottangoCore::relayPool->getIdForRelay(this));
-            Outgoing::printLine();
-            heartbeatOutstanding = false;
         }
     }
 }
 
 void RelayChild::destroy()
 {
-    ESPNowUtil::deregisterPeer(this->mac_addr);
-}
-
-void RelayChild::requestBoot()
-{
-
-#ifdef RELAY_LOGGING
-#ifdef TOGGLE_DEBUG
-    if (PersistentConfigUtil::debugEnabled())
-#endif
-    {
-        Outgoing::printOutputStringFlash(F("Sending boot request to peer: "));
-        char buffer[20];
-        ESPNowUtil::convertMacToCStr(mac_addr, buffer);
-        Outgoing::printOutputStringMem(buffer);
-        Outgoing::printLine();
-    }
-#endif
-
-    char message[MAX_COMMAND_LENGTH];
-    message[0] = '\0';
-    strcat(message, BasicCommands::REQUEST_PEER_BOOT);
-    strcat(message, "\n");
-    // direct to send, ignore connected state
-    BottangoCore::relayPool->enqueueToSendQueue(this, message);
-    lastMsgTime = millis();
+    BottangoCore::relayComs->deregisterPeer(this->mac_addr);
 }
 
 void RelayChild::onConnectionComplete()
@@ -345,19 +305,43 @@ void RelayChild::onConnectionComplete()
     {
         Outgoing::printOutputStringFlash(F("Connected to peer: "));
         char buffer[20];
-        ESPNowUtil::convertMacToCStr(mac_addr, buffer);
+        UDIDHelper::convertMACToCStr(mac_addr, buffer);
         Outgoing::printOutputStringMem(buffer);
         Outgoing::printLine();
     }
 #endif
 
-    if (disconnectedMessageHoldingBuffer[0] != '\0' && !BottangoCore::relayPool->toPeerQueueFull())
+    if (singleMessageHoldingBuffer[0] != '\0' && !BottangoCore::relayPool->toPeerQueueFull())
     {
-        BottangoCore::relayPool->enqueueToSendQueue(this, disconnectedMessageHoldingBuffer);
-        disconnectedMessageHoldingBuffer[0] = '\0';
+        bool enqueued = BottangoCore::relayPool->enqueueUnicastToPeerQueue(this, singleMessageHoldingBuffer, singleMessageHoldingIntent);
+        if (enqueued)
+        {
+            singleMessageHoldingBuffer[0] = '\0';
+            singleMessageHoldingIntent = MessageIntent::Normal;
+        }
     }
 
     connected = true;
-    lastMsgTime = millis();
+    pollOutstanding = false;
+}
+
+void RelayChild::markTxTime()
+{
+    lastTxTime = millis();
+}
+
+void RelayChild::markPollOutstanding()
+{
+    pollOutstanding = true;
+}
+
+void RelayChild::clearPollOutstanding()
+{
+    pollOutstanding = false;
+}
+
+bool RelayChild::pollOutstandingAndExpired(unsigned long now, unsigned long timeout)
+{
+    return pollOutstanding && (now - lastTxTime > timeout);
 }
 #endif

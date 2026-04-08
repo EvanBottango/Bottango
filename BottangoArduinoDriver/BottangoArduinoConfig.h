@@ -200,25 +200,30 @@ const char SD_AUDIO_FORMAT[] PROGMEM = ".wav";              // file format name 
 
 // relay parent and child config
 #ifdef RELAY_SUPPORTED
+
 #define MAX_RELAY_CHILD 16                                  // max number of controllers to relay commands to
-#define RELAY_BOOT_INTERVAL 250UL                           // how often to send a boot request to a peer to check if it has come online
-#define RELAY_HEARTBEAT_INTERVAL 3000UL                     // how often to send a heartbeat request from bridge to peer
-#define RELAY_HEARTBEAT_TIMEOUT 1000UL                      // how long to give the peer to reply before report lost
-#define RELAY_HEARTBEAT_KEEP_ALIVE_ADDITION 1000UL          // how long a peer should add to the heartbeat interval to get a heartbeat request before it should reboot due to lost bridge
+#define RELAY_BOOT_INTERVAL_AS_BRIDGE 500UL                 // how often bridge sends a boot request to check if a peer has come online
+#define RELAY_POLL_INTERVAL_AS_BRIDGE 500UL                // how often bridge enqueues a poll request
+#define RELAY_POLL_TIMEOUT_AS_PEER 3000UL                   // how long a peer should wait without a poll before rebooting due to lost bridge
+
+#define TXT_BUFFER_SIZE_RX_FROM_PEER 512                    // num chars to store in per peer (as bridge) in espnow recv buffers in Relay Child class
+#define OUT_MESSAGE_QUEUE_DEPTH 6                           // max num full commands to store for transmission to peers via comms (as bridge)
+
+#define TXT_BUFFER_SIZE_RX_COMMS 512                        // num chars to store in the active relay comms, rx
+#define TXT_BUFFER_SIZE_TX_COMMS 512                        // num chars to store in the active relay comms, tx
 
 #ifdef RELAY_COMS_ESPNOW
 #define ESPNOW_CHANNEL 1                                    // Wifi channel to use. All relays (send and recv) must be on the same channel
+#define ESPNOW_RX_QUEUE_DEPTH 4                             // RX packet queue depth for ESP-NOW relay comms
 #define ESPNOW_RETRY_MS 50                                  // time in MS before retry sending
 #define ESPNOW_TIMEOUT_MS 250                               // time in MS before timeout
-
-#define TXT_BUFFER_SIZE_RX_FROM_PEER 512                    // num chars to store in per peer (as bridge) in espnow recv buffers
-#define OUT_MESSAGE_QUEUE_DEPTH 6                           // max num full commands to store for transmission to peers via comms (as bridge)
-
-#define TXT_BUFFER_SIZE_PEER_TO_BRIDGE 512                  // num chars to store in the espnow up to bridge from peer (as peer) buffer
-#define TXT_BUFFER_SIZE_PEER_FROM_BRIDGE 512                // num chars to store in the espnow down to peer from bridge (as peer) buffer
-
-
+#define RELAY_ESPNOW_RESPONSE_TIMEOUT 250UL                 // how long to wait for a response from a peer on ESP-NOW (tune if enabled)
 #endif
+
+#ifdef RELAY_COMS_RS485
+#define RELAY_RS485_RESPONSE_TIMEOUT 75UL                   // how long to wait for a response from a peer on RS485
+#endif
+
 #endif
 
 // ---------------------------------- //
@@ -226,6 +231,8 @@ const char SD_AUDIO_FORMAT[] PROGMEM = ".wav";              // file format name 
 // extra logging
 #define EXPORTED_ANIM_LOGGING                               // extra logging of status of exported animation playback
 // #define RELAY_LOGGING                                    // extra logging of relay status
+#define RELAY_COMMS_LOGGING                              // extra logging of relay comms state machines (RS485, etc)
+// #define RELAY_COMMS_LOGGING_DEBUG                       // extra verbose relay comms logging (payloads, state traces)
 // #define ESP32WIFI_LOGGING                                   // when communicating without serial, enable it for extra logging
 
 // ---------------------------------- //
@@ -253,6 +260,36 @@ constexpr int onboardPins[PIN_REMAP_LENGTH] = {32, 33, 25, 26, 27, 14, 13, 15, 1
 constexpr int onboardPins[PIN_REMAP_LENGTH] = {15, 21, 22, 13, 14, 27, 26, 33, 32, 12};
 #endif
 #endif
+
+// ---------------------------------- //
+
+// RS485
+#if defined(BOTTANGO_NOVA)
+#define RS485_RX_PIN 33
+#define RS485_DE_PIN 12
+#define RS485_TX_PIN 32
+#elif defined(BOTTANGO_IMPULSE)
+#define RS485_RX_PIN 16
+#define RS485_DE_PIN 19
+#define RS485_TX_PIN 23
+#elif defined(BOTTANGO_SOLAR)
+#define RS485_RX_PIN 34
+#define RS485_DE_PIN 12
+#define RS485_TX_PIN 32
+#else
+#define RS485_RX_PIN 34
+#define RS485_DE_PIN 12
+#define RS485_TX_PIN 32
+#endif
+
+#define RS485_BAUD 1000000
+#define RS485_SERIAL Serial2
+
+#define RS485_SOH '\x01'     // start id header
+#define RS485_STX '\x02'     // start message payload
+#define RS485_EOT '\x04'     // end of tx
+#define RS485_ENQ '\x05'     // start of boot request header
+#define RS485_PEERACK '\x06' // start of peer ack response header
 
 // ---------------------------------- //
 

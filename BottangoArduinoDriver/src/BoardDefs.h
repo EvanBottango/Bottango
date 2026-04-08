@@ -31,6 +31,7 @@
 // relay
 #define RELAY_SUPPORTED
 #define RELAY_COMS_ESPNOW
+// #define RELAY_COMS_RS485
 
 // Utility pin
 #define UTILITY_PIN 0

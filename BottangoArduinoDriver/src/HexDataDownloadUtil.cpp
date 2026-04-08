@@ -23,6 +23,7 @@ namespace HexDataDownloadUtil
         {
             // error here
             Outgoing::printOutputStringFlash(F("ERR: HexData-NotStarted"));
+            Outgoing::printLine();
             return;
         }
 
@@ -31,6 +32,7 @@ namespace HexDataDownloadUtil
         {
             // error here
             Outgoing::printOutputStringFlash(F("ERR: HexData-BadHex"));
+            Outgoing::printLine();
             return;
         }
 
@@ -40,6 +42,7 @@ namespace HexDataDownloadUtil
         {
             // error here
             Outgoing::printOutputStringFlash(F("ERR: HexData-MemAlloc"));
+            Outgoing::printLine();
             return;
         }
 

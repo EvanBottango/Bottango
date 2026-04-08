@@ -7,29 +7,58 @@
 class AbstractMultiMessageOutgoingSource
 {
 public:
+    // Multi-message flow:
+    // 1) initializeMultiMessage() resets state, calls onMultiMessageStart(), and marks a pending emit.
+    // 2) After the device sends OK, emitPending() sends the next chunk (emitNextChunk()).
+    // 3) If emitNextChunk() returns true, we wait for setRecievedContinue() (host OK).
+    // 4) setRecievedContinue() marks a pending emit for the next OK window.
+    // 5) If emitNextChunk() returns false, the response ends (no further chunks).
+    // 6) updateMultiMessage() only checks for timeout while waiting; timeout ends the response.
+
+    // caller received a "continue" from the requester (ex: OK)
     void setRecievedContinue();
 
 #ifdef RELAY_SUPPORTED
     void setSecondary();
 #endif
 
-    virtual void initializeMultiMessage() = 0; // setup
+    // start a new multi-message response, next chunk is emitted after device OK is sent
+    void initializeMultiMessage();
 
-    virtual bool multiMessageisComplete() = 0; // when everything is done and responded to, ready to clean up
+    // true when no more chunks are expected
+    bool multiMessageisComplete();
 
-    virtual void updateMultiMessage() = 0; // will send if anything to send, will timeout if waiting and no response, will send closing if ready/any
+    // handles timeouts (error state), emits next chunk when ready
+    void updateMultiMessage();
 
+    // emit next chunk if a continue is pending (used after device OK is sent)
+    void emitPending();
+
+    virtual ~AbstractMultiMessageOutgoingSource() = default;
     virtual void cleanUpMultiMessage() = 0; // cleanup if aborting...
 
-    bool hasOutgoingMessage;
-
 protected:
+    // initialize responder state (iterator, flags, etc.)
+    virtual void onMultiMessageStart() = 0;
+    // emit at most one response chunk; base class drives timing
+    virtual bool emitNextChunk() = 0;
+    // called when a continue timeout is hit (error / abort)
+    virtual void onTimeout();
+
     bool isTimeout();
     void setTransmitted();
+    bool hasEmittedAny() const { return emittedAny; }
     unsigned long lastMessageTime = 0;
+    bool hasOutgoingMessage = false;
 #ifdef RELAY_SUPPORTED
     bool secondary = false;
 #endif
+
+private:
+    void tryEmitNextChunk();
+    bool complete = false;
+    bool emittedAny = false;
+    bool pendingEmit = false;
 };
 
 #endif
