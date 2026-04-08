@@ -12,7 +12,7 @@
 
 // !! RELAY !!
 
-#define RELAY_SUPPORTED                                  // uncomment this line to allow for relay bridge / relay peer behavior
+// #define RELAY_SUPPORTED                                  // uncomment this line to allow for relay bridge / relay peer behavior
 
 // relay Comms type.                                        // (select only 1 if relay behavior is supported)
 // #define RELAY_COMS_ESPNOW                                // ESP-Now communication stack for relay parent <-> child.  only fully supported currently (There's also an RS485 experimental option)

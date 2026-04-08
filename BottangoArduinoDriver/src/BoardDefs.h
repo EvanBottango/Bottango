@@ -6,7 +6,7 @@
 
 // #define BOTTANGO_IMPULSE
 // #define BOTTANGO_NOVA
-#define BOTTANGO_SOLAR
+// #define BOTTANGO_SOLAR
 
 #if defined(BOTTANGO_IMPULSE) || defined(BOTTANGO_NOVA) || defined(BOTTANGO_SOLAR)
 #define OVERRIDE_MODULES
