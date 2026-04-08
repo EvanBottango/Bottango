@@ -39,6 +39,7 @@ private:
     {
         // header processing
         int respondingPeerID = 0;            // after tx a request to peer from bridge, what id should we expect a response from
+        MessageIntent respondingIntent = MessageIntent::Normal;
         unsigned long responseWaitStart = 0; // ms timestamp when bridge starts waiting for a peer response
         bool peerAckRecv = false;
         bool tossRX = false; // bridge should toss any RX until the next EOT
@@ -90,6 +91,7 @@ private:
     LineStatus lineStatus = LineStatus::idle;
     void setLineStatus(LineStatus next);
     bool broadcastActive();
+    bool tryPrepareNextOutgoing(OutgoingMessage &msg);
     void handleBridgeResponseTimeout();
     bool hasRoleState();
     bool parsePeerIdStrict(const char *text, int &outValue);

@@ -145,6 +145,86 @@ bool RelayCommsRS485::broadcastActive()
     return bridgeState != nullptr && bridgeState->broadcastCount > 0;
 }
 
+bool RelayCommsRS485::tryPrepareNextOutgoing(OutgoingMessage &msg)
+{
+    if (bridgeState == nullptr)
+    {
+        return false;
+    }
+
+    while (BottangoCore::relayPool->outgoingQueue().peek(msg))
+    {
+        // toss stale unicast messages to peers that are tearing down
+        if (msg.target == TargetGroup::Unicast)
+        {
+            RelayChild *peer = BottangoCore::relayPool->getRelay(msg.peerId);
+
+            if (peer != nullptr && peer->teardown         // teardown message
+                && msg.intent != MessageIntent::Teardown) // but not a teardown intent
+            {
+                // skip it
+                BottangoCore::relayPool->outgoingQueue().pop();
+                continue;
+            }
+        }
+        // broadcast
+        else
+        {
+            // set up broadcast
+            if (!broadcastActive())
+            {
+                // snapshot connected peers for this broadcast when it reaches the head of the queue
+                if (msg.target == TargetGroup::BroadcastUnconnected)
+                {
+                    BottangoCore::relayPool->getUnconnectedRelayIds(bridgeState->broadcastTargets, bridgeState->broadcastCount);
+                }
+                else
+                {
+                    bool includeTeardown = msg.intent == MessageIntent::Teardown;
+                    BottangoCore::relayPool->getConnectedRelayIds(bridgeState->broadcastTargets, bridgeState->broadcastCount, includeTeardown);
+                }
+                bridgeState->broadcastIdx = 0;
+            }
+
+            // skip forward on peerIDX until we find a still active peer
+            // needed in case a peer becomes inactive after enqueing a broadcast to it.
+            while (broadcastActive() && bridgeState->broadcastIdx < bridgeState->broadcastCount)
+            {
+                int peerId = bridgeState->broadcastTargets[bridgeState->broadcastIdx];
+                RelayChild *peer = BottangoCore::relayPool->getRelay(peerId);
+                // skip null
+                if (peer == nullptr)
+                {
+                    bridgeState->broadcastIdx++;
+                    continue;
+                }
+                // stop advancing and use this peer if either:
+                // - the peer is not tearing down and this is a normal message, OR
+                // - this is itself a teardown broadcast, it goes to everyone
+                if (!peer->teardown || msg.intent == MessageIntent::Teardown)
+                {
+                    break;
+                }
+
+                bridgeState->broadcastIdx++;
+            }
+
+            if (!broadcastActive() || bridgeState->broadcastIdx >= bridgeState->broadcastCount)
+            {
+                // no valid targets remain in the snapshot, consume the broadcast entry for now
+                bridgeState->broadcastIdx = 0;
+                bridgeState->broadcastCount = 0;
+                BottangoCore::relayPool->outgoingQueue().pop();
+                continue;
+            }
+        }
+
+        return true;
+    }
+
+    return false;
+}
+
 bool RelayCommsRS485::hasRoleState()
 {
     return bridgeState != nullptr || peerState != nullptr;
@@ -157,10 +237,23 @@ void RelayCommsRS485::handleBridgeResponseTimeout()
     {
         return;
     }
-    // On timeout, mark peer lost and move on.
-    BottangoCore::relayPool->reportLostPeer(bridgeState->respondingPeerID);
+
+    RelayChild *peer = BottangoCore::relayPool->getRelay(bridgeState->respondingPeerID);
+
+    // if it's a timed out teardown, mark it ready to finalize on the main loop and move on
+    if (bridgeState->respondingIntent == MessageIntent::Teardown)
+    {
+        BottangoCore::relayPool->markRelayTeardownReadyToFinalize(bridgeState->respondingPeerID);
+    }
+    else if (peer != nullptr && peer->connected)
+    {
+        // Only report lost peer if it was actually connected in the first place
+        BottangoCore::relayPool->reportLostPeer(bridgeState->respondingPeerID);
+    }
+    // otherwise, this was a timeout while still trying to connect the peer. Keep waiting.
 
     bridgeState->peerAckRecv = false;
+    bridgeState->respondingIntent = MessageIntent::Normal;
     peerIdBufferIDX = 0;
     peerIdBuffer[0] = '\0';
     setLineStatus(LineStatus::idle);
@@ -469,6 +562,14 @@ void RelayCommsRS485::update()
                     // set to idle
                     setLineStatus(LineStatus::idle);
 
+                    // we closed the loop on the teardown message, so mark it ready to finalize on the main loop
+                    if (bridgeState->respondingIntent == MessageIntent::Teardown)
+                    {
+                        BottangoCore::relayPool->markRelayTeardownReadyToFinalize(bridgeState->respondingPeerID);
+                    }
+
+                    bridgeState->respondingIntent = MessageIntent::Normal;
+
                     // advance broadcast target only after a complete response
                     if (broadcastActive())
                     {
@@ -503,35 +604,10 @@ void RelayCommsRS485::update()
         // at idle, so check if anything to send out
         if (lineStatus == LineStatus::idle)
         {
-            gotOutgoing = BottangoCore::relayPool->outgoingQueue().peek(msg);
+            gotOutgoing = tryPrepareNextOutgoing(msg);
             if (gotOutgoing)
             {
-                // this is a broadcast message, and we need to set it up?
-                if (msg.target != TargetGroup::Unicast && !broadcastActive())
-                {
-                    // snapshot connected peers for this broadcast when it reaches the head of the queue
-                    if (msg.target == TargetGroup::BroadcastUnconnected)
-                    {
-                        BottangoCore::relayPool->getUnconnectedRelayIds(bridgeState->broadcastTargets, bridgeState->broadcastCount);
-                    }
-                    else
-                    {
-                        BottangoCore::relayPool->getConnectedRelayIds(bridgeState->broadcastTargets, bridgeState->broadcastCount);
-                    }
-                    bridgeState->broadcastIdx = 0;
-
-                    // broadcastActive returns false if number of peers is 0
-                    if (!broadcastActive())
-                    {
-                        // no connected targets in the snapshot, consume the broadcast entry for now
-                        BottangoCore::relayPool->outgoingQueue().pop();
-                        gotOutgoing = false;
-                    }
-                }
-                if (gotOutgoing)
-                {
-                    setLineStatus(LineStatus::txOut);
-                }
+                setLineStatus(LineStatus::txOut);
             }
         }
 
@@ -543,6 +619,9 @@ void RelayCommsRS485::update()
 
             // broadcast uses a snapshot per-target id, unicast uses the message peerId directly
             bridgeState->respondingPeerID = (msg.target == TargetGroup::Unicast) ? msg.peerId : bridgeState->broadcastTargets[bridgeState->broadcastIdx];
+
+            // save the intent of the message as we process it and get response
+            bridgeState->respondingIntent = msg.intent;
 
             // mark the tx on the peer in the pool
             BottangoCore::relayPool->markPeerTx(bridgeState->respondingPeerID);

@@ -52,20 +52,22 @@ void RelayChild::onReboot()
     pollOutstanding = false;
 }
 
-void RelayChild::passDownCommands(char *commands)
+void RelayChild::passDownCommands(char *commands, MessageIntent intent)
 {
     // connected and to peer queue has space?
     // send away!
+    bool enqueSucceded = false;
     if (connected && !BottangoCore::relayPool->toPeerQueueFull())
     {
-        BottangoCore::relayPool->enqueueUnicastToPeerQueue(this, commands);
+        enqueSucceded = BottangoCore::relayPool->enqueueUnicastToPeerQueue(this, commands, intent);
     }
+
     // otherwise...
-    else
+    if (!enqueSucceded)
     {
         // something already in the holding buffer until ready to send?
         // if so, it needs to be tossed
-        if (disconnectedMessageHoldingBuffer[0] != '\0')
+        if (singleMessageHoldingBuffer[0] != '\0')
         {
 #ifdef RELAY_LOGGING
 #ifdef TOGGLE_DEBUG
@@ -73,12 +75,13 @@ void RelayChild::passDownCommands(char *commands)
 #endif
             {
                 Outgoing::printOutputStringFlash(F("Toss prev in holding buffer "));
-                Outgoing::printOutputStringMem(disconnectedMessageHoldingBuffer);
+                Outgoing::printOutputStringMem(singleMessageHoldingBuffer);
                 Outgoing::printLine();
             }
 
 #endif
-            disconnectedMessageHoldingBuffer[0] = '\0';
+            singleMessageHoldingBuffer[0] = '\0';
+            singleMessageHoldingIntent = MessageIntent::Normal;
         }
 
 #ifdef RELAY_LOGGING
@@ -93,7 +96,8 @@ void RelayChild::passDownCommands(char *commands)
 #endif
 
         // hold it until connected and space is available
-        strcpy(disconnectedMessageHoldingBuffer, commands);
+        strcpy(singleMessageHoldingBuffer, commands);
+        singleMessageHoldingIntent = intent;
     }
 }
 
@@ -274,10 +278,14 @@ void RelayChild::update()
     {
         if (!BottangoCore::relayPool->toPeerQueueFull())
         {
-            if (disconnectedMessageHoldingBuffer[0] != '\0' && !BottangoCore::relayPool->toPeerQueueFull())
+            if (singleMessageHoldingBuffer[0] != '\0' && !BottangoCore::relayPool->toPeerQueueFull())
             {
-                BottangoCore::relayPool->enqueueUnicastToPeerQueue(this, disconnectedMessageHoldingBuffer);
-                disconnectedMessageHoldingBuffer[0] = '\0';
+                bool enqueued = BottangoCore::relayPool->enqueueUnicastToPeerQueue(this, singleMessageHoldingBuffer, singleMessageHoldingIntent);
+                if (enqueued)
+                {
+                    singleMessageHoldingBuffer[0] = '\0';
+                    singleMessageHoldingIntent = MessageIntent::Normal;
+                }
             }
         }
     }
@@ -303,10 +311,14 @@ void RelayChild::onConnectionComplete()
     }
 #endif
 
-    if (disconnectedMessageHoldingBuffer[0] != '\0' && !BottangoCore::relayPool->toPeerQueueFull())
+    if (singleMessageHoldingBuffer[0] != '\0' && !BottangoCore::relayPool->toPeerQueueFull())
     {
-        BottangoCore::relayPool->enqueueUnicastToPeerQueue(this, disconnectedMessageHoldingBuffer);
-        disconnectedMessageHoldingBuffer[0] = '\0';
+        bool enqueued = BottangoCore::relayPool->enqueueUnicastToPeerQueue(this, singleMessageHoldingBuffer, singleMessageHoldingIntent);
+        if (enqueued)
+        {
+            singleMessageHoldingBuffer[0] = '\0';
+            singleMessageHoldingIntent = MessageIntent::Normal;
+        }
     }
 
     connected = true;

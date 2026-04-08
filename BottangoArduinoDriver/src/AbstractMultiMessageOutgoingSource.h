@@ -34,6 +34,7 @@ public:
     // emit next chunk if a continue is pending (used after device OK is sent)
     void emitPending();
 
+    virtual ~AbstractMultiMessageOutgoingSource() = default;
     virtual void cleanUpMultiMessage() = 0; // cleanup if aborting...
 
 protected:

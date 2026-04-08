@@ -30,6 +30,7 @@ public:
     bool streamIsInProgress();
 
     void stop();
+    void forceStopForTeardown(); // will also stop setup
     void setInvalidState();
 
     bool commandStreamIsSetup = false;
@@ -39,9 +40,12 @@ protected:
     void runInProgressCommand();
     bool invalidState = false;
 
+private:
+    void executeStop(bool allowSetupStop = false);
 #ifdef RELAY_SUPPORTED
     bool startingPeerCommandsSent = false;
     char cachedPostControlRegisterCommand[MAX_COMMAND_LENGTH] = {0};
+    bool waitingForAllPeers = false;
 #endif
 };
 #endif

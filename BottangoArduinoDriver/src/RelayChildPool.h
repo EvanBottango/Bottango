@@ -64,25 +64,31 @@ public:
 
     void clearCurvesOnConnectedPeers();
 
+    void beginPoolTeardown();
+
     RelayChild *getRelay(int id);
     RelayChild *getRelay(const uint8_t *mac_addr);
     int getIdForRelay(RelayChild *relayChild);
 
     bool toPeerQueueFull() const { return toPeerQueue.full(); }
+    bool toPeerQueueEmpty() const { return toPeerQueue.empty(); }
 
     virtual void cleanUpMultiMessage() override;
 
     void setRelayIdToReport(int id);
 
-    bool enqueueUnicastToPeerQueue(RelayChild *peer, char *commandString);
+    bool enqueueUnicastToPeerQueue(RelayChild *peer, char *commandString, MessageIntent intent = MessageIntent::Normal);
 
     RelayChildMessageQueue &outgoingQueue() { return toPeerQueue; }
 
-    void getConnectedRelayIds(int *outIds, uint8_t &outCount);
+    void getConnectedRelayIds(int *outIds, uint8_t &outCount, bool includeTeardown = false);
     void getUnconnectedRelayIds(int *outIds, uint8_t &outCount);
     void markPeerTx(int peerId);
     void markPeerPollOutstanding(int peerId);
+    void markRelayTeardownReadyToFinalize(int peerId);
     void reportLostPeer(int peerId);
+
+    bool isUninitializing = false;
 
 private:
     bool isMacEqual(const uint8_t *mac1, const uint8_t *mac2);
@@ -94,6 +100,7 @@ private:
     bool enqueueBroadcastPassThrough(char *commandString, MessageIntent intent, TargetGroup target);
     void enqueuePollBroadcast();
     void enqueueBootBroadcast();
+    void finalizeRelayTeardown(int peerId);
 
     RelayChildMessageQueue toPeerQueue;
     int relayIdToReport = -1;

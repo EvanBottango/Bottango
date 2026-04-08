@@ -82,6 +82,21 @@ void CommandStreamProvider::startCommandStream(byte streamID, bool loop)
         return;
     }
 
+    // can't start an animation if setup is not complete
+    if (streamIsInProgress() && commandStreamIsSetup)
+    {
+#ifdef EXPORTED_ANIM_LOGGING
+#ifdef TOGGLE_DEBUG
+        if (PersistentConfigUtil::debugEnabled())
+#endif
+        {
+            Outgoing::printOutputStringFlash(F("Can't Play, Setup Incomplete"));
+            Outgoing::printLine();
+        }
+#endif
+        return;
+    }
+
 #ifdef EXPORTED_ANIM_LOGGING
 #ifdef TOGGLE_DEBUG
     if (PersistentConfigUtil::debugEnabled())
@@ -148,12 +163,38 @@ void CommandStreamProvider::runInProgressCommand()
 #ifdef RELAY_SUPPORTED
     // bridge needs to wait till all peers are connected to start time
     // but not during setup
+    bool allPeersConnected = BottangoCore::isRelayBridge &&
+                             BottangoCore::relayPool->bridgeIsConnectedToAllPeers();
     bool resumePeerTime = BottangoCore::isRelayBridge &&
                           !commandStreamIsSetup &&
                           !startingPeerCommandsSent &&
-                          BottangoCore::relayPool->bridgeIsConnectedToAllPeers();
+                          allPeersConnected;
 
-    // todo, what to do if we loose or reconnect to a peer mid play?
+    if (BottangoCore::isRelayBridge && waitingForAllPeers && allPeersConnected)
+    {
+        waitingForAllPeers = false;
+#ifdef EXPORTED_ANIM_LOGGING
+#ifdef TOGGLE_DEBUG
+        if (PersistentConfigUtil::debugEnabled())
+#endif
+        {
+            Outgoing::printOutputStringFlash(F("All connected"));
+            Outgoing::printLine();
+        }
+#endif
+
+#ifdef ENABLE_STATUS_LIGHTS
+        if (streamIsInProgress() && !commandStreamIsSetup)
+        {
+            StatusLights::setDesiredColor(SIGNAL_STATUS_LIGHT, STATUS_COLOR_SIGNAL_OFFLINEPLAY);
+        }
+        else
+        {
+            StatusLights::setDesiredColor(SIGNAL_STATUS_LIGHT, STATUS_COLOR_SIGNAL_OFFLINEREADY);
+        }
+#endif
+    }
+
 #endif
 
     if (streamIsInProgress())
@@ -187,6 +228,23 @@ void CommandStreamProvider::runInProgressCommand()
                     // keep waiting for all peers to be connected
                     else
                     {
+                        if (!waitingForAllPeers)
+                        {
+                            waitingForAllPeers = true;
+#ifdef EXPORTED_ANIM_LOGGING
+#ifdef TOGGLE_DEBUG
+                            if (PersistentConfigUtil::debugEnabled())
+#endif
+                            {
+                                Outgoing::printOutputStringFlash(F("Starting wait"));
+                                Outgoing::printLine();
+                            }
+#endif
+
+#ifdef ENABLE_STATUS_LIGHTS
+                            StatusLights::setDesiredColor(SIGNAL_STATUS_LIGHT, STATUS_COLOR_YELLOW);
+#endif
+                        }
                         return;
                     }
                 }
@@ -222,6 +280,22 @@ void CommandStreamProvider::runInProgressCommand()
                         // so cache it
                         if (cachedPostControlRegisterCommand[0] == '\0' && strncmp(commandBuffer, BasicCommands::REGISTER_RELAY, sizeof(BasicCommands::REGISTER_RELAY) - 1) != 0)
                         {
+                            if (!waitingForAllPeers)
+                            {
+                                waitingForAllPeers = true;
+#ifdef EXPORTED_ANIM_LOGGING
+#ifdef TOGGLE_DEBUG
+                                if (PersistentConfigUtil::debugEnabled())
+#endif
+                                {
+                                    Outgoing::printOutputStringFlash(F("Starting wait"));
+                                    Outgoing::printLine();
+                                }
+#endif
+#ifdef ENABLE_STATUS_LIGHTS
+                                StatusLights::setDesiredColor(SIGNAL_STATUS_LIGHT, STATUS_COLOR_YELLOW);
+#endif
+                            }
                             strcpy(cachedPostControlRegisterCommand, commandBuffer);
                             return; // and break out for now
                         }
@@ -245,8 +319,15 @@ void CommandStreamProvider::runInProgressCommand()
             }
 #endif
 
+            if (commandStreamIsSetup)
+            {
+                executeStop(true); // stop with permission to destroy setup
+            }
+            else
+            {
+                stop();
+            }
             commandStreamIsSetup = false;
-            stop();
         }
     }
 
@@ -282,6 +363,16 @@ void CommandStreamProvider::updateOnLoop()
 
 void CommandStreamProvider::stop()
 {
+    executeStop(false);
+}
+
+void CommandStreamProvider::forceStopForTeardown()
+{
+    executeStop(true);
+}
+
+void CommandStreamProvider::executeStop(bool allowSetupStop)
+{
     if (!BottangoCore::isOffline())
     {
         return;
@@ -289,6 +380,12 @@ void CommandStreamProvider::stop()
 
     if (commandStream != nullptr)
     {
+        if (commandStreamIsSetup && !allowSetupStop)
+        {
+            // don't exit out of setup unless explicitly allowed
+            return;
+        }
+
         delete commandStream;
     }
     commandStream = nullptr;
@@ -296,6 +393,7 @@ void CommandStreamProvider::stop()
     BottangoCore::effectorPool.clearAllCurves();
 
 #ifdef RELAY_SUPPORTED
+    waitingForAllPeers = false;
     if (BottangoCore::isRelayBridge)
     {
         BottangoCore::relayPool->clearCurvesOnConnectedPeers();

@@ -374,10 +374,52 @@ namespace BottangoCore
 #if defined(USE_CODE_COMMAND_STREAM) || defined(USE_SD_CARD_COMMAND_STREAM)
             if (commandStreamProvider != nullptr)
             {
-                commandStreamProvider->stop();
+                if (doUninitialize)
+                {
+                    commandStreamProvider->forceStopForTeardown();
+                }
+                else
+                {
+                    commandStreamProvider->stop();
+                }
             }
 #endif
         }
+
+        // need to handle a bridge gracefully stopping it's peers?
+#ifdef RELAY_SUPPORTED
+        if (BottangoCore::isRelayBridge)
+        {
+            // enque clear cuves on all peers
+            relayPool->clearCurvesOnConnectedPeers();
+
+            if (doUninitialize)
+            {
+
+                // stop any new animation from playing
+#if defined(USE_CODE_COMMAND_STREAM) || defined(USE_SD_CARD_COMMAND_STREAM)
+                if (commandStreamProvider != nullptr)
+                {
+                    commandStreamProvider->setInvalidState();
+                }
+#endif
+
+                // send stop out to all peers if not already stopping (and stop all future messages)
+                // then wait and let loop come back once the queue is empty
+                if (!relayPool->isUninitializing)
+                {
+                    relayPool->beginPoolTeardown();
+                    return;
+                }
+                // we are uninitializing, but there's still messages to send
+                else if (!relayPool->toPeerQueueEmpty())
+                {
+                    // still wait
+                    return;
+                }
+            }
+        }
+#endif
 
         if (doUninitialize)
         {
@@ -386,14 +428,22 @@ namespace BottangoCore
 
 #ifdef ENABLE_STATUS_LIGHTS
 #ifdef RELAY_SUPPORTED
+            // peers reboot after getting stop
             if (BottangoCore::isRelayPeer)
             {
-                StatusLights::setDesiredColor(CONNECTION_STATUS_LIGHT, STATUS_COLOR_NO_CONNECTION_PEER);
-                StatusLights::setLightMode(CONNECTION_STATUS_LIGHT, StatusLights::LightMode::MODE_BLINK);
+                BasicCommands::reboot(false);
             }
             else
             {
-                StatusLights::setDesiredColor(CONNECTION_STATUS_LIGHT, STATUS_COLOR_NO_CONNECTION_SERIAL);
+                if (BottangoCore::isRelayBridge)
+                {
+                    StatusLights::setDesiredColor(CONNECTION_STATUS_LIGHT, STATUS_COLOR_RED);
+                }
+                else
+                {
+                    StatusLights::setDesiredColor(CONNECTION_STATUS_LIGHT, STATUS_COLOR_NO_CONNECTION_SERIAL);
+                }
+
                 StatusLights::setLightMode(CONNECTION_STATUS_LIGHT, StatusLights::LightMode::MODE_BLINK);
             }
 #else
@@ -509,9 +559,6 @@ namespace BottangoCore
     {
         bool sendReady = true;
 
-#ifdef ENABLE_STATUS_LIGHTS
-        StatusLights::pulseSignalLight();
-#endif
 #ifdef ALLOW_SYNC_COMMANDS
         // before split, check if this is a syncronized command
         // we don't actually want to split a syncronized command, but to parse it's own unique syntax
@@ -532,6 +579,9 @@ namespace BottangoCore
         // The command name is the first string in the array, subsequent strings are parameters of that command
         char *commandName = splitCommandBuffer[0];
 
+#ifdef ENABLE_STATUS_LIGHTS
+        bool flashCmdRcvLight = true;
+#endif
         // to all who may judge a giant list of if / else... I get it.
         // but also, benchamarking proved this to be faster than any other more elegant looking approach
         // so it may be ugly... but it's quick.
@@ -549,6 +599,14 @@ namespace BottangoCore
             BasicCommands::stop(splitCommandBuffer);
         }
 #ifdef RELAY_SUPPORTED
+        else if (strcmp_P(commandName, BasicCommands::RELAY_POLL_REQUEST) == 0)
+        {
+            BasicCommands::requestPoll(splitCommandBuffer);
+            sendReady = false;
+#ifdef ENABLE_STATUS_LIGHTS
+            flashCmdRcvLight = false;
+#endif
+        }
         else if (strcmp_P(commandName, BasicCommands::PASS_TO_RELAY) == 0)
         {
             BasicCommands::passToRelayController(splitCommandBuffer, paramsCount);
@@ -677,14 +735,10 @@ namespace BottangoCore
         {
             BasicCommands::deregisterAllRelayControllers(splitCommandBuffer);
         }
-        else if (strcmp_P(commandName, BasicCommands::RELAY_POLL_REQUEST) == 0)
-        {
-            BasicCommands::requestPoll(splitCommandBuffer);
-            sendReady = false;
-        }
         else if (strcmp_P(commandName, BasicCommands::REQUEST_PEER_BOOT) == 0)
         {
             BasicCommands::requestBoot(splitCommandBuffer);
+            sendReady = false;
         }
         else if (strcmp_P(commandName, BasicCommands::GET_MAC_ADDRESS) == 0)
         {
@@ -704,6 +758,12 @@ namespace BottangoCore
         }
 #endif
 
+#ifdef ENABLE_STATUS_LIGHTS
+        if (flashCmdRcvLight)
+        {
+            StatusLights::pulseSignalLight();
+        }
+#endif
         return sendReady;
     }
 
@@ -936,6 +996,16 @@ namespace BottangoCore
         if (isRelayPeer)
         {
             updateReadBuffer(true); // secondary read when peer also
+        }
+        if (isRelayBridge)
+        {
+            // was stopping all peers, and the queue is now empty
+            if (relayPool->isUninitializing && relayPool->toPeerQueueEmpty())
+            {
+                // try stop again, and actually shut down
+                // because the queue is empty, it won't abort out
+                stop(true);
+            }
         }
 #endif
 

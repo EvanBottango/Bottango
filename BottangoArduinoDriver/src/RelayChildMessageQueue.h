@@ -19,7 +19,8 @@ enum class MessageIntent : uint8_t
 {
     Normal,
     Poll,
-    Boot
+    Boot,
+    Teardown
 };
 
 enum class TargetGroup : uint8_t
@@ -49,6 +50,11 @@ public:
 
     bool enqueueMessage(const int peerId, const char *txt, MessageIntent intent, TargetGroup target)
     {
+        if (locked)
+        {
+            return false;
+        }
+
         OutgoingMessage msg;
         msg.peerId = peerId;
         msg.intent = intent;
@@ -99,8 +105,22 @@ public:
         xQueueReceive(queue, &dummy, 0);
     }
 
+    void clear()
+    {
+        while (!empty())
+        {
+            pop();
+        }
+    }
+
+    void lock()
+    {
+        locked = true;
+    }
+
 private:
     QueueHandle_t queue;
+    bool locked = false;
 };
 
 #endif // relay supported

@@ -16,6 +16,8 @@
 // internal helper to execute bridge to peer transmissions
 namespace
 {
+    constexpr uint32_t ESPNOW_TX_RX_TASK_STACK_BYTES = 3100;
+
     enum class EspNowSendResult : uint8_t
     {
         NoPeer,
@@ -27,22 +29,38 @@ namespace
     {
         uint8_t mac[6] = {};
         bool hasPeer = false;
+        bool skippedTeardownPeer = false;
 
         // Copy child MAC while locking relay pool so pointer lifetime of the child is safe.
         pool->lockPool();
         RelayChild *child = pool->getRelay(peerId);
         if (child != nullptr)
         {
-            memcpy(mac, child->mac_addr, sizeof(mac));
-            hasPeer = true;
+            // dont send messages to peers that are tearing down
+            if (child->teardown && msg.intent != MessageIntent::Teardown)
+            {
+                skippedTeardownPeer = true;
+            }
+            else
+            {
+                memcpy(mac, child->mac_addr, sizeof(mac));
+                hasPeer = true;
+            }
         }
         pool->unlockPool();
 
-        // couldn't get a peer for the id, error case
+        // couldn't get a peer for the id, error case except for peer teardown
         if (!hasPeer)
         {
+            // ok to have skipped if this peer is tearing down
+            if (skippedTeardownPeer)
+            {
+                return EspNowSendResult::NoPeer;
+            }
+
 #ifdef RELAY_LOGGING
 #ifdef TOGGLE_DEBUG
+            // log the error
             if (PersistentConfigUtil::debugEnabled() || ALWAYS_LOG_ERROR_CASE)
 #endif
             {
@@ -329,6 +347,12 @@ void RelayCommsESPNow::espNowTxRxTask(void *pvParameters)
                 if (res == EspNowSendResult::NoPeer || res == EspNowSendResult::QueuedOk)
                 {
                     queue.pop();
+
+                    // let the pool know the teardown message was sent, and we can finalize tearing it down
+                    if (msg.intent == MessageIntent::Teardown)
+                    {
+                        pool->markRelayTeardownReadyToFinalize(msg.peerId);
+                    }
                 }
             }
             // broadcast to multiple targets
@@ -348,7 +372,8 @@ void RelayCommsESPNow::espNowTxRxTask(void *pvParameters)
                     }
                     else
                     {
-                        pool->getConnectedRelayIds(bridgeState->broadcastTargetIds, bridgeState->broadcastTargetCount);
+                        bool includeTeardown = msg.intent == MessageIntent::Teardown;
+                        pool->getConnectedRelayIds(bridgeState->broadcastTargetIds, bridgeState->broadcastTargetCount, includeTeardown);
                     }
                 }
 
@@ -371,6 +396,12 @@ void RelayCommsESPNow::espNowTxRxTask(void *pvParameters)
                         {
                             break;
                         }
+
+                        if (msg.intent == MessageIntent::Teardown)
+                        {
+                            pool->markRelayTeardownReadyToFinalize(peerId);
+                        }
+
                         bridgeState->broadcastNextIndex++;
                     }
 
@@ -523,7 +554,7 @@ void RelayCommsESPNow::initializeAsBridge()
     xTaskCreate(
         espNowTxRxTask,
         "espNowTxRx",
-        2048,
+        ESPNOW_TX_RX_TASK_STACK_BYTES,
         this, // pass comms for rx/tx task
         1,
         nullptr);
@@ -609,7 +640,7 @@ void RelayCommsESPNow::initializeAsPeer()
     xTaskCreate(
         espNowTxRxTask,
         "espNowTxRx",
-        2048,
+        ESPNOW_TX_RX_TASK_STACK_BYTES,
         this, // pass comms for rx/tx task
         1,
         nullptr);
