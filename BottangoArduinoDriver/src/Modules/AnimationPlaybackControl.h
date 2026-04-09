@@ -54,9 +54,9 @@ private:
 
 	void playAnimation(int index, bool loop);
 
-#ifdef USE_SD_CARD_COMMAND_STREAM
+//#ifdef USE_SD_CARD_COMMAND_STREAM
 	void loadConfig();
-#endif // USE_SD_CARD_COMMAND_STREAM
+//#endif // USE_SD_CARD_COMMAND_STREAM
 
 #ifdef EXPORTED_ANIM_LOGGING
 	void logConfig(AnimationConfiguration* config);

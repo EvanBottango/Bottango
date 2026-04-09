@@ -27,7 +27,7 @@ namespace BottangoCore
 	void bottangoSetup()
 	{
 		//PersistentConfigUtil::setUseExportedCommandStream(true);
-		PersistentConfigUtil::setDebugEnabled(false);
+		//PersistentConfigUtil::setDebugEnabled(false);
 
 		// Set the initial connection status. This can be overwritten by a module during initModules()
 		SystemStatus::systemStatus.PowerStatus = SystemStatus::ePowerStatus::Ok;
@@ -54,29 +54,7 @@ namespace BottangoCore
 #ifdef ENABLE_STATUS_LIGHTS
 		SystemStatus::systemStatus.Signal = SystemStatus::eSignal::Off;
 		SystemStatus::systemStatus.UserLED = SystemStatus::eUserLED::Off;
-		//StatusLights::setDesiredColor(SIGNAL_STATUS_LIGHT, CRGB::Black);
-		//StatusLights::setDesiredColor(USER_STATUS_LIGHT, CRGB::Black);
 #endif
-
-// enter exported animation if required
-//#ifdef ENABLE_DYNAMIC_ANIMATION_SOURCE_SWITCH
-		// ToDo: implement dynamic source switch <- das müsste eigentlich drin sein
-//        if (PersistentConfigUtil::getUseExportedCommandStream())
-//#endif
-//#if defined(USE_CODE_COMMAND_STREAM) || defined(USE_SD_CARD_COMMAND_STREAM)
-//        {
-			// Note: Moved to mMaster.initModules();
-//#ifdef ENABLE_STATUS_LIGHTS
-			//SystemStatus::systemStatus.ConnectionStatus = SystemStatus::eConnectionStatus::Export_Playback;
-			//StatusLights::setDesiredColor(CONNECTION_STATUS_LIGHT, STATUS_COLOR_CONNECTION_EXPORT_PLAYBACK);
-			//StatusLights::setLightMode(CONNECTION_STATUS_LIGHT, StatusLights::LightMode::MODE_PULSE);
-//#endif
-			/*commandStreamProvider = new CommandStreamProvider();
-			SystemStatus::systemStatus.initialized = true;
-			Callbacks::onThisControllerStarted();
-			commandStreamProvider->runSetup();*/
-			//       }
-		   //#endif
 
 		// Setup is done
 		SystemStatus::systemStatus.initialized = true;

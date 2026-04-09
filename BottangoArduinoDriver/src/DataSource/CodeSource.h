@@ -1,0 +1,27 @@
+#pragma once
+#include "../../BottangoArduinoModules.h"
+#ifdef USE_CODE_COMMAND_STREAM
+#include "StaticSecondaryDataSource.h"
+#include "../Modules/AnimationPlaybackControl.h"
+
+class CodeSource : public OfflineDataSource
+{
+public:
+	void onPhase(Phase p) override;
+	void init() override;
+	bool openSetup() override;
+	bool openAnimation(uint8_t animIndex, bool loop) override;
+	void prepareNextCommand() override;
+	bool peekNextCommand(char* out) override;
+	bool tryConsumeData(char** out) override;
+	void resetBuffer() override;
+	bool getConfigurationForAnimation(uint8_t animIndex, AnimationConfiguration* config) const override;
+
+private:
+	// ==== Buffer and file management ====
+	char _commandBuffer[MAX_COMMAND_LENGTH];
+
+	void parseConfiguration(AnimationConfiguration* config, const uint16_t* parsedValue) const;
+};
+
+#endif // USE_CODE_COMMAND_STREAM

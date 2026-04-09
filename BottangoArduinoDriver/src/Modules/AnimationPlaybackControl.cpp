@@ -5,6 +5,7 @@
 #include "../BottangoCore.h"
 #include "../PersistentConfigUtil.h"
 #include "../DataSource/SdCardSource.h"
+#include "../DataSource/CodeSource.h"
 #include "../Module Handling/ModuleMaster.h"
 #include "Modules/Outgoing.h"
 #include "../Communication/CommandDecoder.h"
@@ -32,7 +33,7 @@ void AnimationPlaybackControl::onPhase(Phase p)
 	// Ready for next command: prepare the next command
 	if (readyForNextCommand())
 	{
-#ifdef USE_SD_CARD_COMMAND_STREAM
+#if defined(USE_SD_CARD_COMMAND_STREAM) || defined(USE_CODE_COMMAND_STREAM)
 		if (complete())
 		{
 #ifdef EXPORTED_ANIM_LOGGING
@@ -139,15 +140,15 @@ void AnimationPlaybackControl::init()
 	// Setup the secondary data source module, if any
 #ifdef USE_SD_CARD_COMMAND_STREAM
 	_offlineSource = static_cast<OfflineDataSource*>(BottangoCore::mMaster.registerModuleInOfflineDataSlot<SdCardSource>());
-	loadConfig();
-	_offlineSource->openSetup();
-	_setupIsRunning = true;
-
-	BottangoCore::mMaster.getModule<CommandDecoder>(Modules::Decoder)->setOfflineDataSource(_offlineSource);
-#elif USE_CODE_COMMAND_STREAM
-	// ToDo for USE_CODE_COMMAND_STREAM
-	// BottangoCore::mMaster.registerModuleInSecondaryDataSlot<ExportedCodeSource>();
+#elif defined(USE_CODE_COMMAND_STREAM)
+	 BottangoCore::mMaster.registerModuleInSecondaryDataSlot<CodeSource>();
 #endif // USE_CODE_COMMAND_STREAM
+
+	 loadConfig();
+	 _offlineSource->openSetup();
+	 _setupIsRunning = true;
+
+	 BottangoCore::mMaster.getModule<CommandDecoder>(Modules::Decoder)->setOfflineDataSource(_offlineSource);
 
 	_parser = BottangoCore::mMaster.getModule<Parser>(Modules::Parser);
 
@@ -313,7 +314,7 @@ void AnimationPlaybackControl::updatePlaybackStatus()
 	}
 }
 
-#ifdef USE_SD_CARD_COMMAND_STREAM
+//#ifdef USE_SD_CARD_COMMAND_STREAM
 void AnimationPlaybackControl::loadConfig()
 {
 	// parse and build config files
@@ -356,7 +357,7 @@ void AnimationPlaybackControl::loadConfig()
 		_animationConfigs.pushBack(config);
 	}
 }
-#endif // USE_SD_CARD_COMMAND_STREAM
+//#endif // USE_SD_CARD_COMMAND_STREAM
 
 bool AnimationPlaybackControl::readyForNextCommand()
 {

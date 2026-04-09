@@ -1,6 +1,3 @@
-// 
-// 
-// 
 #include "../../BottangoArduinoModules.h"
 #ifdef USE_SD_CARD_COMMAND_STREAM
 
