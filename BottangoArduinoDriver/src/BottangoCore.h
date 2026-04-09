@@ -36,8 +36,6 @@ namespace BottangoCore
 
     void uninitialize();
 
-    void updateReadBuffer(bool secondary);
-
     extern EffectorPool effectorPool;
     extern AbstractMultiMessageOutgoingSource *activeOutgoingMultimessage;
 	extern ModuleMaster mMaster;
@@ -51,18 +49,6 @@ namespace BottangoCore
 #ifdef RELAY_LOGGING
     extern unsigned long lastWaitForConnectLog;
 #endif // RELAY_LOGGING
-
-#ifdef USE_ESP32_WIFI
-    void initESP32WifiComs();
-    void onWifiConnetionSuccess();
-    void onWifiConnectionClosed();
-    bool updateWifiConnectionStatus();
-#endif // USE_ESP32_WIFI
-
-
-#ifdef USE_ESP32_WIFI
-    extern WiFiClient client;
-#endif // USE_ESP32_WIFI
 
 } // namespace BottangoCore
 

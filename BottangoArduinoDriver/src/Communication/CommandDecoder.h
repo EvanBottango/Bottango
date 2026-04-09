@@ -47,7 +47,7 @@ public:
 	 */
 	virtual void setDataSource(DataSource* src);
 
-#if defined(RELAY_SUPPORTED)
+#if defined(RELAY_SUPPORTED) || defined(USE_ESP32_WIFI)
 	/**
 	 * @brief Set the secondary data source for the command decoder.
 	 * @param src Pointer to the secondary data source.
@@ -116,7 +116,7 @@ protected:
 	DataSource* _source;
 
 
-#if defined(RELAY_SUPPORTED)
+#if defined(RELAY_SUPPORTED) || defined(USE_ESP32_WIFI)
 	/**
 	 * @brief The secondary source of data. Like ESP-Now, RS485 or something else
 	 */

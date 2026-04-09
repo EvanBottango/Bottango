@@ -1,9 +1,12 @@
 #include "Relay.h"
+
+#ifdef RELAY_SUPPORTED
 #include "../../PersistentConfigUtil.h"
 #include "../../System/SystemStatus.h"
 #include "BasicCommands.h"
 #include "Modules/Outgoing.h"
 #include "DataSource/EspNowSource.h"
+
 
 void Relay::init()
 {
@@ -64,3 +67,4 @@ bool Relay::stop(bool doUninitialize)
 
 	return true;
 }
+#endif // RELAY_SUPPORTED

@@ -91,7 +91,7 @@ public:
 	}
 #endif
 
-#if defined(RELAY_SUPPORTED)
+#if defined(RELAY_SUPPORTED) || defined(USE_ESP32_WIFI)
 	/**
 	 * @brief Register a data source into the secondary data source slot and initialize it by calling init(). The old instance in the slot will be destroyed gracefully using the destructor.
 	 * Static storage duration is used for the module instance, so it will be automatically destroyed when the program ends.
@@ -126,7 +126,7 @@ private:
 	ModuleSlot<SlotSize<Modules::DataSource_Offline>::value> _slotOfflineDataSource;
 #endif
 
-#if defined(RELAY_SUPPORTED)
+#if defined(RELAY_SUPPORTED) || defined(USE_ESP32_WIFI)
 	/**
 	 * @brief A module slot sized for the biggest possible secondary data source module.
 	 */

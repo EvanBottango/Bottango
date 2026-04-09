@@ -1,7 +1,3 @@
-// 
-// 
-// 
-
 #include "CharStreamedSource.h"
 #include "../Modules/Outgoing.h"
 #include "../BasicCommands.h"

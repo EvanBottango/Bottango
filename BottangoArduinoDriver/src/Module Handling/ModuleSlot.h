@@ -9,6 +9,7 @@
 #include "../DataSource/SdCardSource.h"
 #include "../DataSource/RS485Source.h"
 #include "../DataSource/EspNowSource.h"
+#include "../DataSource/WifiSource.h"
 
 /**
  * @brief Enumeration of available modules.
@@ -51,7 +52,14 @@ template <> struct SlotSize<Modules::DataSource_Secondary>
 {
 	static constexpr size_t value = std::max({
 		sizeof(RS485Source),
-		sizeof(EspNowSource)
+
+#if defined(RELAY_COMS_ESPNOW)
+		sizeof(EspNowSource),
+#endif // RELAY_COMS_ESPNOW
+
+#if defined(USE_ESP32_WIFI)
+		sizeof(WifiSource),
+#endif // USE_ESP32_WIFI
 		});
 };
 
@@ -71,7 +79,7 @@ public:
 	template <typename T>
 	T* place()
 	{
-		static_assert(sizeof(T) <= MaxSize,"Module does not fit into this slot");
+		static_assert(sizeof(T) <= MaxSize, "Module does not fit into this slot");
 
 		destroy();
 		new (_buffer) T();

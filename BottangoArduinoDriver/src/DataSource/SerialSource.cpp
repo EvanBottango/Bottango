@@ -1,7 +1,3 @@
-// 
-// 
-// 
-
 #include "SerialSource.h"
 #include "Modules/Outgoing.h"
 #include "../BasicCommands.h"

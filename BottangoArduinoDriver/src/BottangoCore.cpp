@@ -15,33 +15,14 @@ namespace BottangoCore
 	ModuleMaster mMaster = ModuleMaster();
 
 	char delimiters[] = ",";
-	//char* splitCommandBuffer[COMMANDS_PARAMS_SIZE];
 
-/*#ifdef RELAY_SUPPORTED
-	RelayChildPool* relayPool = nullptr;
-	bool isRelayBridge = false;
-	bool isRelayPeer = false;
-	char* secondaryPeerCommandBuffer = nullptr;
-	int secondaryCommandIdx = 0;
-	unsigned long secondaryTimeOfLastChar = 0;*/
-	//unsigned long lastHeartbeatTime = 0;
-	//bool secondaryCommandInProgress = false;
 #ifdef RELAY_LOGGING
 	unsigned long lastWaitForConnectLog = 0;
-#endif
+#endif // RELAY_LOGGING
 
 #if defined(RELAY_SUPPORTED)
 	unsigned long lastPollTimeAsPeer;
 #endif // RELAY_SUPPORTED
-	//#endif
-
-#if !defined(RELAY_SUPPORTED) && defined(USE_ESP32_WIFI)
-	WiFiClient client;
-	bool serverConnected = false;
-	unsigned long lastNetworkCheckTime = 0;
-	const unsigned long NETWORK_CHECK_INTERVAL_MS = 15000; // recheck wifi connection every 15 seconds
-	const unsigned long SERVER_CHECK_INTERVAL_MS = 3000;   // recheck server every 3 seconds
-#endif
 
 	void bottangoSetup()
 	{
@@ -67,11 +48,6 @@ namespace BottangoCore
 		{
 			pinMode(onboardPins[i], INPUT_PULLDOWN);
 		}
-#endif
-
-		// init comms types
-#if defined(USE_ESP32_WIFI)
-		initESP32WifiComs();
 #endif
 
 		// init status lights
@@ -106,106 +82,6 @@ namespace BottangoCore
 		SystemStatus::systemStatus.initialized = true;
 		Callbacks::onThisControllerStarted();
 	}
-
-#ifdef USE_ESP32_WIFI
-
-	void initESP32WifiComs()
-	{
-#ifdef ESP32WIFI_LOGGING
-		Serial.begin(BAUD_RATE);
-#endif
-		// begin async callback to check for connection state
-		WiFi.onEvent([](WiFiEvent_t event, WiFiEventInfo_t info)
-			{
-				switch (event)
-				{
-
-#ifdef ESP_ARDUINO_VERSION_MAJOR
-#if ESP_ARDUINO_VERSION >= ESP_ARDUINO_VERSION_VAL(3, 0, 0)
-				case IP_EVENT_STA_GOT_IP:
-					onWifiConnetionSuccess();
-					break;
-				case WIFI_EVENT_STA_DISCONNECTED:
-					onWifiConnectionClosed();
-					break;
-#else
-				case SYSTEM_EVENT_STA_GOT_IP:
-					onWifiConnetionSuccess();
-					break;
-				case SYSTEM_EVENT_STA_DISCONNECTED:
-					onWifiConnectionClosed();
-					break;
-#endif
-#endif
-
-				default:
-					break;
-				}
-			});
-	}
-
-	void onWifiConnetionSuccess()
-	{
-		lastNetworkCheckTime = 0;
-		serverConnected = false;
-	}
-
-	void onWifiConnectionClosed()
-	{
-		BasicCommands::stop(nullptr);
-		// restart the board
-		ESP.restart();
-	}
-
-	bool updateWifiConnectionStatus()
-	{
-		// attempt wifi connection?
-		if (WiFi.status() != WL_CONNECTED)
-		{
-			// ready to check?
-			if (lastNetworkCheckTime == 0 || Time::getCurrentTimeInMs() - lastNetworkCheckTime >= NETWORK_CHECK_INTERVAL_MS)
-			{
-				WiFi.begin(WIFI_SSID, WIFI_PASSWORD);
-				lastNetworkCheckTime = Time::getCurrentTimeInMs();
-			}
-			// not gonna read/write anything this loop...
-			return false;
-		}
-		// attempt server connection?
-		else if (!serverConnected)
-		{
-			// ready to check?
-			if (lastNetworkCheckTime == 0 || Time::getCurrentTimeInMs() - lastNetworkCheckTime >= SERVER_CHECK_INTERVAL_MS)
-			{
-				lastNetworkCheckTime = Time::getCurrentTimeInMs();
-				// connect to the server
-				if (client.connect(WIFI_SERVER_IP, WIFI_SERVER_PORT))
-				{
-					Outgoing::printOutputStringFlash(F("\n\n"));
-					Outgoing::printOutputStringPROGMEM(BasicCommands::BOOT);
-					Outgoing::printOutputStringFlash(F("\n\n"));
-					serverConnected = true;
-				}
-				else
-				{
-					// couldn't connect, we'll try again
-					return false;
-				}
-			}
-		}
-		// had then lost server connection
-		else if (!client.connected())
-		{
-			BasicCommands::stop(nullptr);
-			// restart the board
-			ESP.restart();
-			return false;
-		}
-
-		return true;
-	}
-
-#endif
 
 	bool stopPlaybackModule(bool doUninitialize)
 	{
@@ -287,49 +163,6 @@ namespace BottangoCore
 		}
 	}
 
-	bool checkHash(char* cmdString)
-	{
-		if (cmdString[0] == '\0')
-		{
-			return 0;
-		}
-
-		char c = cmdString[0];
-		int idx = 0;
-
-		// Scan forward to end of string
-		while (c != '\0')
-		{
-			c = cmdString[idx++];
-		}
-		// Scan backward to find start of hash (don't hash the hash)
-		idx -= 1; // One for 'h', one for ','
-
-		while (idx > 0)
-		{
-			if (cmdString[idx] == ',' && cmdString[idx + 1] == 'h')
-			{
-				break;
-			}
-			idx--;
-		}
-
-		int hashStartIdx = idx + 2;
-
-		idx -= 1; // For ','
-
-		int hsh = 0;
-		while (idx >= 0)
-		{
-			c = cmdString[idx--];
-			hsh += c;
-		}
-
-		int ati = atoi(cmdString + hashStartIdx);
-
-		return ati == hsh;
-	}
-
 	void uninitialize()
 	{
 		BottangoCore::effectorPool.deregisterAll();
@@ -338,14 +171,9 @@ namespace BottangoCore
 			char t = Serial.read();
 		}
 		SystemStatus::systemStatus.initialized = false;
-		//initialized = false;
 
 		DataSource* dataSource = mMaster.getModule<DataSource>(Modules::DataSource_Serial);
 		dataSource->resetBuffer();
-		//commandInProgress = false;
-		//serialCommandIdx = 0;
-		//serialCommandBuffer[serialCommandIdx] = '\0';
-		//timeOfLastChar = 0;
 	}
 
 	void bottangoLoop()
@@ -356,14 +184,6 @@ namespace BottangoCore
 		mMaster.executePhase(Phase::Logic);
 		mMaster.executePhase(Phase::Output);
 
-		//updateReadBuffer(false); // standard read
-
-/*#ifdef RELAY_SUPPORTED
-		if (isRelayPeer)
-		{
-			updateReadBuffer(true); // secondary read when peer also
-		}
-#endif*/
 
 		if (SystemStatus::systemStatus.initialized)
 		{
@@ -414,286 +234,6 @@ namespace BottangoCore
 			}
 		}
 #endif // RELAY_SUPPORTED && RELAY_LOGGING
-	}
-
-	/*bool isOffline()
-	{
-		bool offline = false;
-#if defined(USE_CODE_COMMAND_STREAM) || defined(USE_SD_CARD_COMMAND_STREAM)
-#ifdef ENABLE_DYNAMIC_ANIMATION_SOURCE_SWITCH
-		if (commandStreamProvider != nullptr)
-		{
-			offline = true;
-		}
-#else
-		offline = true;
-#endif
-#endif
-		return offline;
-	}*/
-
-	void updateReadBuffer(bool secondary)
-	{
-		/*
-		#if defined(USE_ESP32_WIFI)
-				if !(updateWifiConnectionStatus())
-				{
-					return;
-				}
-		#endif
-
-		#ifdef RELAY_SUPPORTED
-				if (isRelayPeer && secondary)
-				{
-					Outgoing::setSecondaryPeerOutgoing(true);
-				}
-		#endif
-
-				while (rcvAvailable(secondary))
-				{
-					char read = readNextChar(secondary);
-
-		#ifdef RELAY_SUPPORTED
-
-					if (secondary)
-					{
-						secondaryCommandInProgress = true;
-						secondaryTimeOfLastChar = millis();
-					}
-					else
-		#endif
-					{
-						commandInProgress = true;
-						timeOfLastChar = millis();
-					}
-
-					if (read == '\n')
-					{
-
-						bool hashPasses;
-		#ifdef RELAY_SUPPORTED
-						if (secondary)
-						{
-							hashPasses = checkHash(secondaryPeerCommandBuffer);
-						}
-						else
-		#endif
-						{
-							hashPasses = checkHash(serialCommandBuffer);
-						}
-
-		#ifdef RELAY_SUPPORTED
-						if (secondary)
-						{
-							secondaryCommandInProgress = false;
-							secondaryTimeOfLastChar = 0;
-						}
-						else
-		#endif
-						{
-							commandInProgress = false;
-							timeOfLastChar = 0;
-						}
-
-						if (hashPasses)
-						{
-		#ifdef RELAY_SUPPORTED
-							// primary incoming on relay peer
-							if (isRelayPeer && !secondary)
-							{
-		#ifdef RELAY_LOGGING
-		#ifdef TOGGLE_DEBUG
-								if (PersistentConfigUtil::debugEnabled())
-		#endif
-								{
-									Outgoing::toggleOnSecondaryOutgoing();
-									Outgoing::printOutputStringFlash(F("peer rcv msg: "));
-									Outgoing::printOutputStringMem(serialCommandBuffer);
-									Outgoing::printLine();
-									Outgoing::endToggleOnSecondaryOutgoing();
-								}
-		#endif
-							}
-		#endif
-
-							bool sendReady = true;
-		#ifdef RELAY_SUPPORTED
-							if (secondary)
-							{
-								if (externalCommandIsAllowed(secondaryPeerCommandBuffer, secondary))
-								{
-									sendReady = executeCommand(secondaryPeerCommandBuffer, true);
-								}
-							}
-							else
-		#endif
-							{
-								if (externalCommandIsAllowed(serialCommandBuffer, secondary))
-								{
-									sendReady = executeCommand(serialCommandBuffer, false);
-								}
-							}
-							if (sendReady)
-							{
-								Outgoing::printOutputStringPROGMEM(BasicCommands::READY);
-							}
-						}
-						else
-						{
-							Outgoing::printOutputStringPROGMEM(BasicCommands::HASH_FAIL);
-						}
-
-		#ifdef RELAY_SUPPORTED
-						if (secondary)
-						{
-							secondaryCommandIdx = 0;
-							secondaryPeerCommandBuffer[secondaryCommandIdx] = '\0';
-						}
-						else
-		#endif
-						{
-							serialCommandIdx = 0;
-							serialCommandBuffer[serialCommandIdx] = '\0';
-						}
-					}
-					else if (read == '\0')
-					{
-					}
-					else
-					{
-		#ifdef RELAY_SUPPORTED
-						if (secondary)
-						{
-							if (secondaryCommandIdx <= MAX_COMMAND_LENGTH - 2)
-							{
-								secondaryPeerCommandBuffer[secondaryCommandIdx++] = read;
-								secondaryPeerCommandBuffer[secondaryCommandIdx] = '\0';
-							}
-							else
-							{
-								Error::reportError_CmdTooLong(secondaryCommandIdx);
-								secondaryCommandIdx = 0;
-								secondaryPeerCommandBuffer[secondaryCommandIdx] = '\0';
-
-								secondaryCommandInProgress = false;
-								secondaryTimeOfLastChar = 0;
-
-								Outgoing::printOutputStringPROGMEM(BasicCommands::READY);
-							}
-						}
-						else
-		#endif
-						{
-							if (serialCommandIdx <= MAX_COMMAND_LENGTH - 2)
-							{
-								serialCommandBuffer[serialCommandIdx++] = read;
-								serialCommandBuffer[serialCommandIdx] = '\0';
-							}
-							else
-							{
-								Error::reportError_CmdTooLong(serialCommandIdx);
-								serialCommandIdx = 0;
-								serialCommandBuffer[serialCommandIdx] = '\0';
-
-								commandInProgress = false;
-								timeOfLastChar = 0;
-
-								Outgoing::printOutputStringPROGMEM(BasicCommands::READY);
-							}
-						}
-					}
-				}
-
-		#ifdef RELAY_SUPPORTED
-				if (secondary)
-				{
-					if (secondaryCommandInProgress && millis() - secondaryTimeOfLastChar >= READ_TIMEOUT)
-					{
-						Outgoing::printOutputStringPROGMEM(BasicCommands::TIMEOUT);
-
-						secondaryCommandIdx = 0;
-						secondaryPeerCommandBuffer[secondaryCommandIdx] = '\0';
-
-						secondaryCommandInProgress = false;
-						secondaryTimeOfLastChar = 0;
-					}
-				}
-				else
-		#endif
-				{
-					if (commandInProgress && millis() - timeOfLastChar >= READ_TIMEOUT)
-					{
-						Outgoing::printOutputStringPROGMEM(BasicCommands::TIMEOUT);
-
-						serialCommandIdx = 0;
-						serialCommandBuffer[serialCommandIdx] = '\0';
-
-						commandInProgress = false;
-						timeOfLastChar = 0;
-					}
-				}
-
-		#ifdef RELAY_SUPPORTED
-				if (isRelayPeer && secondary)
-				{
-					Outgoing::setSecondaryPeerOutgoing(false);
-				}
-		#endif*/
-	}
-
-	bool rcvAvailable(bool secondary)
-	{
-		/*#ifdef RELAY_SUPPORTED
-			if (isRelayPeer)
-			{
-				if (secondary)
-				{
-					return Serial.available() > 0;
-				}
-				else
-				{
-					return ESPNowUtil::peerRecvAvailable();
-				}
-			}
-			else
-			{
-				return Serial.available() > 0;
-			}
-
-	#elif defined(USE_USB_SERIAL)
-			return Serial.available() > 0;*/
-
-#if defined(USE_ESP32_WIFI)
-		return client.available() > 0;
-#endif
-		return '\0';
-	}
-
-	char readNextChar(bool secondary)
-	{
-		/*#ifdef RELAY_SUPPORTED
-			if (isRelayPeer)
-			{
-				if (secondary)
-				{
-					return Serial.read();
-				}
-				else
-				{
-					return ESPNowUtil::peerReadNextChar();
-				}
-			}
-			else
-			{
-				return Serial.read();
-			}
-	#elif defined(USE_USB_SERIAL)
-			return Serial.read();*/
-
-#if defined(USE_ESP32_WIFI)
-		return client.read();
-#endif
-		return '\0';
 	}
 
 } // namespace BottangoCore

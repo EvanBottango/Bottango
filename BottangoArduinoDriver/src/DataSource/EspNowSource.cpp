@@ -1,6 +1,9 @@
 #include "EspNowSource.h"
+
+#if defined(RELAY_COMS_ESPNOW)
 #include "Modules/RelayComs/Relay.h"
 #include "BottangoCore.h"
+
 
 void EspNowSource::onPhase(Phase p)
 {
@@ -26,10 +29,6 @@ void EspNowSource::readData()
 		processData(relay->peerReadNextChar());
 	}
 
-	/*while (ESPNowUtil::peerRecvAvailable())
-	{
-		processData(ESPNowUtil::peerReadNextChar());
-	}*/
-
 	checkTimeout();
 }
+#endif // RELAY_COMS_ESPNOW
