@@ -25,6 +25,7 @@ void Parser::onPhase(Phase p)
 	bool sourceIsUsbSerial = _decoder->isSourceUsbSerial();
 	bool sendReady = false;
 
+	// Split the command and execute it
 	if (splitCommandBuffer != nullptr)
 	{
 		while (splitCommandBuffer)
@@ -37,7 +38,8 @@ void Parser::onPhase(Phase p)
 			splitCommandBuffer = _decoder->tryConsumeCommand();
 		}
 
-		if (sendReady)
+		// Send "OK" back to the source if the last command was successfully parsed and the source is USB serial
+		if (sendReady && sourceIsUsbSerial)
 		{
 			Outgoing::printOutputStringPROGMEM(BasicCommands::READY);
 		}

@@ -20,8 +20,17 @@ public:
 private:
 	// ==== Buffer and file management ====
 	char _commandBuffer[MAX_COMMAND_LENGTH];
+	const char* const* _dataArray = nullptr;
+	int8_t _arrayLength = 0;
+	const char* _loopCharStream = nullptr;
+	int8_t _dataArrayIndex = 0;
+	unsigned int _currentDataStringLength = 0;
+	unsigned int _travel = 0;
+	bool _shouldLoop = false;
 
+	bool getNextCommand(char* buffer, bool peek = false);
 	void parseConfiguration(AnimationConfiguration* config, const uint16_t* parsedValue) const;
+	void incrementArrayIndex();
 };
 
 #endif // USE_CODE_COMMAND_STREAM

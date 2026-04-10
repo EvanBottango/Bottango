@@ -58,6 +58,7 @@ bool SdCardSource::openSetup()
 	{
 		_dataComplete = false;
 		_fileReadComplete = false;
+		_shouldLoop = false;
 		LOG_DEBUG("SdCard", "openSetup()", "Opening Setup File");
 		LOG_DEBUG("SdCard", "openSetup()", "Marking _fileReadComplete = false");
 

@@ -111,15 +111,15 @@ void AnimationPlaybackControl::onPhase(Phase p)
 
 	updatePlaybackStatus();
 
-/*#ifdef RELAY_SUPPORTED
-	// If we're a relay bridge, we need to check if we should resume time on connected peers after setup
-	if (!_peerSetupDone && !_setupIsRunning && _relay->isBridge() && _relay->getPeerPool()->bridgeIsConnectedToAllPeers())
-	{
-		_relay->getPeerPool()->resumeTimeConnectedPeers(false);
-		Time::syncTime(0);
-		_peerSetupDone = true;
-	}
-#endif*/ // RELAY_SUPPORTED
+	/*#ifdef RELAY_SUPPORTED
+		// If we're a relay bridge, we need to check if we should resume time on connected peers after setup
+		if (!_peerSetupDone && !_setupIsRunning && _relay->isBridge() && _relay->getPeerPool()->bridgeIsConnectedToAllPeers())
+		{
+			_relay->getPeerPool()->resumeTimeConnectedPeers(false);
+			Time::syncTime(0);
+			_peerSetupDone = true;
+		}
+	#endif*/ // RELAY_SUPPORTED
 }
 
 void AnimationPlaybackControl::init()
@@ -141,14 +141,15 @@ void AnimationPlaybackControl::init()
 #ifdef USE_SD_CARD_COMMAND_STREAM
 	_offlineSource = static_cast<OfflineDataSource*>(BottangoCore::mMaster.registerModuleInOfflineDataSlot<SdCardSource>());
 #elif defined(USE_CODE_COMMAND_STREAM)
-	 BottangoCore::mMaster.registerModuleInSecondaryDataSlot<CodeSource>();
+	_offlineSource = static_cast<OfflineDataSource*>(BottangoCore::mMaster.registerModuleInOfflineDataSlot<CodeSource>());
 #endif // USE_CODE_COMMAND_STREAM
 
-	 loadConfig();
-	 _offlineSource->openSetup();
-	 _setupIsRunning = true;
+	loadConfig();
+	// ToDo: Error handling when openSetup fails
+	_offlineSource->openSetup();
+	_setupIsRunning = true;
 
-	 BottangoCore::mMaster.getModule<CommandDecoder>(Modules::Decoder)->setOfflineDataSource(_offlineSource);
+	BottangoCore::mMaster.getModule<CommandDecoder>(Modules::Decoder)->setOfflineDataSource(_offlineSource);
 
 	_parser = BottangoCore::mMaster.getModule<Parser>(Modules::Parser);
 
@@ -177,7 +178,7 @@ void AnimationPlaybackControl::init()
 	}
 #endif // ENABLE_DYNAMIC_ANIMATION_SOURCE_SWITCH
 
-	// Activate the secondary data source, if it exists
+	// Activate the offline data source, if it exists
 	if (BottangoCore::mMaster.getModule<DataSource>(Modules::DataSource_Offline) != nullptr)
 	{
 		SystemStatus::systemStatus.ConnectionStatus = SystemStatus::eConnectionStatus::Export_Playback;
@@ -398,7 +399,8 @@ bool AnimationPlaybackControl::readyForNextCommand()
 			_relay->getPeerPool()->clearCurvesOnConnectedPeers();
 			_relay->getPeerPool()->resumeTimeConnectedPeers(true);
 		}
-#endif
+#endif // RELAY_SUPPORTED
+
 		/*if (_offlineSource)
 		{
 			_offlineSource->resetBuffer();
@@ -417,14 +419,17 @@ bool AnimationPlaybackControl::readyForNextCommand()
 		return false;
 	}*/
 
-#ifdef USE_SD_CARD_COMMAND_STREAM
+
 #ifdef RELAY_SUPPORTED
 	// not ready for next if esp comms pool is full
 	if (_relay->isBridge() && _relay->getPeerPool()->toPeerQueueFull())
 	{
 		return false;
 	}
+#endif
 
+#ifdef USE_SD_CARD_COMMAND_STREAM
+#ifdef RELAY_SUPPORTED
 	// check pre read time?
 	if (_timeStartOfNextCommand > SD_ANIM_PREREAD_MS_RELAY)
 	{
@@ -435,30 +440,30 @@ bool AnimationPlaybackControl::readyForNextCommand()
 	{
 		return Time::getCurrentTimeInMs() >= _timeStartOfNextCommand - SD_ANIM_PREREAD_MS;
 	}
-#endif // USE_SD_CARD_COMMAND_STREAM
+#endif // RELAY_SUPPORTED
+
 
 	// otherwise all commands before pre-read are valid
-	else if (_timeStartOfNextCommand > 0)
+	if (_timeStartOfNextCommand > 0)
 	{
 		return true;
 	}
 	// fallback if we're at or past time of next
-	else
-	{
-		return Time::getCurrentTimeInMs() >= _timeStartOfNextCommand;
-	}
-	/*#elif defined(USE_CODE_COMMAND_STREAM)
-	#ifdef RELAY_SUPPORTED
-		// not ready for next if esp comms pool is full
-		if (BottangoCore::isRelayBridge && BottangoCore::relayPool->toPeerQueueFull())
-		{
-			return false;
-		}
-	#endif
-		return Time::getCurrentTimeInMs() >= timeOfNextCommand;*/
-#endif
+	return Time::getCurrentTimeInMs() >= _timeStartOfNextCommand;
 
-	return false;
+//#endif // USE_SD_CARD_COMMAND_STREAM
+#elif defined(USE_CODE_COMMAND_STREAM)
+#ifdef RELAY_SUPPORTED
+	// not ready for next if esp comms pool is full
+	if (BottangoCore::isRelayBridge && BottangoCore::relayPool->toPeerQueueFull())
+	{
+		return false;
+	}
+#endif // RELAY_SUPPORTED
+	return Time::getCurrentTimeInMs() >= _timeStartOfNextCommand;
+#endif // USE_CODE_COMMAND_STREAM
+
+	//return false;
 }
 
 bool AnimationPlaybackControl::complete()
@@ -570,24 +575,27 @@ void AnimationPlaybackControl::playAnimation(int index, bool loop)
 	BottangoCore::request_Stop();
 	LOG_DEBUG("APC", "playAnimation()", "Playing animation index %d, loop: %d", index, loop);
 	SystemStatus::systemStatus.Signal = SystemStatus::eSignal::OfflinePlayback;
-	_offlineSource->openAnimation(index, loop);
 
-#ifdef RELAY_SUPPORTED
-	if (BottangoCore::mMaster.getModule<Relay>(Modules::RelayComs)->isBridge())
+	// Opening the animation was successful
+	if (_offlineSource->openAnimation(index, loop))
 	{
-		// ToDo: Do we always send the whole setup again for each animation we play, or should this be a one-time only?
-		// There should be a check, if we lost a peer in the meantime, to only resend setup data if needed
+#ifdef RELAY_SUPPORTED
+		if (BottangoCore::mMaster.getModule<Relay>(Modules::RelayComs)->isBridge())
+		{
+			// ToDo: Do we always send the whole setup again for each animation we play, or should this be a one-time only?
+			// There should be a check, if we lost a peer in the meantime, to only resend setup data if needed
 
-		//Time::stopTime();
-		//BottangoCore::mMaster.getModule<Relay>(Modules::RelayComs)->getPeerPool()->stopTimeOnConnectedPeers();
+			//Time::stopTime();
+			//BottangoCore::mMaster.getModule<Relay>(Modules::RelayComs)->getPeerPool()->stopTimeOnConnectedPeers();
 
-		_relay->getPeerPool()->resumeTimeConnectedPeers(false);
-		//Time::syncTime(0);
-		//return;
-	}
+			_relay->getPeerPool()->resumeTimeConnectedPeers(false);
+			//Time::syncTime(0);
+			//return;
+		}
 #endif // RELAY_SUPPORTED
 
-	Time::syncTime(0);
+		Time::syncTime(0);
+	}
 }
 
 void AnimationPlaybackControl::setInvalidState()

@@ -10,6 +10,7 @@
 #include "../DataSource/RS485Source.h"
 #include "../DataSource/EspNowSource.h"
 #include "../DataSource/WifiSource.h"
+#include "../DataSource/CodeSource.h"
 
 /**
  * @brief Enumeration of available modules.
@@ -43,8 +44,12 @@ struct SlotSize;
 template <> struct SlotSize<Modules::DataSource_Offline>
 {
 	static constexpr size_t value = std::max({
+#if defined (USE_SD_CARD_COMMAND_STREAM)
 		sizeof(SdCardSource),
-		//sizeof(ExportedCodeSource) // ToDo for USE_CODE_COMMAND_STREAM
+#endif // USE_SD_CARD_COMMAND_STREAM
+#if defined (USE_CODE_COMMAND_STREAM)
+		sizeof(CodeSource)
+#endif
 		});
 };
 

@@ -16,10 +16,9 @@ class CommandDecoder : public LoopModule
 public:
 	struct SplitCommandData
 	{
-		char* splitCommandBuffer[COMMANDS_PARAMS_SIZE];
-		char* stringToSplit;
+		char* splitCommandBuffer[COMMANDS_PARAMS_SIZE] = {};
+		char* stringToSplit = nullptr;
 #ifdef ALLOW_SYNC_COMMANDS
-		//char* currentCommand = nullptr;
 		char* syncCommandToSplit = nullptr;
 		char* commandEnd = nullptr;
 		char* currentFrameStart = nullptr;
