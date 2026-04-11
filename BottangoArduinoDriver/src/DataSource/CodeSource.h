@@ -19,7 +19,7 @@ public:
 
 private:
 	// ==== Buffer and file management ====
-	char _commandBuffer[MAX_COMMAND_LENGTH];
+	char _commandBuffer[MAX_COMMAND_LENGTH] = {};
 	const char* const* _dataArray = nullptr;
 	int8_t _arrayLength = 0;
 	const char* _loopCharStream = nullptr;

@@ -38,8 +38,8 @@ void Parser::onPhase(Phase p)
 			splitCommandBuffer = _decoder->tryConsumeCommand();
 		}
 
-		// Send "OK" back to the source if the last command was successfully parsed and the source is USB serial
-		if (sendReady && sourceIsUsbSerial)
+		// Send "OK" back to the source if the last command was successfully parsed and if we are NOT in export playback mode
+		if (sendReady && SystemStatus::systemStatus.ConnectionStatus != SystemStatus::eConnectionStatus::Export_Playback)
 		{
 			Outgoing::printOutputStringPROGMEM(BasicCommands::READY);
 		}
@@ -359,7 +359,6 @@ unsigned long Parser::getEndTime(char* command) const
 		// To avoid re-processing when ALLOW_SYNC_COMMANDS is defined, splitCommandBuffer[0] is cleared above.
 		// commandHasStartTime will return false if so.
 		if (commandHasDuration(data.splitCommandBuffer[0])
-			&& commandHasDuration(data.splitCommandBuffer[0])
 			&& data.splitCommandBuffer[2] != nullptr
 			&& data.splitCommandBuffer[3] != nullptr)
 		{

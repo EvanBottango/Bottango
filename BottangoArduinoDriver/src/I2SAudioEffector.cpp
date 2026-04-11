@@ -6,7 +6,7 @@
 #include "TriggerCurve.h"
 #include "System/Time.h"
 #include "../BottangoArduinoConfig.h"
-#include "Outgoing.h"
+#include "Modules/Outgoing.h"
 #include "BottangoCore.h"
 #include "Module Handling/ModuleMaster.h"
 

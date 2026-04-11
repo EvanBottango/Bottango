@@ -28,8 +28,8 @@
 // selecting nothing is USB control
 // otherwise select one of the below:
 
-#define USE_CODE_COMMAND_STREAM                             // uncomment this line to drive animations from exported code instead of live control
-//#define USE_SD_CARD_COMMAND_STREAM                       // uncomment this line to drive animations from files on an SD card instead of live control (Note, arduino Uno / Nano / mega not supported)
+//#define USE_CODE_COMMAND_STREAM                             // uncomment this line to drive animations from exported code instead of live control
+#define USE_SD_CARD_COMMAND_STREAM                       // uncomment this line to drive animations from files on an SD card instead of live control (Note, arduino Uno / Nano / mega not supported)
 
 
 // if you have selected one of the above, enable this to dynamically switch between USB or the selected above exported animation source
@@ -46,7 +46,7 @@
 // !! AUDIO !!
 // (select only 1)
 // #define AUDIO_TRIGGER_EVENT                                 // uncomment this line to have audio keyframes act as trigger events
-// #define AUDIO_SD_I2S                                     // uncomment this line to have audio keyframes play audio over i2s, reading audio file from SD card
+#define AUDIO_SD_I2S                                     // uncomment this line to have audio keyframes play audio over i2s, reading audio file from SD card
 
 // extra features
 // #define DYNAMIC_VOLUME                                   // uncomment this line to adjust volume of i2s signal based on analog pin read

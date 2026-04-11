@@ -67,9 +67,10 @@ void ModuleMaster::setupModules()
 #endif // ENABLE_STATUS_LIGHTS
 
 #ifdef AUDIO_SD_I2S
-	static I2SAudioModule audioModule;
-	_modules[(int)Modules::AudioI2S] = &audioModule;
-	InterfaceRegistry::registerInterface(Modules::AudioI2S, static_cast<IAudioPlayback*>(&audioModule));
+	registerModule<I2SAudioModule>(Modules::AudioI2S);
+	//static I2SAudioModule audioModule;
+	//_modules[(int)Modules::AudioI2S] = &audioModule;
+	//InterfaceRegistry::registerInterface(Modules::AudioI2S, static_cast<IAudioPlayback*>(&audioModule));
 #endif
 
 	// ==== Setup Output bindings ====

@@ -1,14 +1,14 @@
 // AudioModule.h
-#include "../../../BottangoArduinoModules.h"
+#include "../BottangoArduinoModules.h"
 
 #ifdef AUDIO_SD_I2S
 #ifndef _AudioModule_h
 #define _AudioModule_h
 
 #include <Arduino.h>
-#include "../../Module Handling/ModuleMaster.h"
-#include "../../Interfaces/AudioPlayback.h"
-#include "../../../BottangoArduinoConfig.h"
+#include "Module Handling/ModuleMaster.h"
+#include "Interfaces/AudioPlayback.h"
+#include "../BottangoArduinoConfig.h"
 
 #ifdef ESP_ARDUINO_VERSION_MAJOR
 #if ESP_ARDUINO_VERSION >= ESP_ARDUINO_VERSION_VAL(3, 0, 0)

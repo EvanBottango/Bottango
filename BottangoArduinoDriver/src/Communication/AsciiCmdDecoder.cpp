@@ -160,7 +160,12 @@ void AsciiCmdDecoder::beginSyncCommand(SplitCommandData* data) const
 
 void AsciiCmdDecoder::getNextFrame(SplitCommandData* data) const
 {
-	if (!data->nextFrameStart || *data->nextFrameStart == '\0')
+	if (data == nullptr || data->nextFrameStart == nullptr)
+	{
+		return;
+	}
+
+	if (*data->nextFrameStart == '\0')
 	{
 		data->stringToSplit = nullptr;
 	}

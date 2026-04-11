@@ -1,11 +1,11 @@
-#include "../../../BottangoArduinoModules.h"
+#include "../BottangoArduinoModules.h"
 
 #ifdef AUDIO_SD_I2S
 #include "I2SAudioModule.h"
 #include "I2SAudEventStatusResponder.h"
-#include "../../SDCardUtil.h"
-#include "../../Outgoing.h"
-#include "../../BottangoCore.h"
+#include "DataSource/SDCardUtil.h"
+#include "Modules/Outgoing.h"
+#include "BottangoCore.h"
 
 void I2SAudioModule::onPhase(Phase p)
 {
