@@ -6,6 +6,7 @@
 #include "DataSource/SDCardUtil.h"
 #include "Modules/Outgoing.h"
 #include "BottangoCore.h"
+#include "System/Systemstatus.h"
 
 void I2SAudioModule::onPhase(Phase p)
 {
@@ -247,7 +248,35 @@ void I2SAudioModule::checkAudioSource(const char* effectorIdentifier, const char
 		BottangoCore::activeOutgoingMultimessage = nullptr;
 	}
 	BottangoCore::activeOutgoingMultimessage = new I2SAudEventStatusResponder(responderCode);
-	BottangoCore::activeOutgoingMultimessage->initializeMultiMessage();
+
+#ifdef RELAY_SUPPORTED
+	if (Outgoing::secondaryPeerOutgoing)
+	{
+		BottangoCore::activeOutgoingMultimessage->setSecondary();
+	}
+#endif
+	BottangoCore::activeOutgoingMultimessage->initializeMultiMessage(Outgoing::get());
+
+#if defined(USE_CODE_COMMAND_STREAM) || defined(USE_SD_CARD_COMMAND_STREAM)
+	if (SystemStatus::systemStatus.ConnectionStatus == SystemStatus::eConnectionStatus::Export_Playback
+		&& !(responderCode == I2S_AUDIO_STATUS_READY || responderCode == I2S_AUDIO_STATUS_NO_HASH_MATCH_ON_CARD))
+	{
+		BottangoCore::mMaster.getModule<AnimationPlaybackControl>(Modules::AnimPlaybackCntrl)->setInvalidState();
+#ifdef EXPORTED_ANIM_LOGGING
+#ifdef TOGGLE_DEBUG
+		if (PersistentConfigUtil::debugEnabled() || ALWAYS_LOG_ERROR_CASE)
+#endif
+		{
+			Outgoing::printOutputStringFlash(F("Exported Anim, Audio File SD Error: "));
+			Outgoing::printOutputStringMem(effectorIdentifier);
+			Outgoing::printOutputStringFlash(F(" code: "));
+			Outgoing::printOutputStringMem(responderCode);
+			Outgoing::printLine();
+		}
+
+#endif
+	}
+#endif
 }
 
 void I2SAudioModule::play(const char* effectorIdentifier, uint32_t offsetMS)

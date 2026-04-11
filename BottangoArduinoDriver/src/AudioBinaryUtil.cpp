@@ -1,8 +1,8 @@
 #include "../BottangoArduinoModules.h"
-#include "AudioBinaryUtil.h"
+#if defined(AUDIO_SD_I2S)  && defined(ENABLE_ESP_OTA_UPDATE)
 
-#if defined(AUDIO_SD_I2S)
-#include "Outgoing.h"
+#include "AudioBinaryUtil.h"
+#include "Modules/Outgoing.h"
 #include "BasicCommands.h"
 #include "HexDataDownloadUtil.h"
 

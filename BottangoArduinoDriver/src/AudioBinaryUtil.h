@@ -1,11 +1,11 @@
 #include "../BottangoArduinoModules.h"
-#if defined(AUDIO_SD_I2S)
+#if defined(AUDIO_SD_I2S) && defined(ENABLE_ESP_OTA_UPDATE)
 
 #ifndef AUDIO_BINARY_UTIL_H
 #define AUDIO_BINARY_UTIL_H
 
 #include <Arduino.h>
-#include "SDCardUtil.h"
+#include "DataSource/SDCardUtil.h"
 
 namespace AudioBinaryUtil
 {

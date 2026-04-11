@@ -1,10 +1,10 @@
-#include "../../../BottangoArduinoModules.h"
+#include "../BottangoArduinoModules.h"
 #if defined(AUDIO_SD_I2S)
 
 #ifndef I2SAudEventStatusResponder_h
 #define I2SAudEventStatusResponder_h
 
-#include "../../AbstractMultiMessageOutgoingSource.h"
+#include "AbstractMultiMessageOutgoingSource.h"
 
 // good to go
 #define I2S_AUDIO_STATUS_READY 0
@@ -22,6 +22,7 @@
 // <- OK
 // <- sAud,statusCode
 // -> OK
+// <- OK
 // Complete
 
 const char REPLY_AUD_STATUS[] PROGMEM = "sAud";
@@ -29,20 +30,15 @@ const char REPLY_AUD_STATUS[] PROGMEM = "sAud";
 class I2SAudEventStatusResponder : public AbstractMultiMessageOutgoingSource
 {
 public:
-    I2SAudEventStatusResponder(byte incomingStatus);
+	I2SAudEventStatusResponder(byte incomingStatus);
 
-    virtual void initializeMultiMessage() override;
+	virtual void cleanUpMultiMessage() override; // cleanup if aborting...
 
-    virtual bool multiMessageisComplete() override; // when everything is done and responded to, ready to clean up
-
-    virtual void updateMultiMessage() override; // will send if anything to send, will timeout if waiting and no response, will send closing if ready/any
-
-    virtual void cleanUpMultiMessage() override; // cleanup if aborting...
-
-    byte status;
+	byte status;
 
 private:
-    bool statusSent = false;
+	void onMultiMessageStart() override;
+	bool emitNextChunk() override;
 };
 
 #endif

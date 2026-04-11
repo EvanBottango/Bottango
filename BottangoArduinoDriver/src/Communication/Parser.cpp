@@ -199,7 +199,7 @@ bool Parser::parseCommand(char** splitCommandBuffer, bool sourceIsUsbSerial) con
 		BasicCommands::stepperSync(splitCommandBuffer);
 	}
 #ifdef AUDIO_SD_I2S
-	else if (strcmp_P(commandName, BasicCommands::I2S_RegisterAudioEvent()) == 0)
+	else if (strcmp_P(commandName, BasicCommands::REGISTER_AUDIO_EVENT) == 0)
 	{
 		BasicCommands::registerAudioEvent(splitCommandBuffer);
 	}

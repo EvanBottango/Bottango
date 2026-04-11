@@ -1,4 +1,3 @@
-
 #include "BasicCommands.h"
 #include "PinServoEffector.h"
 #include "PinStepperEffector.h"
@@ -272,10 +271,7 @@ namespace BasicCommands
 		char* identifier = args[1];
 		char* hash = args[2];
 
-		BottangoCore::effectorPool.addEffector<I2SAudioEffector>(identifier, hash, static_cast<IAudioPlayback*>(InterfaceRegistry::get(Modules::AudioI2S)));
-
-		//I2SAudioEffector *newEffector = new I2SAudioEffector(identifier, hash, static_cast<IAudioPlayback*>(InterfaceRegistry::get(Modules::AudioI2S)));
-		//BottangoCore::effectorPool.addEffector(newEffector);
+		BottangoCore::effectorPool.addEffector<I2SAudioEffector>(identifier, hash);
 	}
 #endif
 

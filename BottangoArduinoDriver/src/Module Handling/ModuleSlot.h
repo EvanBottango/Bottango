@@ -1,5 +1,3 @@
-// ModuleSlot.h
-
 #ifndef _ModuleSlot_h
 #define _ModuleSlot_h
 

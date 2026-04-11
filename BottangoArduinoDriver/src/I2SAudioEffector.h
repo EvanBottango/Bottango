@@ -8,13 +8,12 @@
 #include "AbstractEffector.h"
 #include "DataSource/SDCardUtil.h"
 #include "../BottangoArduinoConfig.h"
-#include "Interfaces/AudioPlayback.h"
+#include "Modules/Audio/I2SAudioModule.h"
 
 class I2SAudioEffector : public AbstractEffector
 {
 public:
-    I2SAudioEffector(char* identifier, char* hash, IAudioPlayback* interface);
-	//I2SAudioEffector(char** args);
+    I2SAudioEffector(char* identifier, char* hash);
 
     virtual void updateOnLoop() override;
     virtual void driveOnLoop() override;
@@ -24,11 +23,11 @@ public:
 
 protected:
 private:
-	IAudioPlayback* AudioInterface;
+	I2SAudioModule* _audioModule = nullptr;
 
-    char myIdentifier[9];
-    bool shouldFire = false;
-	uint32_t offsetMS = 0;
+    char _myIdentifier[9];
+    bool _shouldFire = false;
+	uint32_t _offsetMS = 0;
 };
 
 #endif

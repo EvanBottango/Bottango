@@ -1,4 +1,3 @@
-// AudioModule.h
 #include "../BottangoArduinoModules.h"
 
 #ifdef AUDIO_SD_I2S
@@ -7,7 +6,6 @@
 
 #include <Arduino.h>
 #include "Module Handling/ModuleMaster.h"
-#include "Interfaces/AudioPlayback.h"
 #include "../BottangoArduinoConfig.h"
 
 #ifdef ESP_ARDUINO_VERSION_MAJOR
@@ -15,23 +13,23 @@
 #include "ESP_I2S.h"
 #else
 #include "driver/i2s.h"
-#endif
-#endif
+#endif // ESP_ARDUINO_VERSION
+#endif // ESP_ARDUINO_VERSION_MAJOR
 
 void i2s_Task(void* param);
 
-class I2SAudioModule : public LoopModule, public IAudioPlayback
+class I2SAudioModule : public LoopModule
 {
 public:
     void onPhase(Phase p) override;
     void init() override;
 	void updateVolume();
 
-	virtual void checkAudioSource(const char* effectorIdentifier, const char* hash) override;
-	virtual bool isAudioSourceOK() const override { return audioSourceOK; }
-	virtual void play(const char* effectorIdentifier, uint32_t offsetMS) override;
-	virtual void stop() override;
-	virtual bool isPlaying() const override;
+	void checkAudioSource(const char* effectorIdentifier, const char* hash);
+	bool isAudioSourceOK() const { return audioSourceOK; }
+	void play(const char* effectorIdentifier, uint32_t offsetMS);
+	void stop();
+	bool isPlaying() const;
 	void init_I2S_Task();	
 
 	/**
@@ -84,8 +82,8 @@ public:
 		.ws_io_num = I2S_LRC,
 		.data_out_num = I2S_DOUT,
 		.data_in_num = I2S_PIN_NO_CHANGE };
-#endif
-#endif
+#endif // ESP_ARDUINO_VERSION
+#endif // ESP_ARDUINO_VERSION_MAJOR
 private:
 	uint32_t sampleRate_FromHeader = 0;
 	bool audioSourceOK = false;
@@ -98,13 +96,11 @@ private:
 #else
 	i2s_bits_per_sample_t BitsPerSample_FromHeader;
 	i2s_channel_fmt_t channelFormat_FromHeader;
-#endif
-#endif
+#endif // ESP_ARDUINO_VERSION
+#endif // ESP_ARDUINO_VERSION_MAJOR
 
-private:
 	 void start_I2S_Task();
 };
 
-
-#endif
-#endif
+#endif // _AudioModule_h
+#endif // AUDIO_SD_I2S

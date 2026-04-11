@@ -17,21 +17,10 @@ bool MACResponder::emitNextChunk()
 	char buffer[15];
 	PersistentConfigUtil::getThisDeviceMacAddress(buffer);
 
-	// ToDo: Hier muss ein passender switch rein, damit das an den richtigen Kanal gesendet wird
-	/*if (secondary)
-	{
-		Outgoing::setSecondaryPeerOutgoing(true);
-	}*/
-
 	_outgoing->printOutputStringPROGMEM(REPLY_MAC_ADDRESS);
 	_outgoing->printOutputStringFlash(F(","));
 	_outgoing->printOutputStringMem(buffer);
 	_outgoing->printLine();
-
-	/*if (secondary)
-	{
-		Outgoing::setSecondaryPeerOutgoing(false);
-	}*/
 
 	return true;
 }

@@ -1,5 +1,3 @@
-// ModuleMaster.h
-
 #ifndef _ModuleMaster_h
 #define _ModuleMaster_h
 
@@ -9,7 +7,7 @@
 #include "../Modules/Outgoing.h"
 
 /**
- * @brief The ModuleMaster class is responsible for managing and executing the lifecycle of various modules in the system.
+ * @brief The ModuleMaster class is responsible for managing and executing the lifecycle of various modules/functions in the system.
  * @details It handles the setup, initialization, and execution of different phases for each registered module.
  */
 class ModuleMaster
@@ -27,12 +25,12 @@ public:
 	~ModuleMaster() = default;
 
 	/**
-	 * @brief Initializes and configures modules used by the application.
+	 * @brief Initial setup of modules. Modules are created and registered in this method. Is called once during system setup.
 	 */
 	void setupModules();
 
 	/**
-	 * @brief Initializes modules. Is called once during system setup.
+	 * @brief Initializes every module, which were setup earlier. Is called once during system setup.
 	 */
 	void initModules();
 
@@ -43,10 +41,10 @@ public:
 	void executePhase(Phase p);
 
 	/**
-	 * @brief Retrieves a module of the specified type.
-	 * @tparam T The type of the module to retrieve.
-	 * @param moduleType The type of module to retrieve.
-	 * @return Pointer to the requested module instance.
+	 * @brief Retrieves a specific module instance by its enum reprensentation. The returned pointer is of the type specified by the template parameter T.
+	 * @tparam T The class of the module to retrieve. Can be a base class, that the module inherits from.
+	 * @param moduleType The enum entry that corresponds to the module being requested.
+	 * @return Pointer to the requested module instance (T*).
 	 */
 	template <typename T>
 	T* getModule(Modules moduleType)
@@ -55,11 +53,11 @@ public:
 	}
 
 	/**
-	 * @brief Registers a module of the specified type. The module instance is stored in the modules registry and its pointer is returned.
+	 * @brief Creates a static instance of the specified module type and registers it in the modules registry.
 	 * Static storage duration is used for the module instance, so it will be automatically destroyed when the program ends.
-	 * @tparam T The type of the module to register.
-	 * @param moduleType The type of module to register.
-	 * @return Pointer to the registered module instance.
+	 * @tparam T The class of the module to register.
+	 * @param moduleType The enum entry that corresponds to the module being registered.
+	 * @return Pointer to the registered instance (T*).
 	 */
 	template <typename T>
 	T* registerModule(Modules moduleType)
@@ -73,8 +71,8 @@ public:
 	/**
 	 * @brief Register a data source into the offline data source slot and initialize it by calling init(). The old instance in the slot will be destroyed gracefully using the destructor.
 	 * Static storage duration is used for the module instance, so it will be automatically destroyed when the program ends.
-	 * @tparam T The concrete data source module type to place in the offline data source slot.
-	 * @return Pointer to the newly created/placed module instance (T*), which is also stored in the modules registry.
+	 * @tparam T The concrete data source module class to place in the offline data source slot.
+	 * @return Pointer to the newly created/placed module instance (T*).
 	 */
 	template <typename T>
 	T* registerModuleInOfflineDataSlot()
@@ -89,14 +87,14 @@ public:
 		_modules[(int)Modules::DataSource_Offline] = moduleInstance;
 		return moduleInstance;
 	}
-#endif
+#endif // USE_SD_CARD_COMMAND_STREAM || USE_CODE_COMMAND_STREAM
 
 #if defined(RELAY_SUPPORTED) || defined(USE_ESP32_WIFI)
 	/**
 	 * @brief Register a data source into the secondary data source slot and initialize it by calling init(). The old instance in the slot will be destroyed gracefully using the destructor.
 	 * Static storage duration is used for the module instance, so it will be automatically destroyed when the program ends.
 	 * @tparam T The concrete data source module type to place in the secondary data source slot.
-	 * @return Pointer to the newly created/placed module instance (T*), which is also stored in the modules registry.
+	 * @return Pointer to the newly created/placed module instance (T*).
 	 */
 	template <typename T>
 	T* registerModuleInSecondaryDataSlot()
@@ -111,7 +109,7 @@ public:
 		_modules[(int)Modules::DataSource_Secondary] = moduleInstance;
 		return moduleInstance;
 	}
-#endif
+#endif // RELAY_SUPPORTED || USE_ESP32_WIFI
 
 private:
 	/**
@@ -124,47 +122,14 @@ private:
 	 * @brief A module slot sized for the biggest possible offline data source module.
 	 */
 	ModuleSlot<SlotSize<Modules::DataSource_Offline>::value> _slotOfflineDataSource;
-#endif
+#endif // USE_SD_CARD_COMMAND_STREAM || USE_CODE_COMMAND_STREAM
 
 #if defined(RELAY_SUPPORTED) || defined(USE_ESP32_WIFI)
 	/**
 	 * @brief A module slot sized for the biggest possible secondary data source module.
 	 */
 	ModuleSlot<SlotSize<Modules::DataSource_Secondary>::value> _slotSecondaryDataSource;
-#endif
+#endif // RELAY_SUPPORTED || USE_ESP32_WIFI
 };
 
-/**
- * @brief The InterfaceRegistry class provides a mechanism to register and retrieve interfaces for different modules.
- */
-class InterfaceRegistry
-{
-public:
-	/**
-	 * @brief Registers the interface for the given module type.
-	 * @param ModuleType The type of module.
-	 * @param interface Pointer to the interface to register.
-	 */
-	static void registerInterface(Modules ModuleType, void* interface)
-	{
-		interfaces[(int)ModuleType] = interface;
-	}
-
-	/**
-	 * @brief Retrieves the interface for the given module type.
-	 * @param ModuleType The type of module.
-	 * @return Pointer to the registered interface.
-	 */
-	static void* get(Modules ModuleType)
-	{
-		return interfaces[(int)ModuleType];
-	}
-
-private:
-	/**
-	 * @brief A array of void* pointers, sized to (int)Modules::Max, initialized with nullptr.
-	 */
-	static inline void* interfaces[(int)Modules::Max] = { nullptr };
-};
-
-#endif
+#endif // _ModuleMaster_h
