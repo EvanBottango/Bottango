@@ -4,6 +4,10 @@
 
 #include "BezierCurve.h"
 
+// vtable = 12 byte
+// size of this class in RAM = 28 bytes (not including vtable pointer)
+// Formula for RAM usage: n * instance size + vtable size, where n is the number of instances. So for example, 8 instances would be 8 * 28 + 12 = 236 bytes of RAM.
+// getValue() needs ~90 bytes of RAM on the stack. After optimizations, it is down to ~56 byte of RAM on the stack. (38% reduction)
 class FloatBezierCurve : public BezierCurve
 {
 public:
@@ -18,19 +22,24 @@ public:
         int endControlY);
 
     /** returns a value in the range [startPosition - endPosition] */
-    virtual float getValue(unsigned long currentTimeMs);
+    virtual float getValue(unsigned long currentTimeMs) override;
 
-    virtual bool isInProgress(unsigned long currentTimeMs);
+    virtual bool isInProgress(unsigned long currentTimeMs) override;
 
-    virtual unsigned long getEndTimeMs();
+    virtual unsigned long getEndTimeMs() override;
 
-    virtual unsigned long getStartTimeMs();
+    virtual unsigned long getStartTimeMs() override;
 
-    virtual float getStartMovement();
-    virtual float getEndMovement();
+    virtual float getStartMovement() override;
+    virtual float getEndMovement() override;
 
 private:
-    float lerp(float start, float end, float u);
+    //float lerp(float start, float end, float u);
+	// This removes 18 bytes of RAM on stack
+	inline float lerp(float start, float end, float u)
+	{
+		return ((end - start) * u) + start;
+	}
 
     void EvaluateForUX(float u, float &outx);
     void EvaluateForUY(float u, float &outy);

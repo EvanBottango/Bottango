@@ -73,31 +73,47 @@ float FloatBezierCurve::Evaluate(unsigned long x)
 
 void FloatBezierCurve::EvaluateForUX(float u, float &outx)
 {
-    float p11x = (float)startControlX * u;
+    /*float p11x = (float)startControlX * u;
     float p12x = lerp((float)startControlX, (float)(duration + endControlX), u);
     float p13x = lerp((float)(duration + endControlX), (float)duration, u);
     float p21x = lerp(p11x, p12x, u);
     float p22x = lerp(p12x, p13x, u);
 
-    outx = lerp(p21x, p22x, u);
+    outx = lerp(p21x, p22x, u);*/
+
+	// This saves 8 bytes of RAM on stack by reusing the same variables
+	float a = (float)startControlX * u;
+	float b = lerp((float)startControlX, (float)(duration + endControlX), u);
+	float c = lerp((float)(duration + endControlX), (float)duration, u);
+	a = lerp(a, b, u);
+	b = lerp(b, c, u);
+	outx = lerp(a, b, u);
 }
 
 void FloatBezierCurve::EvaluateForUY(float u, float &outy)
 {
-    float p11y = lerp((float)startY, (float)(startY + startControlY), u);
+    /*float p11y = lerp((float)startY, (float)(startY + startControlY), u);
     float p12y = lerp((float)(startY + startControlY), (float)(endY + endControlY), u);
     float p13y = lerp((float)(endY + endControlY), (float)endY, u);
     float p21y = lerp(p11y, p12y, u);
     float p22y = lerp(p12y, p13y, u);
 
-    outy = lerp(p21y, p22y, u);
+    outy = lerp(p21y, p22y, u);*/
+
+	// This saves 8 bytes of RAM on stack by reusing the same variables
+	float a = lerp((float)startY, (float)(startY + startControlY), u);
+	float b = lerp((float)(startY + startControlY), (float)(endY + endControlY), u);
+	float c = lerp((float)(endY + endControlY), (float)endY, u);
+	a = lerp(a, b, u);
+	b = lerp(b, c, u);
+	outy = lerp(a, b, u);
 }
 
-float FloatBezierCurve::lerp(float start, float end, float u)
+/*float FloatBezierCurve::lerp(float start, float end, float u)
 {
     float result = ((end - start) * u) + start;
     return result;
-}
+}*/
 
 bool FloatBezierCurve::isInProgress(unsigned long currentTimeMs)
 {
