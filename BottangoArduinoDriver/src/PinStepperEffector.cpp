@@ -1,4 +1,5 @@
 #include "PinStepperEffector.h"
+#ifdef ADVANCED_FEATURES
 #include "BottangoCore.h"
 #include "Errors.h"
 
@@ -144,3 +145,4 @@ void PinStepperEffector::getIdentifier(char *outArray, short arraySize)
     snprintf(outArray, arraySize, "%d", (int)pin0);
 #endif
 }
+#endif // ADVANCED_FEATURES

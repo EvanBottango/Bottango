@@ -46,9 +46,9 @@ namespace BasicCommands
 	// input [0] command, [1] hash code
 	// output [0] command, [1] driver version, [2] repeat back hash code
 	void sendHandshakeResponse(char* args[], bool sourceIsUsbSerial)
-	{
-		bool offlinePlayback = false;
+	{		
 #if defined(USE_CODE_COMMAND_STREAM) || defined(USE_SD_CARD_COMMAND_STREAM)
+		bool offlinePlayback = false;
 #ifdef ENABLE_DYNAMIC_ANIMATION_SOURCE_SWITCH
 		offlinePlayback = PersistentConfigUtil::getUseExportedCommandStream();
 #else 
@@ -200,6 +200,7 @@ namespace BasicCommands
 		BottangoCore::effectorPool.addEffector<I2CServoEffector>(address, pinId, minPWM, maxPWM, maxPWMSec, startPWM);
 	}
 
+#ifdef ADVANCED_FEATURES
 	void registerPinStepper(char** args)
 	{
 
@@ -233,6 +234,7 @@ namespace BasicCommands
 		StepDirStepperEffector* newEffector = new StepDirStepperEffector(stepPin, dirPin, clockwiseIsLow, maxCounterClockwiseSteps, maxClockwiseSteps, maxStepsPerSecond, startingStepOffset);
 		BottangoCore::effectorPool.addEffector(newEffector);
 	}
+#endif
 
 	void registerCurvedEvent(char** args)
 	{
@@ -486,6 +488,7 @@ namespace BasicCommands
 		BottangoCore::effectorPool.addCurveToEffector(identifier, new ColorCurve(Time::getCurrentTimeInMs(), 0, r, g, b, r, g, b));
 	}
 
+#ifdef ADVANCED_FEATURES
 	/**
 	 * Command to sync a stepper type effector
 	 * [1]identifier, [2] targetSync (0 - 100 and 0 - -100 are manual sync) ( any number > 100 and <-100 are auto sync in the given direction)
@@ -516,6 +519,7 @@ namespace BasicCommands
 			BottangoCore::effectorPool.syncEffector(identifier, syncVal);
 		}
 	}
+#endif // ADVANCED_FEATURES
 
 	void clearCurvesForEffector(char** args)
 	{

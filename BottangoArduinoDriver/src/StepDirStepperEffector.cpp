@@ -1,4 +1,6 @@
 #include "StepDirStepperEffector.h"
+
+#ifdef ADVANCED_FEATURES
 #include "BottangoCore.h"
 #include "Errors.h"
 
@@ -172,3 +174,5 @@ void StepDirStepperEffector::getIdentifier(char *outArray, short arraySize)
     snprintf(outArray, arraySize, "%d", (int)stepPin);
 #endif
 }
+
+#endif // ADVANCED_FEATURES

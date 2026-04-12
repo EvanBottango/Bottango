@@ -2,6 +2,7 @@
 #define PinStepperEffector_h
 
 #include "VelocityEffector.h"
+#ifdef ADVANCED_FEATURES
 #include "Arduino.h"
 
 class PinStepperEffector : public VelocityEffector
@@ -27,4 +28,5 @@ private:
     void pulse();
 };
 
+#endif
 #endif

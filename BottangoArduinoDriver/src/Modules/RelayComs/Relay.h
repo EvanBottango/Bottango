@@ -55,4 +55,4 @@ protected:
 	unsigned long lastHeartbeatTime = 0;
 };
 
-#endif; // RELAY_SUPPORTED
+#endif // RELAY_SUPPORTED

@@ -1,6 +1,10 @@
 #ifndef StepDirStepperEffector_h
 #define StepDirStepperEffector_h
 
+#include "../BottangoArduinoModules.h"
+#ifdef ADVANCED_FEATURES
+
+
 #include "VelocityEffector.h"
 #include "Arduino.h"
 
@@ -32,5 +36,5 @@ protected:
 private:
     void stepDrive();
 };
-
-#endif
+#endif // ADVANCED_FEATURES
+#endif // StepDirStepperEffector_h

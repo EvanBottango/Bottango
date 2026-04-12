@@ -37,6 +37,7 @@ namespace BottangoCore
 		mMaster.setupModules();
 		mMaster.initModules();
 
+		pinMode(10, OUTPUT);
 
 #ifdef NAMED_BOARD_STARTUP
 		NamedBoardStartup::runNamedBoardStartup();
@@ -97,7 +98,7 @@ namespace BottangoCore
 			else
 			{
 				SystemStatus::systemStatus.ConnectionStatus = SystemStatus::eConnectionStatus::No_Connection_Serial;
-			}			
+			}
 		}
 #else 
 		SystemStatus::systemStatus.ConnectionStatus = SystemStatus::eConnectionStatus::No_Connection_Serial;
@@ -124,7 +125,7 @@ namespace BottangoCore
 			if (stopPlaybackModule(true))
 			{
 				hardStop();
-			}			
+			}
 		}
 		else
 		{
@@ -156,17 +157,18 @@ namespace BottangoCore
 
 	void bottangoLoop()
 	{
+		digitalWrite(10, !digitalRead(10));
+
 		Callbacks::onEarlyLoop();
 		mMaster.executePhase(Phase::Input);
 		mMaster.executePhase(Phase::Communication);
 		mMaster.executePhase(Phase::Logic);
 		mMaster.executePhase(Phase::Output);
 
-
+		// update relay pool
+#ifdef RELAY_SUPPORTED
 		if (SystemStatus::systemStatus.initialized)
 		{
-			// update relay pool
-#ifdef RELAY_SUPPORTED
 			if (mMaster.getModule<Relay>(Modules::RelayComs)->isPeer() && millis() - lastPollTimeAsPeer > RELAY_POLL_TIMEOUT_AS_PEER)
 			{
 				OutgoingSerial::printOutputStringFlash(F("Lost Bridge!"));
@@ -175,8 +177,8 @@ namespace BottangoCore
 				//BasicCommands::reboot(false);
 				lastPollTimeAsPeer = millis();
 			}
-#endif
 		}
+#endif
 
 		// update outgoing multimessage sender if any
 		if (activeOutgoingMultimessage != nullptr)

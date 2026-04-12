@@ -49,9 +49,6 @@
     <Filter Include="Header Files\lib\ESP32Servo">
       <UniqueIdentifier>{c1c233dd-67c6-4549-9dad-850974c04cf8}</UniqueIdentifier>
     </Filter>
-    <Filter Include="Header Files\Data">
-      <UniqueIdentifier>{8c3ae968-afbd-45c4-9c72-707a3f224650}</UniqueIdentifier>
-    </Filter>
     <Filter Include="Header Files\Effector\Audio">
       <UniqueIdentifier>{debdf1a6-a285-4233-80b5-b83d5df5ad85}</UniqueIdentifier>
     </Filter>
@@ -78,9 +75,6 @@
     </Filter>
     <Filter Include="Source Files\System\Util">
       <UniqueIdentifier>{64f64c79-e94f-4ba5-8d7a-803e940cd1d4}</UniqueIdentifier>
-    </Filter>
-    <Filter Include="Source Files\Data">
-      <UniqueIdentifier>{1ef89748-dbad-4796-8bb1-071545829da5}</UniqueIdentifier>
     </Filter>
     <Filter Include="Source Files\OTA">
       <UniqueIdentifier>{507432dd-d7c4-4766-9b3e-4a4e0f0b5307}</UniqueIdentifier>
@@ -355,9 +349,6 @@
     <ClCompile Include="src\BottangoCore.cpp">
       <Filter>Source Files\System</Filter>
     </ClCompile>
-    <ClCompile Include="src\AbstractMultiMessageOutgoingSource.cpp">
-      <Filter>Source Files\Data</Filter>
-    </ClCompile>
     <ClCompile Include="src\AudioBinaryUtil.cpp">
       <Filter>Source Files\OTA</Filter>
     </ClCompile>
@@ -443,7 +434,10 @@
       <Filter>Source Files\DataSource</Filter>
     </ClCompile>
     <ClCompile Include="src\AbstractMultiMessageOutgoingSource.h">
-      <Filter>Header Files\Data</Filter>
+      <Filter>Header Files\Communication</Filter>
+    </ClCompile>
+    <ClCompile Include="src\AbstractMultiMessageOutgoingSource.cpp">
+      <Filter>Source Files\Communication</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>

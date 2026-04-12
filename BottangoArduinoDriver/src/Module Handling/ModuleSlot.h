@@ -21,16 +21,28 @@
 enum class Modules : uint8_t
 {
 	DataSource_Serial,			// [Mandatory] Primary data source, always present and active
+#if defined(USE_SD_CARD_COMMAND_STREAM) || defined(USE_CODE_COMMAND_STREAM)
 	DataSource_Offline,			// [Optinal] Offline data source, can be switched between different modules (e.g. SD card, Export to code)
+#endif // USE_SD_CARD_COMMAND_STREAM || USE_CODE_COMMAND_STREAM
+#if defined(RELAY_SUPPORTED) || defined(USE_ESP32_WIFI)
 	DataSource_Secondary,		// [Optinal] Secondary data source, can be switched between different modules (e.g. ESP-Now, RS485, etc.)
 	RelayComs,					// [Optinal] Relay communication module, if supported
+#endif // RELAY_SUPPORTED || USE_ESP32_WIFI
 	Decoder,					// [Mandatory] Command decoder, parses raw data into commands. Can be switched between different decoders (e.g. ASCII, binary, etc.)
 	Parser,						// [Mandatory] Command parser, takes parsed commands and executes them
-	EffectorPool,				// [Mandatory] Pool of effectors that can be used by commands	
+	EffectorPool,				// [Mandatory] Pool of effectors that can be used by commands
+#if defined (STOP_BUTTON_SUPPORTED)
 	StopButton,					// [Optinal] Stop button module, if supported
+#endif // STOP_BUTTON_SUPPORTED
+#if defined (STATUS_LIGHTS_SUPPORTED)
 	StatusLights,				// [Optinal] Status lights module, if supported
+#endif // STATUS_LIGHTS_SUPPORTED
+#if defined (USE_I2S_AUDIO)
 	AudioI2S,					// [Optinal] I2S audio module, if supported	
+#endif // USE_I2S_AUDIO
+#if defined(USE_SD_CARD_COMMAND_STREAM) || defined(USE_CODE_COMMAND_STREAM)
 	AnimPlaybackCntrl,			// [Mandatory] [Has to be second to last] Animation playback control module, is used automatically, depending on the active BottangoArduinoModules
+#endif // USE_SD_CARD_COMMAND_STREAM || USE_CODE_COMMAND_STREAM
 	Max							// [Mandatory] [Has to be the last] Sentinel value to indicate the number of modules, must always be last
 };
 

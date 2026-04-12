@@ -109,13 +109,13 @@
 #define CMD_PREFIX_SIZE 16                                   // max character count of a command prefix
 #define READ_TIMEOUT 50                                      // time in MS before timeout while reading incoming serial
 #define COMMANDS_PARAMS_SIZE 15                              // max number of paramaters in an incoming command
-#define BAUD_RATE 115200                                     // serial speed at which Bottango and Arduino communicate with each other
+#define BAUD_RATE 500000                                     // serial speed at which Bottango and Arduino communicate with each other
 #define COMPRESSED_SIGNAL_MAX 8192.0f                        // Movement is sent as a value between 0 and this value
 #define COMPRESSED_SIGNAL_MAX_INT (int)COMPRESSED_SIGNAL_MAX // Cast to int shortcut
 #define TRIGGER_EVENT_PIN_TIME 250                            // time in MS to keep a pin high before setting it back low in trigger events
 #define OUTGOING_TIMEOUT_RESPONSE_TIME 1000                  // time in MS to wait to get a continue response during a multi message outgoing response
 #if defined(ARDUINO_AVR_UNO) || defined(ARDUINO_AVR_NANO)
-#define MAX_NUM_CURVES 3                                     // number of curves to precache (uno / mega)
+#define MAX_NUM_CURVES 2                                     // number of curves to precache (uno / mega)
 #else
 #define MAX_NUM_CURVES 8                                     // number of curves to precache (everything else)
 #endif

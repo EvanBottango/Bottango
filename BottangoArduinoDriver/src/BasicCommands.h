@@ -52,11 +52,13 @@ namespace BasicCommands
     /** Register a Servo type effector with a [0] i2c address [1]pin, [2] minPWM, [3] maxPWM, [4] maxPWMPerSec, [5] startingPWM */
     inline const char REGISTER_I2C_SERVO[] PROGMEM = "rSVI2C";
 
+#ifdef ADVANCED_FEATURES
     /** Register a Stepper type effector with a [0]pin0, [1]pin1, [2]pin2, [3]pin3, [4]maxCounterClockwiseSteps, [5]maxClockwiseSteps, [6]maxStepsPerSecond */
     inline const char REGISTER_PIN_STEPPER[] PROGMEM = "rSTPin";
 
     /** Register a Stepper type effector with a [0] step Pin, [1] direction Pin, [2] should clockwise on Low, [3]maxCounterClockwiseSteps, [4]maxClockwiseSteps, [5]maxStepsPerSecond, [6] startingStepOffset */
     inline const char REGISTER_DIR_STEPPER[] PROGMEM = "rSTDir";
+#endif
 
     /** Register a Curved Custom Event type effector with a [0] identifier, [1] max movement per second, [2] starting movement, [3] pin */
     inline const char REGISTER_CURVED_EVENT[] PROGMEM = "rECC";
@@ -112,6 +114,7 @@ namespace BasicCommands
      */
     inline const char SET_INSTANT_COLOR_CURVE[] PROGMEM = "sCCI";
 
+#ifdef ADVANCED_FEATURES
     /**
      * Command to change motor position in order to sync, without using movement
      * [0]identifier, [1] syncValue
@@ -121,6 +124,7 @@ namespace BasicCommands
     inline const char STEPPER_SYNC_MANUALHOME[] PROGMEM = "home";
     inline const char STEPPER_SYNC_AUTO_CLOCKWISE[] PROGMEM = "aCW";
     inline const char STEPPER_SYNC_AUTO_COUNTERCLOCKWISE[] PROGMEM = "aCC";
+#endif
 
 #ifdef RELAY_SUPPORTED
 	/**
@@ -262,6 +266,7 @@ namespace BasicCommands
 	/** Request start anim */
 	inline const char START_PLAY[] PROGMEM = "reqPlay,";
 
+
 #ifdef ONLINE_BUTTON_ACTIONS
 	inline const char START_PLAY_BUTTON[] PROGMEM = "reqPlayBtn,";
 #endif // ONLINE_BUTTON_ACTIONS
@@ -289,9 +294,11 @@ namespace BasicCommands
 
 	void registerI2CServo(char** args);
 
+#ifdef ADVANCED_FEATURES
 	void registerPinStepper(char** args);
 
 	void registerDirStepper(char** args);
+#endif // ADVANCED_FEATURES
 
 	void registerCurvedEvent(char** args);
 
@@ -317,7 +324,9 @@ namespace BasicCommands
 
 	void addInstantColorCurve(char** args);
 
+#ifdef ADVANCED_FEATURES
 	void stepperSync(char** args);
+#endif // ADVANCED_FEATURES
 
 	void clearCurvesForEffector(char** args);
 

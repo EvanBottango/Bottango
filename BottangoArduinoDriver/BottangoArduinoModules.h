@@ -8,6 +8,8 @@
 #define USE_USB_SERIAL                                      // DEFAULT Use USB serial connection. Comment this line out if using ESP32 Wifi instead 
 //#define USE_ESP32_WIFI                                    // uncomment this line to use WiFi Socket communication on an ESP32 (this is not the realy (wireless) module.
 
+// #define ADVANCED_FEATURES                                   // comment this line out to disable all advanced features and just have basic USB serial control. This will save some memory if you don't need the extra features.
+
 // ---------------------------------- //
 
 // !! RELAY !!

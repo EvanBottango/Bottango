@@ -1,6 +1,9 @@
 #ifndef VelocityEffector_h
 #define VelocityEffector_h
 
+#include "../BottangoArduinoModules.h"
+#ifdef ADVANCED_FEATURES
+
 #include "AbstractEffector.h"
 #include "../BottangoArduinoConfig.h"
 #include "BasicCommands.h"
@@ -50,4 +53,5 @@ protected:
     void notifyEndAutoSync();
 };
 
-#endif
+#endif // ADVANCED_FEATURES
+#endif // VelocityEffector_h

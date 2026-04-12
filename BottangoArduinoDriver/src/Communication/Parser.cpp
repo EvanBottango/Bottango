@@ -6,6 +6,7 @@
 #include "../BasicCommands.h"
 #include "../System/SystemStatus.h"
 #include "../Modules/Outgoing.h"
+#include "../FreeRam.h"
 
 #ifdef RELAY_SUPPORTED
 #include "../BottangoCore.h"
@@ -33,6 +34,8 @@ void Parser::onPhase(Phase p)
 			if (commandIsAllowed(splitCommandBuffer[0], sourceIsUsbSerial))
 			{
 				sendReady = parseCommand(splitCommandBuffer, sourceIsUsbSerial);
+				//Serial.print(F("Free RAM = "));
+				//Serial.println(freeMemory());
 			}
 			
 			splitCommandBuffer = _decoder->tryConsumeCommand();
@@ -166,6 +169,7 @@ bool Parser::parseCommand(char** splitCommandBuffer, bool sourceIsUsbSerial) con
 	{
 		BasicCommands::registerPinServo(splitCommandBuffer);
 	}
+#ifdef ADVANCED_FEATURES
 	else if (strcmp_P(commandName, BasicCommands::REGISTER_PIN_STEPPER) == 0)
 	{
 		BasicCommands::registerPinStepper(splitCommandBuffer);
@@ -174,6 +178,7 @@ bool Parser::parseCommand(char** splitCommandBuffer, bool sourceIsUsbSerial) con
 	{
 		BasicCommands::registerDirStepper(splitCommandBuffer);
 	}
+#endif // ADVANCED_FEATURES
 	else if (strcmp_P(commandName, BasicCommands::REGISTER_CURVED_EVENT) == 0)
 	{
 		BasicCommands::registerCurvedEvent(splitCommandBuffer);
@@ -194,10 +199,12 @@ bool Parser::parseCommand(char** splitCommandBuffer, bool sourceIsUsbSerial) con
 	{
 		BasicCommands::registerColorEvent(splitCommandBuffer);
 	}
+#ifdef ADVANCED_FEATURES
 	else if (strcmp_P(commandName, BasicCommands::STEPPER_SYNC) == 0)
 	{
 		BasicCommands::stepperSync(splitCommandBuffer);
 	}
+#endif // ADVANCED_FEATURES
 #ifdef AUDIO_SD_I2S
 	else if (strcmp_P(commandName, BasicCommands::REGISTER_AUDIO_EVENT) == 0)
 	{

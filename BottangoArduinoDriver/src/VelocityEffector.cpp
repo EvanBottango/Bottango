@@ -1,4 +1,6 @@
 #include "VelocityEffector.h"
+#ifdef ADVANCED_FEATURES
+
 #include "Modules/Outgoing.h"
 
 VelocityEffector::VelocityEffector(int minSignal, int maxSignal, int maxSignalPerSec, int startingSignal) : AbstractEffector(minSignal, maxSignal)
@@ -347,3 +349,5 @@ bool VelocityEffector::useFloatCurve()
     return AbstractEffector::useFloatCurve();
 #endif
 }
+
+#endif // ADVANCED_FEATURES
