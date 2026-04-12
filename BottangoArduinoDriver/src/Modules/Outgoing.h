@@ -1,7 +1,7 @@
 #pragma once
 
 #include <Arduino.h>
-#include "../BottangoArduinoModules.h"
+#include "../../BottangoArduinoModules.h"
 
 
 class OutgoingBase

@@ -1,8 +1,4 @@
-// 
-// 
-// 
-
-#include "Communication/CommandDecoder.h"
+#include "CommandDecoder.h"
 
 
 bool CommandDecoder::hasCommand()
@@ -33,7 +29,9 @@ void CommandDecoder::setSecondaryDataSource(DataSource* src)
 }
 #endif;
 
+#if defined(USE_SD_CARD_COMMAND_STREAM) || defined(USE_CODE_COMMAND_STREAM)
 void CommandDecoder::setOfflineDataSource(DataSource* src)
 {
 	_offlineSource = src;
 }
+#endif // ALLOW_SYNC_COMMANDS

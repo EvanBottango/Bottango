@@ -9,6 +9,7 @@
 #include "../DataSource/EspNowSource.h"
 #include "../DataSource/WifiSource.h"
 #include "../DataSource/CodeSource.h"
+#include "../../BottangoArduinoModules.h"
 
 /**
  * @brief Enumeration of available modules.
@@ -33,27 +34,32 @@ enum class Modules : uint8_t
 	Max							// [Mandatory] [Has to be the last] Sentinel value to indicate the number of modules, must always be last
 };
 
+#if defined(USE_SD_CARD_COMMAND_STREAM) || defined(USE_CODE_COMMAND_STREAM) || defined(RELAY_SUPPORTED) || defined(USE_ESP32_WIFI)
 template <Modules slot>
 struct SlotSize;
+#endif
 
+#if defined(USE_SD_CARD_COMMAND_STREAM) || defined(USE_CODE_COMMAND_STREAM)
 // Note: the sizeof() calls can be guarded with #ifdef, as the max() function takes any amount of arguments
 // Any new DataSource needs to be added here, in order to make sure its size is taken into account
 // This is needed, to get the correct size for the buffer in the ModuleSlot, to make sure any of the possible modules that can be placed in the slot will fit.
 template <> struct SlotSize<Modules::DataSource_Offline>
 {
-	static constexpr size_t value = std::max({
+	static constexpr size_t value = max({
 #if defined (USE_SD_CARD_COMMAND_STREAM)
 		sizeof(SdCardSource),
 #endif // USE_SD_CARD_COMMAND_STREAM
 #if defined (USE_CODE_COMMAND_STREAM)
 		sizeof(CodeSource)
-#endif
+#endif // USE_CODE_COMMAND_STREAM
 		});
 };
+#endif // USE_SD_CARD_COMMAND_STREAM || USE_CODE_COMMAND_STREAM
 
+#if defined(RELAY_SUPPORTED) || defined(USE_ESP32_WIFI)
 template <> struct SlotSize<Modules::DataSource_Secondary>
 {
-	static constexpr size_t value = std::max({
+	static constexpr size_t value = max({
 		sizeof(RS485Source),
 
 #if defined(RELAY_COMS_ESPNOW)
@@ -65,6 +71,7 @@ template <> struct SlotSize<Modules::DataSource_Secondary>
 #endif // USE_ESP32_WIFI
 		});
 };
+#endif // RELAY_SUPPORTED || USE_ESP32_WIFI
 
 // Note: This also works with any other module:
 /*template <> struct SlotSize<Modules::Decoder>
@@ -75,6 +82,7 @@ template <> struct SlotSize<Modules::DataSource_Secondary>
 		});
 };*/
 
+#if defined(USE_SD_CARD_COMMAND_STREAM) || defined(USE_CODE_COMMAND_STREAM) || defined(RELAY_SUPPORTED) || defined(USE_ESP32_WIFI)
 template <size_t MaxSize>
 class ModuleSlot
 {
@@ -110,5 +118,5 @@ private:
 	alignas(std::max_align_t) uint8_t _buffer[MaxSize];
 	bool _occupied = false;
 };
-
+#endif // USE_SD_CARD_COMMAND_STREAM || USE_CODE_COMMAND_STREAM || RELAY_SUPPORTED || USE_ESP32_WIFI
 #endif // _ModuleSlot_h

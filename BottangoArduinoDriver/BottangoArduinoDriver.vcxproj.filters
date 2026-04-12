@@ -112,9 +112,6 @@
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="BottangoArduinoDriver.ino" />
-    <ClCompile Include="src\Interfaces\AudioPlayback.cpp">
-      <Filter>Source Files\Interfaces</Filter>
-    </ClCompile>
     <ClCompile Include="src\Module Handling\ModuleLoop.cpp">
       <Filter>Source Files\Module Handling</Filter>
     </ClCompile>
@@ -223,32 +220,11 @@
     <ClCompile Include="src\VelocityEffector.h">
       <Filter>Header Files\Effector</Filter>
     </ClCompile>
-    <ClCompile Include="src\CommandStream.h">
-      <Filter>Header Files\Data</Filter>
-    </ClCompile>
-    <ClCompile Include="src\CommandStreamProvider.h">
-      <Filter>Header Files\Data</Filter>
-    </ClCompile>
-    <ClCompile Include="src\ExportedAnimationPlaybackControl.h">
-      <Filter>Header Files\Data</Filter>
-    </ClCompile>
-    <ClCompile Include="src\SDCardCommandStreamDataSource.h">
-      <Filter>Header Files\Data</Filter>
-    </ClCompile>
-    <ClCompile Include="src\Time.h">
-      <Filter>Header Files\System</Filter>
-    </ClCompile>
-    <ClCompile Include="src\AbstractCommandStreamDataSource.h">
-      <Filter>Header Files\Data</Filter>
-    </ClCompile>
     <ClCompile Include="src\Adafruit_PWMServoDriverContainer.h">
       <Filter>Header Files\Effector</Filter>
     </ClCompile>
     <ClCompile Include="src\I2SAudioEffector.h">
       <Filter>Header Files\Effector\Audio</Filter>
-    </ClCompile>
-    <ClCompile Include="src\ESPNOWUtil.h">
-      <Filter>Header Files\System\Util</Filter>
     </ClCompile>
     <ClCompile Include="src\Errors.h">
       <Filter>Header Files\System\Util</Filter>
@@ -268,18 +244,6 @@
     <ClCompile Include="src\HexDataDownloadUtil.h">
       <Filter>Header Files\OTA</Filter>
     </ClCompile>
-    <ClCompile Include="src\MACResponder.h">
-      <Filter>Header Files\Relay Coms</Filter>
-    </ClCompile>
-    <ClCompile Include="src\RelayChildPool.h">
-      <Filter>Header Files\Relay Coms</Filter>
-    </ClCompile>
-    <ClCompile Include="src\RelayChildMessageQueue.h">
-      <Filter>Header Files\Relay Coms</Filter>
-    </ClCompile>
-    <ClCompile Include="src\RelayChild.h">
-      <Filter>Header Files\Relay Coms</Filter>
-    </ClCompile>
     <ClCompile Include="src\ModulesResponder.h">
       <Filter>Header Files\Module Handling</Filter>
     </ClCompile>
@@ -288,12 +252,6 @@
     </ClCompile>
     <ClCompile Include="src\CircularArray.h">
       <Filter>Header Files\System\Util</Filter>
-    </ClCompile>
-    <ClCompile Include="src\CodeCommandStreamDataSource.h">
-      <Filter>Header Files\Data</Filter>
-    </ClCompile>
-    <ClCompile Include="src\Outgoing.h">
-      <Filter>Header Files\System</Filter>
     </ClCompile>
     <ClCompile Include="src\AbstractMultiMessageOutgoingSource.h">
       <Filter>Header Files\System</Filter>
@@ -391,17 +349,11 @@
     <ClCompile Include="src\Errors.cpp">
       <Filter>Source Files\System\Util</Filter>
     </ClCompile>
-    <ClCompile Include="src\ESPNOWUtil.cpp">
-      <Filter>Source Files\System\Util</Filter>
-    </ClCompile>
     <ClCompile Include="src\FreeRam.cpp">
       <Filter>Source Files\System\Util</Filter>
     </ClCompile>
     <ClCompile Include="src\PersistentConfigUtil.cpp">
       <Filter>Source Files\System\Util</Filter>
-    </ClCompile>
-    <ClCompile Include="src\AbstractCommandStreamDataSource.cpp">
-      <Filter>Source Files\System</Filter>
     </ClCompile>
     <ClCompile Include="src\BoardDefs.cpp">
       <Filter>Source Files\System</Filter>
@@ -412,28 +364,7 @@
     <ClCompile Include="src\BottangoCore.cpp">
       <Filter>Source Files\System</Filter>
     </ClCompile>
-    <ClCompile Include="src\Outgoing.cpp">
-      <Filter>Source Files\System</Filter>
-    </ClCompile>
-    <ClCompile Include="src\Time.cpp">
-      <Filter>Source Files\System</Filter>
-    </ClCompile>
     <ClCompile Include="src\AbstractMultiMessageOutgoingSource.cpp">
-      <Filter>Source Files\Data</Filter>
-    </ClCompile>
-    <ClCompile Include="src\CodeCommandStreamDataSource.cpp">
-      <Filter>Source Files\Data</Filter>
-    </ClCompile>
-    <ClCompile Include="src\CommandStream.cpp">
-      <Filter>Source Files\Data</Filter>
-    </ClCompile>
-    <ClCompile Include="src\CommandStreamProvider.cpp">
-      <Filter>Source Files\Data</Filter>
-    </ClCompile>
-    <ClCompile Include="src\ExportedAnimationPlaybackControl.cpp">
-      <Filter>Source Files\Data</Filter>
-    </ClCompile>
-    <ClCompile Include="src\SDCardCommandStreamDataSource.cpp">
       <Filter>Source Files\Data</Filter>
     </ClCompile>
     <ClCompile Include="src\AudioBinaryUtil.cpp">
@@ -444,15 +375,6 @@
     </ClCompile>
     <ClCompile Include="src\OTAUpdateUtil.cpp">
       <Filter>Source Files\OTA</Filter>
-    </ClCompile>
-    <ClCompile Include="src\MACResponder.cpp">
-      <Filter>Source Files\Relay Coms</Filter>
-    </ClCompile>
-    <ClCompile Include="src\RelayChild.cpp">
-      <Filter>Source Files\Relay Coms</Filter>
-    </ClCompile>
-    <ClCompile Include="src\RelayChildPool.cpp">
-      <Filter>Source Files\Relay Coms</Filter>
     </ClCompile>
     <ClCompile Include="src\lib\ESP32Servo\src\ESP32PWM.cpp">
       <Filter>Source Files\lib\ESP32Servo</Filter>
@@ -487,13 +409,52 @@
     <ClCompile Include="src\DataSource\RS485Source.cpp">
       <Filter>Source Files\DataSource</Filter>
     </ClCompile>
+    <ClCompile Include="src\DataSource\CharStreamedSource.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="src\DataSource\CodeSource.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="src\DataSource\EspNowSource.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="src\DataSource\WiFiSource.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="src\Modules\Outgoing.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="src\Modules\OutgoingRelay.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="src\Modules\OutgoingSerial.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="src\Modules\RelayComs\MACResponder.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="src\Modules\RelayComs\Relay.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="src\Modules\RelayComs\RelayChild.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="src\Modules\RelayComs\RelayChildPool.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="src\Modules\RelayComs\RelayESPNow.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="src\Modules\RelayComs\UDIDHelper.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="src\System\Time.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="__vm\.BottangoArduinoDriver.vsarduino.h">
       <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="src\Interfaces\AudioPlayback.h">
-      <Filter>Header Files\Interfaces</Filter>
     </ClInclude>
     <ClInclude Include="src\Module Handling\ModuleMaster.h">
       <Filter>Header Files\Module Handling</Filter>
@@ -548,6 +509,54 @@
     </ClInclude>
     <ClInclude Include="src\DataSource\RS485Source.h">
       <Filter>Header Files\DataSource</Filter>
+    </ClInclude>
+    <ClInclude Include="src\DataSource\CharStreamedSource.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="src\DataSource\CodeSource.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="src\DataSource\EspNowSource.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="src\DataSource\StaticSecondaryDataSource.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="src\DataSource\WifiSource.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="src\Modules\Outgoing.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="src\Modules\OutgoingRelay.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="src\Modules\OutgoingSerial.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="src\Modules\RelayComs\MACResponder.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="src\Modules\RelayComs\Relay.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="src\Modules\RelayComs\RelayChild.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="src\Modules\RelayComs\RelayChildMessageQueue.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="src\Modules\RelayComs\RelayChildPool.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="src\Modules\RelayComs\RelayESPNow.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="src\Modules\RelayComs\UDIDHelper.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="src\System\Time.h">
+      <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>
 </Project>

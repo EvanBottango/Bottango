@@ -1,6 +1,6 @@
 #pragma once
 
-#include "../BottangoArduinoModules.h"
+#include "../../BottangoArduinoModules.h"
 #ifdef USE_ESP32_WIFI
 #include <WiFi.h>
 #include "CharStreamedSource.h"

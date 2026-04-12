@@ -1,4 +1,4 @@
-#include "../BottangoArduinoModules.h"
+#include "../../../BottangoArduinoModules.h"
 
 #if defined(RELAY_SUPPORTED)
 

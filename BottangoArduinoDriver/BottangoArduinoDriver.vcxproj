@@ -81,9 +81,6 @@
       <FileType>CppCode</FileType>
       <DeploymentContent>true</DeploymentContent>
     </ClCompile>
-    <ClCompile Include="src\AbstractCommandStreamDataSource.cpp">
-      <DeploymentContent>true</DeploymentContent>
-    </ClCompile>
     <ClCompile Include="src\AbstractEffector.cpp">
       <DeploymentContent>true</DeploymentContent>
     </ClCompile>
@@ -111,9 +108,6 @@
     <ClCompile Include="src\CircularArray.cpp">
       <DeploymentContent>true</DeploymentContent>
     </ClCompile>
-    <ClCompile Include="src\CodeCommandStreamDataSource.cpp">
-      <DeploymentContent>true</DeploymentContent>
-    </ClCompile>
     <ClCompile Include="src\Color.cpp">
       <DeploymentContent>true</DeploymentContent>
     </ClCompile>
@@ -124,12 +118,6 @@
       <DeploymentContent>true</DeploymentContent>
     </ClCompile>
     <ClCompile Include="src\ColorEffector.cpp">
-      <DeploymentContent>true</DeploymentContent>
-    </ClCompile>
-    <ClCompile Include="src\CommandStream.cpp">
-      <DeploymentContent>true</DeploymentContent>
-    </ClCompile>
-    <ClCompile Include="src\CommandStreamProvider.cpp">
       <DeploymentContent>true</DeploymentContent>
     </ClCompile>
     <ClCompile Include="src\Communication\AsciiCmdDecoder.cpp">
@@ -153,27 +141,19 @@
     <ClCompile Include="src\CustomMotorEffector.cpp">
       <DeploymentContent>true</DeploymentContent>
     </ClCompile>
+    <ClCompile Include="src\DataSource\CharStreamedSource.cpp" />
+    <ClCompile Include="src\DataSource\CodeSource.cpp" />
     <ClCompile Include="src\DataSource\DataSource.cpp" />
-    <ClCompile Include="src\DataSource\RS485Source.cpp">
-      <SubType>
-      </SubType>
-    </ClCompile>
-    <ClCompile Include="src\DataSource\SdCardSource.cpp">
-      <SubType>
-      </SubType>
-    </ClCompile>
+    <ClCompile Include="src\DataSource\EspNowSource.cpp" />
+    <ClCompile Include="src\DataSource\RS485Source.cpp" />
+    <ClCompile Include="src\DataSource\SdCardSource.cpp" />
     <ClCompile Include="src\DataSource\SDCardUtil.cpp" />
     <ClCompile Include="src\DataSource\SerialSource.cpp" />
+    <ClCompile Include="src\DataSource\WiFiSource.cpp" />
     <ClCompile Include="src\EffectorPool.cpp">
       <DeploymentContent>true</DeploymentContent>
     </ClCompile>
     <ClCompile Include="src\Errors.cpp">
-      <DeploymentContent>true</DeploymentContent>
-    </ClCompile>
-    <ClCompile Include="src\ESPNOWUtil.cpp">
-      <DeploymentContent>true</DeploymentContent>
-    </ClCompile>
-    <ClCompile Include="src\ExportedAnimationPlaybackControl.cpp">
       <DeploymentContent>true</DeploymentContent>
     </ClCompile>
     <ClCompile Include="src\FixedBezierCurve.cpp">
@@ -197,7 +177,6 @@
     <ClCompile Include="src\I2SAudioEffector.cpp">
       <DeploymentContent>true</DeploymentContent>
     </ClCompile>
-    <ClCompile Include="src\Interfaces\AudioPlayback.cpp" />
     <ClCompile Include="src\lib\ESP32Servo\src\ESP32PWM.cpp">
       <DeploymentContent>true</DeploymentContent>
     </ClCompile>
@@ -205,9 +184,6 @@
       <DeploymentContent>true</DeploymentContent>
     </ClCompile>
     <ClCompile Include="src\LoopDrivenEffector.cpp">
-      <DeploymentContent>true</DeploymentContent>
-    </ClCompile>
-    <ClCompile Include="src\MACResponder.cpp">
       <DeploymentContent>true</DeploymentContent>
     </ClCompile>
     <ClCompile Include="src\Module Handling\ModuleLoop.cpp" />
@@ -225,6 +201,15 @@
       <SubType>
       </SubType>
     </ClCompile>
+    <ClCompile Include="src\Modules\Outgoing.cpp" />
+    <ClCompile Include="src\Modules\OutgoingRelay.cpp" />
+    <ClCompile Include="src\Modules\OutgoingSerial.cpp" />
+    <ClCompile Include="src\Modules\RelayComs\MACResponder.cpp" />
+    <ClCompile Include="src\Modules\RelayComs\Relay.cpp" />
+    <ClCompile Include="src\Modules\RelayComs\RelayChild.cpp" />
+    <ClCompile Include="src\Modules\RelayComs\RelayChildPool.cpp" />
+    <ClCompile Include="src\Modules\RelayComs\RelayESPNow.cpp" />
+    <ClCompile Include="src\Modules\RelayComs\UDIDHelper.cpp" />
     <ClCompile Include="src\Modules\StatusLightsModule.cpp" />
     <ClCompile Include="src\Modules\StopButtonModule.cpp" />
     <ClCompile Include="src\OnOffCurve.cpp">
@@ -236,9 +221,6 @@
     <ClCompile Include="src\OTAUpdateUtil.cpp">
       <DeploymentContent>true</DeploymentContent>
     </ClCompile>
-    <ClCompile Include="src\Outgoing.cpp">
-      <DeploymentContent>true</DeploymentContent>
-    </ClCompile>
     <ClCompile Include="src\PersistentConfigUtil.cpp">
       <DeploymentContent>true</DeploymentContent>
     </ClCompile>
@@ -248,22 +230,11 @@
     <ClCompile Include="src\PinStepperEffector.cpp">
       <DeploymentContent>true</DeploymentContent>
     </ClCompile>
-    <ClCompile Include="src\RelayChild.cpp">
-      <DeploymentContent>true</DeploymentContent>
-    </ClCompile>
-    <ClCompile Include="src\RelayChildPool.cpp">
-      <DeploymentContent>true</DeploymentContent>
-    </ClCompile>
-    <ClCompile Include="src\SDCardCommandStreamDataSource.cpp">
-      <DeploymentContent>true</DeploymentContent>
-    </ClCompile>
     <ClCompile Include="src\StepDirStepperEffector.cpp">
       <DeploymentContent>true</DeploymentContent>
     </ClCompile>
     <ClCompile Include="src\System\SystemStatus.cpp" />
-    <ClCompile Include="src\Time.cpp">
-      <DeploymentContent>true</DeploymentContent>
-    </ClCompile>
+    <ClCompile Include="src\System\Time.cpp" />
     <ClCompile Include="src\TriggerCurve.cpp">
       <DeploymentContent>true</DeploymentContent>
     </ClCompile>
@@ -284,10 +255,6 @@
       <DeploymentContent>true</DeploymentContent>
     </ClCompile>
     <ClCompile Include="BottangoArduinoModules.h">
-      <FileType>CppCode</FileType>
-      <DeploymentContent>true</DeploymentContent>
-    </ClCompile>
-    <ClCompile Include="src\AbstractCommandStreamDataSource.h">
       <FileType>CppCode</FileType>
       <DeploymentContent>true</DeploymentContent>
     </ClCompile>
@@ -327,10 +294,6 @@
       <FileType>CppCode</FileType>
       <DeploymentContent>true</DeploymentContent>
     </ClCompile>
-    <ClCompile Include="src\CodeCommandStreamDataSource.h">
-      <FileType>CppCode</FileType>
-      <DeploymentContent>true</DeploymentContent>
-    </ClCompile>
     <ClCompile Include="src\Color.h">
       <FileType>CppCode</FileType>
       <DeploymentContent>true</DeploymentContent>
@@ -344,14 +307,6 @@
       <DeploymentContent>true</DeploymentContent>
     </ClCompile>
     <ClCompile Include="src\ColorEffector.h">
-      <FileType>CppCode</FileType>
-      <DeploymentContent>true</DeploymentContent>
-    </ClCompile>
-    <ClCompile Include="src\CommandStream.h">
-      <FileType>CppCode</FileType>
-      <DeploymentContent>true</DeploymentContent>
-    </ClCompile>
-    <ClCompile Include="src\CommandStreamProvider.h">
       <FileType>CppCode</FileType>
       <DeploymentContent>true</DeploymentContent>
     </ClCompile>
@@ -372,14 +327,6 @@
       <DeploymentContent>true</DeploymentContent>
     </ClCompile>
     <ClCompile Include="src\Errors.h">
-      <FileType>CppCode</FileType>
-      <DeploymentContent>true</DeploymentContent>
-    </ClCompile>
-    <ClCompile Include="src\ESPNOWUtil.h">
-      <FileType>CppCode</FileType>
-      <DeploymentContent>true</DeploymentContent>
-    </ClCompile>
-    <ClCompile Include="src\ExportedAnimationPlaybackControl.h">
       <FileType>CppCode</FileType>
       <DeploymentContent>true</DeploymentContent>
     </ClCompile>
@@ -415,10 +362,6 @@
       <FileType>CppCode</FileType>
       <DeploymentContent>true</DeploymentContent>
     </ClCompile>
-    <ClCompile Include="src\MACResponder.h">
-      <FileType>CppCode</FileType>
-      <DeploymentContent>true</DeploymentContent>
-    </ClCompile>
     <ClCompile Include="src\ModulesResponder.h">
       <FileType>CppCode</FileType>
       <DeploymentContent>true</DeploymentContent>
@@ -435,10 +378,6 @@
       <FileType>CppCode</FileType>
       <DeploymentContent>true</DeploymentContent>
     </ClCompile>
-    <ClCompile Include="src\Outgoing.h">
-      <FileType>CppCode</FileType>
-      <DeploymentContent>true</DeploymentContent>
-    </ClCompile>
     <ClCompile Include="src\PersistentConfigUtil.h">
       <FileType>CppCode</FileType>
       <DeploymentContent>true</DeploymentContent>
@@ -451,27 +390,7 @@
       <FileType>CppCode</FileType>
       <DeploymentContent>true</DeploymentContent>
     </ClCompile>
-    <ClCompile Include="src\RelayChild.h">
-      <FileType>CppCode</FileType>
-      <DeploymentContent>true</DeploymentContent>
-    </ClCompile>
-    <ClCompile Include="src\RelayChildMessageQueue.h">
-      <FileType>CppCode</FileType>
-      <DeploymentContent>true</DeploymentContent>
-    </ClCompile>
-    <ClCompile Include="src\RelayChildPool.h">
-      <FileType>CppCode</FileType>
-      <DeploymentContent>true</DeploymentContent>
-    </ClCompile>
-    <ClCompile Include="src\SDCardCommandStreamDataSource.h">
-      <FileType>CppCode</FileType>
-      <DeploymentContent>true</DeploymentContent>
-    </ClCompile>
     <ClCompile Include="src\StepDirStepperEffector.h">
-      <FileType>CppCode</FileType>
-      <DeploymentContent>true</DeploymentContent>
-    </ClCompile>
-    <ClCompile Include="src\Time.h">
       <FileType>CppCode</FileType>
       <DeploymentContent>true</DeploymentContent>
     </ClCompile>
@@ -507,19 +426,17 @@
       <SubType>
       </SubType>
     </ClInclude>
+    <ClInclude Include="src\DataSource\CharStreamedSource.h" />
+    <ClInclude Include="src\DataSource\CodeSource.h" />
     <ClInclude Include="src\DataSource\DataSource.h" />
-    <ClInclude Include="src\DataSource\RS485Source.h">
-      <SubType>
-      </SubType>
-    </ClInclude>
-    <ClInclude Include="src\DataSource\SdCardSource.h">
-      <SubType>
-      </SubType>
-    </ClInclude>
+    <ClInclude Include="src\DataSource\EspNowSource.h" />
+    <ClInclude Include="src\DataSource\RS485Source.h" />
+    <ClInclude Include="src\DataSource\SdCardSource.h" />
     <ClInclude Include="src\DataSource\SDCardUtil.h" />
     <ClInclude Include="src\DataSource\SerialSource.h" />
+    <ClInclude Include="src\DataSource\StaticSecondaryDataSource.h" />
     <ClInclude Include="src\DataSource\TxtBuffer.h" />
-    <ClInclude Include="src\Interfaces\AudioPlayback.h" />
+    <ClInclude Include="src\DataSource\WifiSource.h" />
     <ClInclude Include="src\Module Handling\ModuleLoop.h" />
     <ClInclude Include="src\Module Handling\ModuleMaster.h" />
     <ClInclude Include="src\Module Handling\ModuleSlot.h">
@@ -532,13 +449,36 @@
       <SubType>
       </SubType>
     </ClInclude>
+    <ClInclude Include="src\Modules\Outgoing.h" />
+    <ClInclude Include="src\Modules\OutgoingRelay.h" />
+    <ClInclude Include="src\Modules\OutgoingSerial.h" />
+    <ClInclude Include="src\Modules\RelayComs\MACResponder.h" />
+    <ClInclude Include="src\Modules\RelayComs\Relay.h" />
+    <ClInclude Include="src\Modules\RelayComs\RelayChild.h" />
+    <ClInclude Include="src\Modules\RelayComs\RelayChildMessageQueue.h" />
+    <ClInclude Include="src\Modules\RelayComs\RelayChildPool.h" />
+    <ClInclude Include="src\Modules\RelayComs\RelayESPNow.h" />
+    <ClInclude Include="src\Modules\RelayComs\UDIDHelper.h" />
     <ClInclude Include="src\Modules\StatusLightsModule.h" />
     <ClInclude Include="src\Modules\StopButtonModule.h" />
     <ClInclude Include="src\System\SystemStatus.h" />
+    <ClInclude Include="src\System\Time.h" />
     <ClInclude Include="__vm\.BottangoArduinoDriver.vsarduino.h" />
   </ItemGroup>
   <PropertyGroup>
     <DebuggerFlavor>VisualMicroDebugger</DebuggerFlavor>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|ARM'">
+    <IncludePath>C:\Users\darki\AppData\Local\arduino15\packages\arduino\hardware\avr\1.8.7\cores\arduino;C:\Users\darki\AppData\Local\arduino15\packages\arduino\hardware\avr\1.8.7\variants\eightanaloginputs;c:\users\darki\appdata\local\arduino15\packages\arduino\tools\avr-gcc\7.3.0-atmel3.6.1-arduino7\lib\gcc\avr\7.3.0\include;c:\users\darki\appdata\local\arduino15\packages\arduino\tools\avr-gcc\7.3.0-atmel3.6.1-arduino7\lib\gcc\avr\7.3.0\include-fixed;c:\users\darki\appdata\local\arduino15\packages\arduino\tools\avr-gcc\7.3.0-atmel3.6.1-arduino7\avr\include</IncludePath>
+    <RemoteCCompileToolExe>C:\Users\darki\AppData\Local\arduino15\packages\arduino\tools\avr-gcc\7.3.0-atmel3.6.1-arduino7\bin\avr-g++</RemoteCCompileToolExe>
+    <RemoteCppCompileToolExe>C:\Users\darki\AppData\Local\arduino15\packages\arduino\tools\avr-gcc\7.3.0-atmel3.6.1-arduino7\bin\avr-g++</RemoteCppCompileToolExe>
+    <ValidateArchitecture>false</ValidateArchitecture>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|ARM'">
+    <IncludePath>c:\Users\darki\Documents\Arduino\libraries\Servo\src;C:\Users\darki\AppData\Local\arduino15\packages\arduino\hardware\avr\1.8.7\libraries\EEPROM\src;C:\Users\darki\AppData\Local\arduino15\packages\arduino\hardware\avr\1.8.7\cores\arduino;C:\Users\darki\AppData\Local\arduino15\packages\arduino\hardware\avr\1.8.7\variants\eightanaloginputs;c:\users\darki\appdata\local\arduino15\packages\arduino\tools\avr-gcc\7.3.0-atmel3.6.1-arduino7\lib\gcc\avr\7.3.0\include;c:\users\darki\appdata\local\arduino15\packages\arduino\tools\avr-gcc\7.3.0-atmel3.6.1-arduino7\lib\gcc\avr\7.3.0\include-fixed;c:\users\darki\appdata\local\arduino15\packages\arduino\tools\avr-gcc\7.3.0-atmel3.6.1-arduino7\avr\include</IncludePath>
+    <RemoteCCompileToolExe>C:\Users\darki\AppData\Local\arduino15\packages\arduino\tools\avr-gcc\7.3.0-atmel3.6.1-arduino7\bin\avr-g++</RemoteCCompileToolExe>
+    <RemoteCppCompileToolExe>C:\Users\darki\AppData\Local\arduino15\packages\arduino\tools\avr-gcc\7.3.0-atmel3.6.1-arduino7\bin\avr-g++</RemoteCppCompileToolExe>
+    <ValidateArchitecture>false</ValidateArchitecture>
   </PropertyGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|ARM64'">
     <ClCompile>
@@ -554,7 +494,40 @@
       <PreprocessorDefinitions>_VMICRO_INTELLISENSE;__2411_esp32__;__2411_ESP32__;F_CPU=240000000L;ARDUINO=108010;ARDUINO_ESP32_DEV;ARDUINO_ARCH_ESP32;ARDUINO_BOARD=ESP32_DEV;ARDUINO_VARIANT=esp32;ARDUINO_PARTITION_default;ARDUINO_HOST_OS=windows;ARDUINO_FQBN={build.fqbn};ESP32=ESP32;CORE_DEBUG_LEVEL=0;ARDUINO_RUNNING_CORE=1;ARDUINO_EVENT_RUNNING_CORE=1;ARDUINO_USB_CDC_ON_BOOT=0;%(PreprocessorDefinitions)</PreprocessorDefinitions>
     </ClCompile>
   </ItemDefinitionGroup>
+  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|ARM'">
+    <ClCompile>
+      <AdditionalIncludeDirectories>C:\Users\darki\AppData\Local\arduino15\packages\arduino\hardware\avr\1.8.7\cores\arduino;C:\Users\darki\AppData\Local\arduino15\packages\arduino\hardware\avr\1.8.7\variants\eightanaloginputs;c:\users\darki\appdata\local\arduino15\packages\arduino\tools\avr-gcc\7.3.0-atmel3.6.1-arduino7\lib\gcc\avr\7.3.0\include;c:\users\darki\appdata\local\arduino15\packages\arduino\tools\avr-gcc\7.3.0-atmel3.6.1-arduino7\lib\gcc\avr\7.3.0\include-fixed;c:\users\darki\appdata\local\arduino15\packages\arduino\tools\avr-gcc\7.3.0-atmel3.6.1-arduino7\avr\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <GccToolChain>C:\Users\darki\AppData\Local\arduino15\packages\arduino\tools\avr-gcc\7.3.0-atmel3.6.1-arduino7\bin\avr-g++</GccToolChain>
+      <CppLanguageStandard>gnu++11</CppLanguageStandard>
+      <CLanguageStandard>gnu11</CLanguageStandard>
+      <CAdditionalWarning />
+      <CppAdditionalWarning />
+      <ForcedIncludeFiles>c:\program files\microsoft visual studio\18\community\common7\ide\extensions\2bqx1gfn.tss\Micro Platforms\default\vm-intelli-pre.h;C:\Users\darki\AppData\Local\Temp\VMBuilds\BottangoArduinoDriver\nano_atmega328\Debug\.vmintelli\c1a293f49b5ef90fe7fdfbaea6de936f\vm-intelli-gcc-defines.h;c:\program files\microsoft visual studio\18\community\common7\ide\extensions\2bqx1gfn.tss\Micro Platforms\default\vm-intelli-post.h;$(ProjectDir)__vm\.BottangoArduinoDriver.vsarduino.h;%(ForcedIncludeFiles)</ForcedIncludeFiles>
+      <UndefineAllPreprocessorDefinitions>true</UndefineAllPreprocessorDefinitions>
+      <IgnoreStandardIncludePath>true</IgnoreStandardIncludePath>
+      <PreprocessorDefinitions>_VMICRO_INTELLISENSE;__AVR_atmega328p__;__AVR_ATmega328P__;__AVR_ATmega328p__;F_CPU=16000000L;ARDUINO=108010;ARDUINO_AVR_NANO;ARDUINO_ARCH_AVR;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+    </ClCompile>
+  </ItemDefinitionGroup>
+  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|ARM'">
+    <ClCompile>
+      <AdditionalIncludeDirectories>c:\Users\darki\Documents\Arduino\libraries\Servo\src;C:\Users\darki\AppData\Local\arduino15\packages\arduino\hardware\avr\1.8.7\libraries\EEPROM\src;C:\Users\darki\AppData\Local\arduino15\packages\arduino\hardware\avr\1.8.7\cores\arduino;C:\Users\darki\AppData\Local\arduino15\packages\arduino\hardware\avr\1.8.7\variants\eightanaloginputs;c:\users\darki\appdata\local\arduino15\packages\arduino\tools\avr-gcc\7.3.0-atmel3.6.1-arduino7\lib\gcc\avr\7.3.0\include;c:\users\darki\appdata\local\arduino15\packages\arduino\tools\avr-gcc\7.3.0-atmel3.6.1-arduino7\lib\gcc\avr\7.3.0\include-fixed;c:\users\darki\appdata\local\arduino15\packages\arduino\tools\avr-gcc\7.3.0-atmel3.6.1-arduino7\avr\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <GccToolChain>C:\Users\darki\AppData\Local\arduino15\packages\arduino\tools\avr-gcc\7.3.0-atmel3.6.1-arduino7\bin\avr-g++</GccToolChain>
+      <CppLanguageStandard>gnu++11</CppLanguageStandard>
+      <CLanguageStandard>gnu11</CLanguageStandard>
+      <CAdditionalWarning />
+      <CppAdditionalWarning />
+      <ForcedIncludeFiles>c:\program files\microsoft visual studio\18\community\common7\ide\extensions\2bqx1gfn.tss\Micro Platforms\default\vm-intelli-pre.h;C:\Users\darki\AppData\Local\Temp\VMBuilds\BottangoArduinoDriver\nano_atmega328\Release\.vmintelli\c1a293f49b5ef90fe7fdfbaea6de936f\vm-intelli-gcc-defines.h;c:\program files\microsoft visual studio\18\community\common7\ide\extensions\2bqx1gfn.tss\Micro Platforms\default\vm-intelli-post.h;$(ProjectDir)__vm\.BottangoArduinoDriver.vsarduino.h;%(ForcedIncludeFiles)</ForcedIncludeFiles>
+      <UndefineAllPreprocessorDefinitions>true</UndefineAllPreprocessorDefinitions>
+      <IgnoreStandardIncludePath>true</IgnoreStandardIncludePath>
+      <PreprocessorDefinitions>_VMICRO_INTELLISENSE;__AVR_atmega328p__;__AVR_ATmega328P__;__AVR_ATmega328p__;F_CPU=16000000L;ARDUINO=108010;ARDUINO_AVR_NANO;ARDUINO_ARCH_AVR;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+    </ClCompile>
+  </ItemDefinitionGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">
   </ImportGroup>
+  <ProjectExtensions>
+    <VisualStudio>
+      <UserProperties arduino.upload.port="COM3" config.Debug.customdebug_nano_atmega328_debugger_type="universal" />
+    </VisualStudio>
+  </ProjectExtensions>
 </Project>

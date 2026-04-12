@@ -1,4 +1,4 @@
-#include "../BottangoArduinoModules.h"
+#include "../../../BottangoArduinoModules.h"
 
 #ifdef AUDIO_SD_I2S
 #include "I2SAudioModule.h"

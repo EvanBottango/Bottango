@@ -1,4 +1,4 @@
-#include "../BottangoArduinoModules.h"
+#include "../../../BottangoArduinoModules.h"
 #if defined(AUDIO_SD_I2S)
 
 #ifndef I2SAudEventStatusResponder_h

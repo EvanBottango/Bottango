@@ -2,7 +2,7 @@
 #define Time_h
 
 #include "Arduino.h"
-#include "../BottangoArduinoModules.h"
+#include "../../BottangoArduinoModules.h"
 
 namespace Time
 {

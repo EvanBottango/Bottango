@@ -6,6 +6,7 @@
 #include <Arduino.h>
 #include "../DataSource/DataSource.h"
 #include "../Module Handling/ModuleLoop.h"
+#include "../../BottangoArduinoModules.h"
 
 /**
  * @brief Decodes commands from a data source and provides them to the parser. The CommandDecoder is responsible for reading raw command strings from the data source,

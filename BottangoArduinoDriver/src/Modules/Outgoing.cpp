@@ -1,6 +1,6 @@
 #include "Outgoing.h"
 #include <limits.h>
-#include "BasicCommands.h"
+#include "../BasicCommands.h"
 
 void OutgoingBase::printOutputStringPROGMEM(const char* targetOutput)
 {
