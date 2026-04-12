@@ -13,12 +13,6 @@
       <UniqueIdentifier>{67DA6AB6-F800-4c08-8B7A-83BB121AAD01}</UniqueIdentifier>
       <Extensions>rc;ico;cur;bmp;dlg;rc2;rct;bin;rgs;gif;jpg;jpeg;jpe;resx;tiff;tif;png;wav;mfcribbon-ms</Extensions>
     </Filter>
-    <Filter Include="Header Files\Interfaces">
-      <UniqueIdentifier>{e7f39977-cc90-46b0-b472-a5151f96d389}</UniqueIdentifier>
-    </Filter>
-    <Filter Include="Source Files\Interfaces">
-      <UniqueIdentifier>{62af4364-1046-4484-ad67-90831403f58a}</UniqueIdentifier>
-    </Filter>
     <Filter Include="Header Files\Module Handling">
       <UniqueIdentifier>{143d6d4c-4dff-465e-aedd-de54eb27d28c}</UniqueIdentifier>
     </Filter>
@@ -67,9 +61,6 @@
     <Filter Include="Header Files\OTA">
       <UniqueIdentifier>{77f64c0a-dfc4-439e-a2b7-f78c3024ec77}</UniqueIdentifier>
     </Filter>
-    <Filter Include="Header Files\Relay Coms">
-      <UniqueIdentifier>{ab8cb5c0-bafe-426c-9fb1-f02b6ab0794b}</UniqueIdentifier>
-    </Filter>
     <Filter Include="Header Files\Communication">
       <UniqueIdentifier>{60192ad9-30c1-497c-b37b-21524c874268}</UniqueIdentifier>
     </Filter>
@@ -94,9 +85,6 @@
     <Filter Include="Source Files\OTA">
       <UniqueIdentifier>{507432dd-d7c4-4766-9b3e-4a4e0f0b5307}</UniqueIdentifier>
     </Filter>
-    <Filter Include="Source Files\Relay Coms">
-      <UniqueIdentifier>{2d08886e-14a6-4006-bc4a-cb18e884af64}</UniqueIdentifier>
-    </Filter>
     <Filter Include="Source Files\lib">
       <UniqueIdentifier>{2666dace-a220-4e78-a647-86a862a5c58b}</UniqueIdentifier>
     </Filter>
@@ -108,6 +96,12 @@
     </Filter>
     <Filter Include="Source Files\DataSource">
       <UniqueIdentifier>{46ef5b88-0660-40a7-aafc-89b10c92f413}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source Files\Modules\Relay Coms">
+      <UniqueIdentifier>{960faf84-b303-485a-8e8a-2c6aeb220b0b}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Header Files\Modules\Relay Coms">
+      <UniqueIdentifier>{ab8cb5c0-bafe-426c-9fb1-f02b6ab0794b}</UniqueIdentifier>
     </Filter>
   </ItemGroup>
   <ItemGroup>
@@ -252,9 +246,6 @@
     </ClCompile>
     <ClCompile Include="src\CircularArray.h">
       <Filter>Header Files\System\Util</Filter>
-    </ClCompile>
-    <ClCompile Include="src\AbstractMultiMessageOutgoingSource.h">
-      <Filter>Header Files\System</Filter>
     </ClCompile>
     <ClCompile Include="src\Communication\CommandDecoder.cpp">
       <Filter>Source Files\Communication</Filter>
@@ -409,47 +400,50 @@
     <ClCompile Include="src\DataSource\RS485Source.cpp">
       <Filter>Source Files\DataSource</Filter>
     </ClCompile>
-    <ClCompile Include="src\DataSource\CharStreamedSource.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
     <ClCompile Include="src\DataSource\CodeSource.cpp">
-      <Filter>Source Files</Filter>
+      <Filter>Source Files\DataSource</Filter>
     </ClCompile>
     <ClCompile Include="src\DataSource\EspNowSource.cpp">
-      <Filter>Source Files</Filter>
+      <Filter>Source Files\DataSource</Filter>
     </ClCompile>
-    <ClCompile Include="src\DataSource\WiFiSource.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="src\Modules\Outgoing.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="src\Modules\OutgoingRelay.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="src\Modules\OutgoingSerial.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="src\Modules\RelayComs\MACResponder.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="src\Modules\RelayComs\Relay.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="src\Modules\RelayComs\RelayChild.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="src\Modules\RelayComs\RelayChildPool.cpp">
-      <Filter>Source Files</Filter>
+    <ClCompile Include="src\DataSource\CharStreamedSource.cpp">
+      <Filter>Source Files\DataSource</Filter>
     </ClCompile>
     <ClCompile Include="src\Modules\RelayComs\RelayESPNow.cpp">
-      <Filter>Source Files</Filter>
+      <Filter>Source Files\Modules\Relay Coms</Filter>
     </ClCompile>
-    <ClCompile Include="src\Modules\RelayComs\UDIDHelper.cpp">
-      <Filter>Source Files</Filter>
+    <ClCompile Include="src\Modules\RelayComs\Relay.cpp">
+      <Filter>Source Files\Modules\Relay Coms</Filter>
+    </ClCompile>
+    <ClCompile Include="src\Modules\RelayComs\RelayChild.cpp">
+      <Filter>Source Files\Modules\Relay Coms</Filter>
+    </ClCompile>
+    <ClCompile Include="src\Modules\RelayComs\RelayChildPool.cpp">
+      <Filter>Source Files\Modules\Relay Coms</Filter>
+    </ClCompile>
+    <ClCompile Include="src\Modules\OutgoingSerial.cpp">
+      <Filter>Source Files\Modules</Filter>
+    </ClCompile>
+    <ClCompile Include="src\Modules\Outgoing.cpp">
+      <Filter>Source Files\Modules</Filter>
+    </ClCompile>
+    <ClCompile Include="src\Modules\OutgoingRelay.cpp">
+      <Filter>Source Files\Modules</Filter>
     </ClCompile>
     <ClCompile Include="src\System\Time.cpp">
-      <Filter>Source Files</Filter>
+      <Filter>Source Files\System</Filter>
+    </ClCompile>
+    <ClCompile Include="src\Modules\RelayComs\MACResponder.cpp">
+      <Filter>Source Files\Modules\Relay Coms</Filter>
+    </ClCompile>
+    <ClCompile Include="src\Modules\RelayComs\UDIDHelper.cpp">
+      <Filter>Source Files\Modules\Relay Coms</Filter>
+    </ClCompile>
+    <ClCompile Include="src\DataSource\WiFiSource.cpp">
+      <Filter>Source Files\DataSource</Filter>
+    </ClCompile>
+    <ClCompile Include="src\AbstractMultiMessageOutgoingSource.h">
+      <Filter>Header Files\Data</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
@@ -510,53 +504,53 @@
     <ClInclude Include="src\DataSource\RS485Source.h">
       <Filter>Header Files\DataSource</Filter>
     </ClInclude>
-    <ClInclude Include="src\DataSource\CharStreamedSource.h">
-      <Filter>Header Files</Filter>
+    <ClInclude Include="src\DataSource\EspNowSource.h">
+      <Filter>Header Files\DataSource</Filter>
     </ClInclude>
     <ClInclude Include="src\DataSource\CodeSource.h">
-      <Filter>Header Files</Filter>
+      <Filter>Header Files\DataSource</Filter>
     </ClInclude>
-    <ClInclude Include="src\DataSource\EspNowSource.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="src\DataSource\StaticSecondaryDataSource.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="src\DataSource\WifiSource.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="src\Modules\Outgoing.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="src\Modules\OutgoingRelay.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="src\Modules\OutgoingSerial.h">
-      <Filter>Header Files</Filter>
+    <ClInclude Include="src\DataSource\CharStreamedSource.h">
+      <Filter>Header Files\DataSource</Filter>
     </ClInclude>
     <ClInclude Include="src\Modules\RelayComs\MACResponder.h">
-      <Filter>Header Files</Filter>
+      <Filter>Header Files\Modules\Relay Coms</Filter>
+    </ClInclude>
+    <ClInclude Include="src\Modules\Outgoing.h">
+      <Filter>Header Files\Modules</Filter>
+    </ClInclude>
+    <ClInclude Include="src\Modules\OutgoingRelay.h">
+      <Filter>Header Files\Modules</Filter>
+    </ClInclude>
+    <ClInclude Include="src\Modules\OutgoingSerial.h">
+      <Filter>Header Files\Modules</Filter>
     </ClInclude>
     <ClInclude Include="src\Modules\RelayComs\Relay.h">
-      <Filter>Header Files</Filter>
+      <Filter>Header Files\Modules\Relay Coms</Filter>
     </ClInclude>
     <ClInclude Include="src\Modules\RelayComs\RelayChild.h">
-      <Filter>Header Files</Filter>
+      <Filter>Header Files\Modules\Relay Coms</Filter>
     </ClInclude>
     <ClInclude Include="src\Modules\RelayComs\RelayChildMessageQueue.h">
-      <Filter>Header Files</Filter>
+      <Filter>Header Files\Modules\Relay Coms</Filter>
     </ClInclude>
     <ClInclude Include="src\Modules\RelayComs\RelayChildPool.h">
-      <Filter>Header Files</Filter>
+      <Filter>Header Files\Modules\Relay Coms</Filter>
     </ClInclude>
     <ClInclude Include="src\Modules\RelayComs\RelayESPNow.h">
-      <Filter>Header Files</Filter>
+      <Filter>Header Files\Modules\Relay Coms</Filter>
     </ClInclude>
     <ClInclude Include="src\Modules\RelayComs\UDIDHelper.h">
-      <Filter>Header Files</Filter>
+      <Filter>Header Files\Modules\Relay Coms</Filter>
+    </ClInclude>
+    <ClInclude Include="src\DataSource\WifiSource.h">
+      <Filter>Header Files\DataSource</Filter>
+    </ClInclude>
+    <ClInclude Include="src\DataSource\StaticSecondaryDataSource.h">
+      <Filter>Header Files\DataSource</Filter>
     </ClInclude>
     <ClInclude Include="src\System\Time.h">
-      <Filter>Header Files</Filter>
+      <Filter>Header Files\System</Filter>
     </ClInclude>
   </ItemGroup>
 </Project>
