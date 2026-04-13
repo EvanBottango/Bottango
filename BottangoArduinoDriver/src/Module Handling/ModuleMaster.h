@@ -2,9 +2,8 @@
 #define _ModuleMaster_h
 
 #include <Arduino.h>
-#include "ModuleLoop.h"
+#include "LoopModule.h"
 #include "ModuleSlot.h"
-#include "../Modules/Outgoing.h"
 
 /**
  * @brief The ModuleMaster class is responsible for managing and executing the lifecycle of various modules/functions in the system.
@@ -17,7 +16,7 @@ public:
 	/**
 	 * @brief Default constructor for the ModuleMaster class.
 	 */
-	ModuleMaster() {};
+	ModuleMaster() = default;
 
 	/**
 	 * @brief Default destructor for the ModuleMaster class.
@@ -30,18 +29,18 @@ public:
 	void setupModules();
 
 	/**
-	 * @brief Initializes every module, which were setup earlier. Is called once during system setup.
+	 * @brief Initializes every module, which were set up earlier. Is called once during system setup.
 	 */
-	void initModules();
+	void initModules() const;
 
 	/**
 	 * @brief Executes the specified phase. Loops through all registered modules and calls their onPhase method.
 	 * @param p The phase to execute.
 	 */
-	void executePhase(Phase p);
+	void executePhase(Phase const p) const;
 
 	/**
-	 * @brief Retrieves a specific module instance by its enum reprensentation. The returned pointer is of the type specified by the template parameter T.
+	 * @brief Retrieves a specific module instance by its enum representation. The returned pointer is of the type specified by the template parameter T.
 	 * @tparam T The class of the module to retrieve. Can be a base class, that the module inherits from.
 	 * @param moduleType The enum entry that corresponds to the module being requested.
 	 * @return Pointer to the requested module instance (T*).
@@ -49,7 +48,7 @@ public:
 	template <typename T>
 	T* getModule(Modules moduleType)
 	{
-		return static_cast<T*>(_modules[(int)moduleType]);
+		return static_cast<T*>(_modules[static_cast<int>(moduleType)]);
 	}
 
 	/**
@@ -63,7 +62,7 @@ public:
 	T* registerModule(Modules moduleType)
 	{
 		static T moduleInstance;
-		_modules[(int)moduleType] = &moduleInstance;
+		_modules[static_cast<int>(moduleType)] = &moduleInstance;
 		return &moduleInstance;
 	}
 
@@ -84,7 +83,7 @@ public:
 
 		// Call init immediately to ensure the module is ready for use right after registration
 		moduleInstance->init(); 
-		_modules[(int)Modules::DataSource_Offline] = moduleInstance;
+		_modules[static_cast<int>(Modules::DataSource_Offline)] = moduleInstance;
 		return moduleInstance;
 	}
 #endif // USE_SD_CARD_COMMAND_STREAM || USE_CODE_COMMAND_STREAM
@@ -106,7 +105,7 @@ public:
 
 		// Call init immediately to ensure the module is ready for use right after registration
 		moduleInstance->init();
-		_modules[(int)Modules::DataSource_Secondary] = moduleInstance;
+		_modules[static_cast<int>(Modules::DataSource_Secondary)] = moduleInstance;
 		return moduleInstance;
 	}
 #endif // RELAY_SUPPORTED || USE_ESP32_WIFI
@@ -115,7 +114,7 @@ private:
 	/**
 	 * @brief An array of pointers to registered LoopModule instances.
 	 */
-	LoopModule* _modules[(int)Modules::Max] = {};
+	LoopModule* _modules[static_cast<int>(Modules::Max)] = {};
 
 #if defined(USE_SD_CARD_COMMAND_STREAM) || defined(USE_CODE_COMMAND_STREAM)
 	/**

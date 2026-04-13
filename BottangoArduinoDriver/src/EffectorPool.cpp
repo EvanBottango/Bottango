@@ -4,202 +4,196 @@
 #include "FreeRam.h"
 #include "System/SystemStatus.h"
 
-EffectorPool::EffectorPool()
-{
-}
-
-void EffectorPool::onPhase(Phase p)
+void EffectorPool::onPhase(Phase const p)
 {
 	if (p != Phase::Output) return;
 
 	if (SystemStatus::systemStatus.initialized)
 	{
 		updateAllDriveTargets();
-	}	
+	}
 }
 
-void EffectorPool::addEffector(AbstractEffector *inEffector)
+void EffectorPool::addEffector(AbstractEffector* effector)
 {
-    if (effectors.size() >= MAX_REGISTERED_EFFECTORS)
-    {
-        Error::reportError_NoSpaceAvailable();
-        return;
-    }
+	if (effectors.size() >= MAX_REGISTERED_EFFECTORS)
+	{
+		Error::reportError_NoSpaceAvailable();
+		return;
+	}
 
-    char inEffectorIdentifier[9];
-    inEffector->getIdentifier(inEffectorIdentifier, 9);
+	char inEffectorIdentifier[9];
+	effector->getIdentifier(inEffectorIdentifier, 9);
 
-    AbstractEffector *existingEffector = getEffector(inEffectorIdentifier);
-
-    if (existingEffector == NULL)
-    {
-        effectors.pushBack(inEffector);
-    }
-    else
-    {
-        Error::reportError_EffectorCollision(inEffectorIdentifier);
-        return;
-    }
+	if (getEffector(inEffectorIdentifier) == NULL)
+	{
+		effectors.pushBack(effector);
+	}
+	else
+	{
+		Error::reportError_EffectorCollision(inEffectorIdentifier);
+		return;
+	}
 }
 
-void EffectorPool::removeEffector(char *identifier)
+void EffectorPool::removeEffector(char* identifier)
 {
 #ifdef __AVR__
-    cli(); // stop interrupts
+	cli(); // stop interrupts
 #endif
 
-    AbstractEffector *effector = getEffector(identifier);
-    if (effector == NULL)
-    {
-        Error::reportError_NoEffectorOnPin(identifier);
-        return;
-    }
+	AbstractEffector* effector = getEffector(identifier);
+	if (effector == NULL)
+	{
+		Error::reportError_NoEffectorOnPin(identifier);
+		return;
+	}
 
-    effectors.remove(effector);
-    effector->destroy(false);
-    delete effector;
+	effectors.remove(effector);
+	effector->destroy(false);
+	delete effector;
 
 #ifdef __AVR__
-    sei(); // allow interrupts
+	sei(); // allow interrupts
 #endif
 }
 
-void EffectorPool::addCurveToEffector(char *identifier, Curve *curve)
+void EffectorPool::addCurveToEffector(char* identifier, Curve* curve) const
 {
-    AbstractEffector *effector = getEffector(identifier);
-    if (effector == NULL)
-    {
-        Error::reportError_NoEffectorOnPin(identifier);
-        return;
-    }
-    effector->addCurve(curve);
+	AbstractEffector* effector = getEffector(identifier);
+	if (effector == NULL)
+	{
+		Error::reportError_NoEffectorOnPin(identifier);
+		return;
+	}
+	effector->addCurve(curve);
 }
 
-void EffectorPool::updateEffectorSignalBounds(char *identifier, int minSignal, int maxSignal, int signalSpeed)
+void EffectorPool::updateEffectorSignalBounds(char* identifier, int minSignal, int maxSignal, int signalSpeed) const
 {
-    AbstractEffector *effector = getEffector(identifier);
-    if (effector == NULL)
-    {
-        Error::reportError_NoEffectorOnPin(identifier);
-        return;
-    }
-    effector->updateSignalBounds(minSignal, maxSignal, signalSpeed);
+	AbstractEffector* effector = getEffector(identifier);
+	if (effector == NULL)
+	{
+		Error::reportError_NoEffectorOnPin(identifier);
+		return;
+	}
+	effector->updateSignalBounds(minSignal, maxSignal, signalSpeed);
 }
 
-void EffectorPool::homeEffector(char *identifier)
+void EffectorPool::homeEffector(char* identifier) const
 {
-    AbstractEffector *effector = getEffector(identifier);
-    if (effector == NULL)
-    {
-        Error::reportError_NoEffectorOnPin(identifier);
-        return;
-    }
-    effector->setHome();
+	AbstractEffector* effector = getEffector(identifier);
+	if (effector == NULL)
+	{
+		Error::reportError_NoEffectorOnPin(identifier);
+		return;
+	}
+	effector->setHome();
 }
 
-void EffectorPool::resetHomeEffector(char *identifier)
+void EffectorPool::resetHomeEffector(char* identifier) const
 {
-    AbstractEffector *effector = getEffector(identifier);
-    if (effector == NULL)
-    {
-        Error::reportError_NoEffectorOnPin(identifier);
-        return;
-    }
-    effector->resetHome();
+	AbstractEffector* effector = getEffector(identifier);
+	if (effector == NULL)
+	{
+		Error::reportError_NoEffectorOnPin(identifier);
+		return;
+	}
+	effector->resetHome();
 }
 
-void EffectorPool::autoSyncEffector(char *identifier, int direction)
+void EffectorPool::autoSyncEffector(char* identifier, int direction) const
 {
-    AbstractEffector *effector = getEffector(identifier);
-    if (effector == NULL)
-    {
-        Error::reportError_NoEffectorOnPin(identifier);
-        return;
-    }
-    effector->setAutoSync(direction);
+	AbstractEffector* effector = getEffector(identifier);
+	if (effector == NULL)
+	{
+		Error::reportError_NoEffectorOnPin(identifier);
+		return;
+	}
+	effector->setAutoSync(direction);
 }
 
 // this routine is called by the GUI buttons to synch (home) a stepper.  Intercept the values and modify to reflect
 // what we specifically want for each stepper motor.
 
-void EffectorPool::syncEffector(char *identifier, int syncValue)
+void EffectorPool::syncEffector(char* identifier, int syncValue) const
 {
-    AbstractEffector *effector = getEffector(identifier);
-    if (effector == NULL)
-    {
-        Error::reportError_NoEffectorOnPin(identifier);
-        return;
-    }
+	AbstractEffector* effector = getEffector(identifier);
+	if (effector == NULL)
+	{
+		Error::reportError_NoEffectorOnPin(identifier);
+		return;
+	}
 
-    effector->setSync(syncValue);
+	effector->setSync(syncValue);
 }
 
-void EffectorPool::clearCurvesForEffector(char *identifier)
+void EffectorPool::clearCurvesForEffector(char* identifier) const
 {
-    AbstractEffector *effector = getEffector(identifier);
-    if (effector == NULL)
-    {
-        Error::reportError_NoEffectorOnPin(identifier);
-        return;
-    }
-    effector->clearCurves();
+	AbstractEffector* effector = getEffector(identifier);
+	if (effector == NULL)
+	{
+		Error::reportError_NoEffectorOnPin(identifier);
+		return;
+	}
+	effector->clearCurves();
 }
 
-bool EffectorPool::effectorUsesFloatCurve(char *identifier)
+bool EffectorPool::effectorUsesFloatCurve(char* identifier) const
 {
-    AbstractEffector *effector = getEffector(identifier);
-    if (effector == NULL)
-    {
-        Error::reportError_NoEffectorOnPin(identifier);
-        return true;
-    }
-    return effector->useFloatCurve();
+	AbstractEffector* effector = getEffector(identifier);
+	if (effector == NULL)
+	{
+		Error::reportError_NoEffectorOnPin(identifier);
+		return true;
+	}
+	return effector->useFloatCurve();
 }
 
-void EffectorPool::updateAllDriveTargets()
+void EffectorPool::updateAllDriveTargets() const
 {
-    for (byte i = 0; i < effectors.size(); i++)
-    {
-        effectors.get(i)->updateOnLoop();
-        effectors.get(i)->driveOnLoop();
-    }
+	for (byte i = 0; i < effectors.size(); i++)
+	{
+		effectors.get(i)->updateOnLoop();
+		effectors.get(i)->driveOnLoop();
+	}
 }
 
 void EffectorPool::deregisterAll()
 {
 #ifdef __AVR__
-    cli(); // stop interrupts
+	cli(); // stop interrupts
 #endif
 
-    for (int i = 0; i < effectors.size(); i++)
-    {
-        AbstractEffector *effector = effectors.get(i);
-        effector->destroy(true);
+	for (int i = 0; i < effectors.size(); i++)
+	{
+		AbstractEffector* effector = effectors.get(i);
+		effector->destroy(true);
 		delete effector;
-    }
-    effectors.clear();
+	}
+	effectors.clear();
 
 #ifdef __AVR__
-    sei(); // allow interrupts
+	sei(); // allow interrupts
 #endif
 }
 
-void EffectorPool::clearAllCurves()
+void EffectorPool::clearAllCurves() const
 {
-    for (byte i = 0; i < effectors.size(); i++)
-    {
-        effectors.get(i)->clearCurves();
-    }
+	for (byte i = 0; i < effectors.size(); i++)
+	{
+		effectors.get(i)->clearCurves();
+	}
 }
 
-AbstractEffector *EffectorPool::getEffector(char *identifier)
+AbstractEffector* EffectorPool::getEffector(char* identifier) const
 {
-    for (byte i = 0; i < effectors.size(); i++)
-    {
-        if (effectors.get(i)->respondsToIdentifier(identifier))
-        {
-            return effectors.get(i);
-        }
-    }
-    return NULL;
+	for (byte i = 0; i < effectors.size(); i++)
+	{
+		if (effectors.get(i)->respondsToIdentifier(identifier))
+		{
+			return effectors.get(i);
+		}
+	}
+	return NULL;
 }

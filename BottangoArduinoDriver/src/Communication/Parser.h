@@ -1,11 +1,9 @@
-// AsciiParser.h
-
-#ifndef _AsciiParser_h
-#define _AsciiParser_h
+#ifndef _Parser_h
+#define _Parser_h
 
 #include <Arduino.h>
 #include "CommandDecoder.h"
-#include "../Module Handling/ModuleLoop.h"
+#include "../Module Handling/LoopModule.h"
 
 /**
  * @brief The Parser class is responsible for parsing commands provided by the CommandDecoder and executing the corresponding actions.
@@ -14,7 +12,7 @@
 class Parser : public LoopModule
 {
 public:
-	void onPhase(Phase p) override;
+	void onPhase(Phase const p) override;
 
 	/**
 	 * @brief Set the command decoder to use for parsing commands.
@@ -25,9 +23,10 @@ public:
 	/**
 	 * @brief Parse a command from the split command buffer.
 	 * @param splitCommandBuffer Pointer to an array of strings representing the split command and its parameters.
+	 * @param sourceIsUsbSerial Indicates whether the command originated from the USB serial interface
 	 * @return true if the command was successfully parsed and executed, false otherwise.
 	 */
-	bool parseCommand(char** splitCommandBuffer, bool sourceIsUsbSerial) const;
+	bool parseCommand(char** splitCommandBuffer, bool const sourceIsUsbSerial) const;
 
 	/**
 	 * @brief Helper to get the earliest start time from a command string. Will also find the earliest start time across all frames of a multi-frame sync command, if applicable.
@@ -50,19 +49,19 @@ public:
 	 * @param commandName The name of the command to check.
 	 * @return True if the command has a start time parameter, false otherwise.
 	 */
-	bool commandHasStartTime(char* commandName) const;
+	bool commandHasStartTime(char* const commandName) const;
 
 	/**
 	 * @brief Helper function to determine if a given command name corresponds to a command that has an end time parameter.
 	 * @param commandName The name of the command to check.
 	 * @return True if the command has an end time parameter, false otherwise.
 	 */
-	bool commandHasDuration(char* commandName) const;
+	bool commandHasDuration(char* const commandName) const;
 
 private:
-	bool commandIsAllowed(char* commandName, bool sourceIsUsbSerial) const;
+	bool commandIsAllowed(char* const commandName, bool const sourceIsUsbSerial) const;
 
-	CommandDecoder* _decoder;
+	CommandDecoder* _decoder = nullptr;
 };
 
 #endif

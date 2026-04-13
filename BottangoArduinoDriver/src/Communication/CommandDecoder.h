@@ -5,7 +5,7 @@
 
 #include <Arduino.h>
 #include "../DataSource/DataSource.h"
-#include "../Module Handling/ModuleLoop.h"
+#include "../Module Handling/LoopModule.h"
 #include "../../BottangoArduinoModules.h"
 
 /**
@@ -65,7 +65,7 @@ public:
 
 	/**
 	 * @brief Splits a command string into components in-place.
-	 * @param stringToSplit Pointer to a writable, null-terminated string containing the command to split. Must be non-null; the function will modify the buffer.
+	 * @param data Pointer to a writable, null-terminated string containing the command to split. Must be non-null; the function will modify the buffer.
 	 */
 	virtual bool splitCommand(SplitCommandData* data) const
 	{
@@ -80,15 +80,15 @@ public:
 #ifdef ALLOW_SYNC_COMMANDS
 	/**
 	 * @brief Initializes the sync command parsing state with a new command string.
-	 * @param stringToSplit Pointer to a writable, null-terminated string containing the sync command to parse. Must be non-null; the function will modify the buffer.
+	 * @param data Pointer to a writable, null-terminated string containing the sync command to parse. Must be non-null; the function will modify the buffer.
 	 */
-	virtual void beginSyncCommand(SplitCommandData* data) const {};
+	virtual void beginSyncCommand(SplitCommandData* data) const {}
 
 	/**
 	 * @brief Retrieves the next frame from the current sync command.
 	 * @return Pointer to the next frame string, or nullptr if no more frames are available.
 	 */
-	virtual void getNextFrame(SplitCommandData* data) const {};
+	virtual void getNextFrame(SplitCommandData* data) const {}
 
 	/**
 	 * @brief Checks whether additional frames from a multi-frame are available.
@@ -107,13 +107,13 @@ protected:
 	/**
 	 * @brief Decode data from the data source.
 	 */
-	virtual void decode() {};
+	virtual void decode() {}
 
 	/**
-	 * @brief The primary source of data. Usally the default Arduino Serial connection. Is ALWAYS active, to give
+	 * @brief The primary source of data. Usually the default Arduino Serial connection. Is ALWAYS active, to give
 	 * the user the chance, to connect Bottango and change the config
 	 */
-	DataSource* _source;
+	DataSource* _source = nullptr;
 
 
 #if defined(RELAY_SUPPORTED) || defined(USE_ESP32_WIFI)

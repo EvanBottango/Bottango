@@ -115,6 +115,7 @@ private:
 	void enqueueBootBroadcast();
 	void finalizeRelayTeardown(int peerId);
 
+protected:
 	// ==== AbstractMultiMessageOutgoingSource implementation ====
 	bool emitNextChunk() override;
 };

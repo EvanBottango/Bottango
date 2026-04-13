@@ -15,7 +15,7 @@
 
 #include "Logger/Logger.h"
 
-void AnimationPlaybackControl::onPhase(Phase p)
+void AnimationPlaybackControl::onPhase(Phase const p)
 {
 	if (p != Phase::Logic)
 	{
@@ -33,7 +33,6 @@ void AnimationPlaybackControl::onPhase(Phase p)
 	// Ready for next command: prepare the next command
 	if (readyForNextCommand())
 	{
-#if defined(USE_SD_CARD_COMMAND_STREAM) || defined(USE_CODE_COMMAND_STREAM)
 		if (complete())
 		{
 #ifdef EXPORTED_ANIM_LOGGING
@@ -96,7 +95,7 @@ void AnimationPlaybackControl::onPhase(Phase p)
 			}
 
 			// Prepare the next command for the parser
-			// The parser will retrieve the command during its own logic phase
+			// It will retrieve the command during its own logic phase
 			_offlineSource->prepareNextCommand();
 
 			// Peek the command after the upcoming command, to retrieve its startTime
@@ -106,7 +105,6 @@ void AnimationPlaybackControl::onPhase(Phase p)
 				_timeStartOfNextCommand = _parser->getStartTime(nextCommand);
 			}
 		}
-#endif // USE_SD_CARD_COMMAND_STREAM
 	}
 
 	updatePlaybackStatus();
@@ -134,7 +132,7 @@ void AnimationPlaybackControl::init()
 	}
 #endif // RELAY_SUPPORTED
 
-	// Note: Unsure about the best place for this. Normaly it should live in the ModuleMaster.
+	// Note: Unsure about the best place for this. Normally it should live in the ModuleMaster.
 	// But it also feels like it would fit here perfectly
 
 	// Setup the secondary data source module, if any
@@ -171,7 +169,7 @@ void AnimationPlaybackControl::init()
 	}
 
 #ifdef ENABLE_DYNAMIC_ANIMATION_SOURCE_SWITCH
-	// If expored animation should not play, return
+	// If exported animation should not play, return
 	if (!PersistentConfigUtil::getUseExportedCommandStream())
 	{
 		return;
@@ -455,7 +453,7 @@ bool AnimationPlaybackControl::readyForNextCommand()
 #elif defined(USE_CODE_COMMAND_STREAM)
 #ifdef RELAY_SUPPORTED
 	// not ready for next if esp comms pool is full
-	if (BottangoCore::isRelayBridge && BottangoCore::relayPool->toPeerQueueFull())
+	if (_relay->isBridge() && _relay->getPeerPool()->toPeerQueueFull())
 	{
 		return false;
 	}
@@ -466,7 +464,7 @@ bool AnimationPlaybackControl::readyForNextCommand()
 	//return false;
 }
 
-bool AnimationPlaybackControl::complete()
+bool AnimationPlaybackControl::complete() const
 {
 	// looping is never complete, needs to be canceled externally
 	if (_currentPlayingIndex >= 0 && ANIM_IS_LOOPING(_animationConfigs.get(_currentPlayingIndex)->flags))
@@ -474,8 +472,6 @@ bool AnimationPlaybackControl::complete()
 		return false;
 	}
 
-	auto debugTime = 0;
-	bool complete = _offlineSource->dataComplete();
 	if (_offlineSource->dataComplete() && Time::getCurrentTimeInMs() >= _timeEndOfLongestCommand)
 	{
 		return true;
@@ -554,7 +550,7 @@ int AnimationPlaybackControl::getIndexOfAnimationToTrigger() const
 	return -1;
 }
 
-void AnimationPlaybackControl::playAnimation(int index, bool loop)
+void AnimationPlaybackControl::playAnimation(uint8_t const index, bool const loop) const
 {
 	if (SystemStatus::systemStatus.ConnectionStatus != SystemStatus::eConnectionStatus::Export_Playback || _invalidState)
 	{
@@ -605,7 +601,7 @@ void AnimationPlaybackControl::setInvalidState()
 }
 
 #ifdef EXPORTED_ANIM_LOGGING
-void AnimationPlaybackControl::logConfig(AnimationConfiguration* config)
+void AnimationPlaybackControl::logConfig(const AnimationConfiguration* config)
 {
 	// ToDo: This is double guarded (see end of parseConfiguration)
 #ifdef TOGGLE_DEBUG

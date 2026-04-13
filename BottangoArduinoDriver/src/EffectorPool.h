@@ -4,23 +4,23 @@
 #include "AbstractEffector.h"
 #include "CircularArray.h"
 #include "../BottangoArduinoConfig.h"
-#include "Module Handling/ModuleLoop.h"
+#include "Module Handling/LoopModule.h"
 
 class EffectorPool : public LoopModule
 {
 
 public:
-    EffectorPool();
+    EffectorPool() = default;
 
-	void onPhase(Phase p) override;
+	void onPhase(Phase const p) override;
 
     void addEffector(AbstractEffector *effector);
 
 	/**
 	 * @brief Template function to add an effector of type T with constructor arguments Args
 	 * @tparam T AbstractEffector derived type
-	 * @tparam ...Args Argument types for T's constructor
-	 * @param ...args Arguments to pass to T's constructor
+	 * @tparam Args Argument types for T's constructor
+	 * @param args Arguments to pass to T's constructor
 	 */
 	template <typename T, typename... Args>
 	void addEffector(Args&&... args)
@@ -33,31 +33,31 @@ public:
 
     void removeEffector(char *identifier);
 
-    void addCurveToEffector(char *identifier, Curve *curve);
+    void addCurveToEffector(char *identifier, Curve *curve) const;
 
-    void updateEffectorSignalBounds(char *identifier, int minSignal, int maxSignal, int signalSpeed);
+    void updateEffectorSignalBounds(char *identifier, int minSignal, int maxSignal, int signalSpeed) const;
 
-    void syncEffector(char *identifier, int syncValue);
+    void syncEffector(char *identifier, int syncValue) const;
 
-    void autoSyncEffector(char *identifer, int direction);
+    void autoSyncEffector(char * identifier, int direction) const;
 
-    void homeEffector(char *identifier);
+    void homeEffector(char *identifier) const;
 
-    void resetHomeEffector(char *identifier);
+    void resetHomeEffector(char *identifier) const;
 
-    void clearCurvesForEffector(char *identifier);
+    void clearCurvesForEffector(char *identifier) const;
 
-    void updateAllDriveTargets();
+    void updateAllDriveTargets() const;
 
     void deregisterAll();
 
-    void clearAllCurves();
+    void clearAllCurves() const;
 
-    bool effectorUsesFloatCurve(char *identifier);
+    bool effectorUsesFloatCurve(char *identifier) const;
 
     CircularArray<AbstractEffector> effectors = CircularArray<AbstractEffector>(MAX_REGISTERED_EFFECTORS);
 
-    AbstractEffector *getEffector(char *identifier);
+    AbstractEffector *getEffector(char *identifier) const;
 };
 
 #endif // BOTTANGOARDUINO_SERVOPOOL_H

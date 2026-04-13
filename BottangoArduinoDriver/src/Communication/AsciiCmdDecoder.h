@@ -16,14 +16,14 @@ public:
 
 	/**
 	 * @brief Splits a command string into components in-place.
-	 * @param stringToSplit Pointer to a writable, null-terminated string containing the command to split. Must be non-null; the function will modify the buffer.
+	 * @param data Pointer to a writable, null-terminated string containing the command to split. Must be non-null; the function will modify the buffer.
 	 */
 	bool splitCommand(SplitCommandData* data) const override;
 
 #ifdef ALLOW_SYNC_COMMANDS
 	/**
 	 * @brief Initializes the sync command parsing state with a new command string.
-	 * @param stringToSplit Pointer to a writable, null-terminated string containing the sync command to parse. Must be non-null; the function will modify the buffer.
+	 * @param data Pointer to a writable, null-terminated string containing the sync command to parse. Must be non-null; the function will modify the buffer.
 	 */
 	void beginSyncCommand(SplitCommandData* data) const override;
 
@@ -40,7 +40,7 @@ public:
 	bool hasMoreFrames(SplitCommandData* data) const override;
 #endif // ALLOW_SYNC_COMMANDS
 
-private:
+protected:
 	void decode() override;
 
 #ifdef RELAY_SUPPORTED

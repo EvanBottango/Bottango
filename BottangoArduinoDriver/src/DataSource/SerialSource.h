@@ -12,7 +12,7 @@
 class SerialSource : public CharStreamedSource
 {
 public:
-	void onPhase(Phase p) override;
+	void onPhase(Phase const p) override;
 	void init() override;
 	void readData() override;
 

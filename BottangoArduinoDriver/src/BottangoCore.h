@@ -23,31 +23,31 @@
 
 namespace BottangoCore
 {
-    void bottangoSetup();
-    void bottangoLoop();
+	void bottangoSetup();
+	void bottangoLoop();
 
 	void request_Stop();
 	void request_eStop();
 
-    /**
+	/**
 	 * @brief Stops the playback - only use when the source is Serial! Otherwise, use the request_Stop() or request_eStop() functions
-     */
-    void stop(bool doUninitialize);
+	 */
+	void stop(bool const doUninitialize);
 
-    void uninitialize();
+	void uninitialize();
 
-    extern EffectorPool effectorPool;
-    extern AbstractMultiMessageOutgoingSource *activeOutgoingMultimessage;
+	extern EffectorPool effectorPool;
+	extern AbstractMultiMessageOutgoingSource* activeOutgoingMultimessage;
 	extern ModuleMaster mMaster;
 
 	extern char delimiters[];
 
-#if defined(RELAY_SUPPORTED)
+#ifdef RELAY_SUPPORTED
 	extern unsigned long lastPollTimeAsPeer;
 #endif // RELAY_SUPPORTED
 
 #ifdef RELAY_LOGGING
-    extern unsigned long lastWaitForConnectLog;
+	extern unsigned long lastWaitForConnectLog;
 #endif // RELAY_LOGGING
 
 } // namespace BottangoCore

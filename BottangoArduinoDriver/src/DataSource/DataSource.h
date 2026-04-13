@@ -5,7 +5,7 @@
 
 #include <Arduino.h>
 #include "../../BottangoArduinoConfig.h"
-#include "../Module Handling/ModuleLoop.h"
+#include "../Module Handling/LoopModule.h"
 
 class DataSource : public LoopModule
 {
@@ -52,7 +52,7 @@ public:
 	 * @brief Helper, to set whether this data source is currently active.
 	 * @param active True to set this data source as active, false to set it as inactive.
 	 */
-	virtual void setActiveSource(bool active)
+	virtual void setActiveSource(bool const active)
 	{
 		_isActive = active;
 	}	

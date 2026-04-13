@@ -48,7 +48,6 @@ void I2SAudioModule::checkAudioSource(const char* effectorIdentifier, const char
 	int responderCode = 0;
 	SDCardUtil::SDFileError fileError;
 
-	// ToDo: SD-Karte öffnen gehört nicht hier hin. Muss in ein eigenes Modul, gekoppelt über ein Interface. Das I2S Audio-Modul darf die Quelle nicht kennen.
 	// Open Hash File
 	char hashBuffer[FILE_HASH_LENGTH + 1];
 	char filePathBuffer[MAX_FILE_PATH_SIZE];
@@ -88,9 +87,7 @@ void I2SAudioModule::checkAudioSource(const char* effectorIdentifier, const char
 			responderCode = I2S_AUDIO_STATUS_NO_HASH_ON_CARD;
 		}
 	}
-	SDCardUtil::closeFile(hashFile);
-
-	bool headerOk = false;
+	SDCardUtil::closeFile(hashFile);	
 
 	// if we didn't get a bad card error
 	// open check and init audio file itself from header
@@ -103,7 +100,7 @@ void I2SAudioModule::checkAudioSource(const char* effectorIdentifier, const char
 		// got audio file
 		if (fileError == SDCardUtil::ERR_NONE)
 		{
-			headerOk = true;
+			bool headerOk = true;
 
 			// Read number of channels (position 22 in WAV header)
 			SDCardUtil::lockCard();
@@ -249,12 +246,6 @@ void I2SAudioModule::checkAudioSource(const char* effectorIdentifier, const char
 	}
 	BottangoCore::activeOutgoingMultimessage = new I2SAudEventStatusResponder(responderCode);
 
-#ifdef RELAY_SUPPORTED
-	if (Outgoing::secondaryPeerOutgoing)
-	{
-		BottangoCore::activeOutgoingMultimessage->setSecondary();
-	}
-#endif
 	BottangoCore::activeOutgoingMultimessage->initializeMultiMessage(Outgoing::get());
 
 #if defined(USE_CODE_COMMAND_STREAM) || defined(USE_SD_CARD_COMMAND_STREAM)
@@ -470,11 +461,11 @@ void i2s_Task(void* param)
 	SDCardUtil::SDFileError err = SDCardUtil::SDFileError::ERR_NONE;
 	File audioFile;
 	uint32_t cachedBytes = 0;
-	bool fileOnDeck = false;
-	char pendingFilePath[MAX_FILE_PATH_SIZE] = { 0 };
-	uint32_t pendingByteOffset = 0;
+	//bool fileOnDeck = false;
+	//char pendingFilePath[MAX_FILE_PATH_SIZE] = { 0 };
+	//uint32_t pendingByteOffset = 0;
 	char currentFilePath[MAX_FILE_PATH_SIZE] = { 0 };
-	uint32_t currentByteOffset = 0;
+	//uint32_t currentByteOffset = 0;
 	uint8_t buffer[I2S_BUFFER_SIZE];
 	uint8_t cacheBuffer[I2S_BUFFER_SIZE];
 	uint8_t volumeBuffer[I2S_BUFFER_SIZE];
@@ -531,7 +522,7 @@ void i2s_Task(void* param)
 				SDCardUtil::unlockCard();
 
 				strncpy(currentFilePath, module->pendingFilePath, sizeof(currentFilePath));
-				currentByteOffset = module->pendingByteOffset;
+				//currentByteOffset = module->pendingByteOffset;
 				module->playing = true;
 			}
 			else
@@ -602,7 +593,7 @@ void i2s_Task(void* param)
 						uint8_t* sampleBuffer8 = volumeBuffer;
 						for (size_t i = 0; i < additionalBytes; i++)
 						{
-							sampleBuffer8[i] = static_cast<uint8_t>(sampleBuffer8[i] * module->volume);
+							sampleBuffer8[i] = static_cast<uint8_t>(static_cast<float>(sampleBuffer8[i]) * module->volume);
 						}
 						break;
 					}
@@ -617,7 +608,7 @@ void i2s_Task(void* param)
 						int16_t* sampleBuffer16 = reinterpret_cast<int16_t*>(volumeBuffer);
 						for (size_t i = 0; i < additionalBytes / 2; i++)
 						{
-							sampleBuffer16[i] = static_cast<int16_t>(sampleBuffer16[i] * module->volume);
+							sampleBuffer16[i] = static_cast<int16_t>(static_cast<float>(sampleBuffer16[i]) * module->volume);
 						}
 						break;
 					}
@@ -638,9 +629,9 @@ void i2s_Task(void* param)
 								(byteBuffer24[base + 2] << 16));
 							if (sample & 0x00800000)
 							{
-								sample |= 0xFF000000;
+								sample |= static_cast<int32_t>(0xFF000000);
 							}
-							sample = static_cast<int32_t>(sample * module->volume);
+							sample = static_cast<int32_t>(static_cast<float>(sample) * module->volume);
 							byteBuffer24[base + 0] = sample & 0xFF;
 							byteBuffer24[base + 1] = (sample >> 8) & 0xFF;
 							byteBuffer24[base + 2] = (sample >> 16) & 0xFF;
@@ -658,7 +649,7 @@ void i2s_Task(void* param)
 						int32_t* sampleBuffer32 = reinterpret_cast<int32_t*>(volumeBuffer);
 						for (size_t i = 0; i < additionalBytes / 4; i++)
 						{
-							sampleBuffer32[i] = static_cast<int32_t>(sampleBuffer32[i] * module->volume);
+							sampleBuffer32[i] = static_cast<int32_t>(static_cast<float>(sampleBuffer32[i]) * module->volume);
 						}
 						break;
 					}

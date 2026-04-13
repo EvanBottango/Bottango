@@ -4,7 +4,7 @@
 #if defined(RELAY_SUPPORTED)
 
 #include "RelayChildPool.h"
-#include "../../Module Handling/ModuleLoop.h"
+#include "../../Module Handling/LoopModule.h"
 
 /*
 Naming should move to:

@@ -8,21 +8,19 @@
 #define USE_USB_SERIAL                                      // DEFAULT Use USB serial connection. Comment this line out if using ESP32 Wifi instead 
 //#define USE_ESP32_WIFI                                    // uncomment this line to use WiFi Socket communication on an ESP32 (this is not the realy (wireless) module.
 
-// #define ADVANCED_FEATURES                                   // comment this line out to disable all advanced features and just have basic USB serial control. This will save some memory if you don't need the extra features.
-
 // ---------------------------------- //
 
 // !! RELAY !!
 
-// #define RELAY_SUPPORTED                                  // uncomment this line to allow for relay bridge / relay peer behavior
+#define RELAY_SUPPORTED                                  // uncomment this line to allow for relay bridge / relay peer behavior
 
 // relay Comms type.                                        // (select only 1 if relay behavior is supported)
-// #define RELAY_COMS_ESPNOW                                // select the kind of communication stack for relay parent <-> child. ESP-Now only supported currently
+#define RELAY_COMS_ESPNOW                                // select the kind of communication stack for relay parent <-> child. ESP-Now only supported currently
 
 // children will use this and override choice of USB Serial or Wifi and only talk to parent via this relay method
 // parents will still use usb serial or wifi to talk to desktop app, and this setting for child comms.
 
-//#define ALLOW_SYNC_COMMANDS                             // parse commands that contain multiple commands wrapped in a single message
+#define ALLOW_SYNC_COMMANDS                             // parse commands that contain multiple commands wrapped in a single message
 
 // ---------------------------------- //
 
@@ -30,12 +28,12 @@
 // selecting nothing is USB control
 // otherwise select one of the below:
 
-//#define USE_CODE_COMMAND_STREAM                             // uncomment this line to drive animations from exported code instead of live control
+#define USE_CODE_COMMAND_STREAM                             // uncomment this line to drive animations from exported code instead of live control
 //#define USE_SD_CARD_COMMAND_STREAM                       // uncomment this line to drive animations from files on an SD card instead of live control (Note, arduino Uno / Nano / mega not supported)
 
 
 // if you have selected one of the above, enable this to dynamically switch between USB or the selected above exported animation source
-//#define ENABLE_DYNAMIC_ANIMATION_SOURCE_SWITCH              // uncomment this line to monitor a pin at boot to switch between live control or saved animation playback.
+#define ENABLE_DYNAMIC_ANIMATION_SOURCE_SWITCH              // uncomment this line to monitor a pin at boot to switch between live control or saved animation playback.
 
 
 // ---------------------------------- //
@@ -48,7 +46,7 @@
 // !! AUDIO !!
 // (select only 1)
 // #define AUDIO_TRIGGER_EVENT                                 // uncomment this line to have audio keyframes act as trigger events
-//#define AUDIO_SD_I2S                                     // uncomment this line to have audio keyframes play audio over i2s, reading audio file from SD card
+#define AUDIO_SD_I2S                                     // uncomment this line to have audio keyframes play audio over i2s, reading audio file from SD card
 
 // extra features
 // #define DYNAMIC_VOLUME                                   // uncomment this line to adjust volume of i2s signal based on analog pin read
@@ -57,12 +55,12 @@
 // ---------------------------------- //
 
 // !! STATUS LIGHTS !!
-//#define ENABLE_STATUS_LIGHTS                             // uncomment this line to drive status lights based on driver status
+#define ENABLE_STATUS_LIGHTS                             // uncomment this line to drive status lights based on driver status
 
 // ---------------------------------- //
 
 // !! STOP BUTTON !!
-//#define STOP_BUTTON_SUPPORTED                            // uncomment this line to monitor a button or pin for stop action
+#define STOP_BUTTON_SUPPORTED                            // uncomment this line to monitor a button or pin for stop action
 // #define DYNAMIC_STOP_BUTTON_BEHAVIOR                     // uncomment this line to allow for dynamic change to what the stop button does
 
 // ---------------------------------- //
@@ -82,7 +80,7 @@
 // #define UTILITY_PIN 0                                       // monitor a specific button/pin for some utility behaviors
 
 // #define RESET_PREFS_SUPPORTED                               // support reset persistent storage with utility button
-//#define TOGGLE_DEBUG                                        // support toggle verbose logging
+#define TOGGLE_DEBUG                                        // support toggle verbose logging
 
 #endif
 #endif

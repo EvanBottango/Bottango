@@ -37,7 +37,7 @@ void ModuleMaster::setupModules()
 #endif
 
 	// ==== Relay Modules ====
-#if defined(RELAY_SUPPORTED)
+#ifdef RELAY_SUPPORTED
 	registerModule<RelayESPNow>(Modules::RelayComs);
 
 	// Relay Output
@@ -55,7 +55,7 @@ void ModuleMaster::setupModules()
 	parser->setCommandDecoder(asciiDecoder);
 
 	// ==== Effector Pool ====
-	_modules[(int)Modules::EffectorPool] = &BottangoCore::effectorPool;
+	_modules[static_cast<int>(Modules::EffectorPool)] = &BottangoCore::effectorPool;
 
 	// ===== Optional Modules ====
 #ifdef STOP_BUTTON_SUPPORTED
@@ -79,9 +79,9 @@ void ModuleMaster::setupModules()
 	Outgoing::bind(&outgoingSerialImpl);
 }
 
-void ModuleMaster::initModules()
+void ModuleMaster::initModules() const
 {
-	for (int i = 0; i < (int)Modules::Max; i++)
+	for (int i = 0; i < static_cast<int>(Modules::Max); i++)
 	{
 		if (_modules[i] != nullptr)
 		{
@@ -90,9 +90,9 @@ void ModuleMaster::initModules()
 	}
 }
 
-void ModuleMaster::executePhase(Phase p)
+void ModuleMaster::executePhase(Phase const p) const
 {
-	for (int i = 0; i < (int)Modules::Max; i++)
+	for (int i = 0; i < static_cast<int>(Modules::Max); i++)
 	{
 		if (_modules[i] != nullptr)
 		{

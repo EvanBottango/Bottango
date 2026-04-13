@@ -83,11 +83,11 @@ bool AsciiCmdDecoder::splitCommand(SplitCommandData* data) const
 #endif // ALLOW_SYNC_COMMANDS
 
 	int idxResult = 0;
-	char delimiters[] = ",";
+	char constexpr delimiters[] = ",";
 	char* token = strtok(data->stringToSplit, delimiters);
 	//validCommandAvailable = false;
 
-	while (token != NULL)
+	while (token != nullptr)
 	{
 		if (idxResult >= COMMANDS_PARAMS_SIZE) // Check buffer capacity
 		{
@@ -95,7 +95,7 @@ bool AsciiCmdDecoder::splitCommand(SplitCommandData* data) const
 			return false;
 		}
 		data->splitCommandBuffer[idxResult++] = token;
-		token = strtok(NULL, delimiters);
+		token = strtok(nullptr, delimiters);
 	}
 
 	return true;

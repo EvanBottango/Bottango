@@ -1,11 +1,11 @@
 #include "EspNowSource.h"
 
-#if defined(RELAY_COMS_ESPNOW)
+#ifdef RELAY_COMS_ESPNOW
 #include "Modules/RelayComs/Relay.h"
 #include "BottangoCore.h"
 
 
-void EspNowSource::onPhase(Phase p)
+void EspNowSource::onPhase(Phase const p)
 {
 	// Only read data during the Communication phase
 	if (p != Phase::Communication)

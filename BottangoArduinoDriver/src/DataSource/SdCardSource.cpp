@@ -3,9 +3,6 @@
 
 #include "SdCardSource.h"
 #include "SDCardUtil.h"
-#include "../System/SystemStatus.h"
-#include "../../BottangoArduinoCallbacks.h"
-#include "../PersistentConfigUtil.h"
 
 #include "Logger/Logger.h"
 
@@ -33,7 +30,7 @@ SdCardSource::~SdCardSource()
 #endif
 }
 
-void SdCardSource::onPhase(Phase p)
+void SdCardSource::onPhase(Phase const p)
 {
 	// Only read data during the Communication phase
 	if (p != Phase::Communication)
@@ -87,7 +84,7 @@ bool SdCardSource::openSetup()
 	return false;
 }
 
-bool SdCardSource::openAnimation(uint8_t animIndex, bool loop)
+bool SdCardSource::openAnimation(uint8_t const animIndex, bool const loop)
 {
 	// Open animation file, only if another file is not already open
 	if (!_currentFile)
@@ -250,44 +247,15 @@ bool SdCardSource::fillBufferChunk()
 	 */
 	 // Core buffer filling logic shared by ESP32 task and non-ESP32 loop
 
-	 // open file if needed
-	/*if (!currentFile)
-	{
-		char finalPath[MAX_FILE_PATH_SIZE];
-		finalPath[0] = '\0';
-
-		if (setup)
-		{
-			SDCardUtil::getSetupFilePath(finalPath);
-		}
-		else
-		{
-			SDCardUtil::getAnimationFilePath(index,
-				finalPath,
-				onLoop,
-				false);
-		}
-
-		SDCardUtil::SDFileError fileError;
-		currentFile = SDCardUtil::openFile(finalPath, fileError);
-
-		if (fileError != SDCardUtil::SDFileError::ERR_NONE || !currentFile)
-		{
-			cardReadComplete = true;
-			SDCardUtil::closeFile(currentFile);
-			return false;
-		}
-	}*/
-
 	if (SDCardUtil::safeAvailable(_currentFile) && _cardReadBuffer.getSpaceAvailable() >= TXT_BUFFER_READ_CHUNK_SIZE)
 	{
 		char tempBuffer[TXT_BUFFER_READ_CHUNK_SIZE];
 		SDCardUtil::lockCard();
-		int bytesRead = _currentFile.readBytes(tempBuffer, TXT_BUFFER_READ_CHUNK_SIZE);
+		size_t bytesRead = _currentFile.readBytes(tempBuffer, TXT_BUFFER_READ_CHUNK_SIZE);
 		SDCardUtil::unlockCard();
 
 		// Add read data to circular buffer
-		for (int i = 0; i < bytesRead; i++)
+		for (size_t i = 0; i < bytesRead; i++)
 		{
 			_cardReadBuffer.addChar(tempBuffer[i]);
 		}
@@ -350,7 +318,7 @@ bool SdCardSource::tryConsumeData(char** out)
 	return false;
 }
 
-bool SdCardSource::getNextCommand(char* buffer, bool peek)
+bool SdCardSource::getNextCommand(char* buffer, bool const peek)
 {
 	if (_dataComplete)
 	{
@@ -358,7 +326,7 @@ bool SdCardSource::getNextCommand(char* buffer, bool peek)
 	}
 
 	// Copy a whole command (sC,12,...\n\0) into the command buffer
-	// ToDo: This funcion can also return \0, if the buffer is empty (Underflow-Error). The following code does not check for that case?
+	// ToDo: This function can also return \0, if the buffer is empty (Underflow-Error). The following code does not check for that case?
 	_cardReadBuffer.getNextTxt(buffer, peek);
 
 	/*if (peek && buffer[0] == '\0' && _fileReadComplete)
@@ -422,17 +390,16 @@ void SdCardSource::resetBuffer()
 #endif*/
 }
 
-bool SdCardSource::getConfigurationForAnimation(uint8_t animIndex, AnimationConfiguration* config) const
+bool SdCardSource::getConfigurationForAnimation(uint8_t const animIndex, AnimationConfiguration* config) const
 {
 	char path[MAX_FILE_PATH_SIZE];
 	SDCardUtil::SDFileError fileError;
 
-	// first verify existance of all required files
+	// first verify existence of all required files
 	path[0] = '\0';
 	SDCardUtil::getAnimationFilePath(animIndex, path, false, true); // Get and open CONFIG file
 
-	bool exists = SDCardUtil::fileExists(path, fileError);
-	if (!exists)
+	if (!SDCardUtil::fileExists(path, fileError))
 	{
 		return false;
 	}
@@ -448,7 +415,7 @@ bool SdCardSource::getConfigurationForAnimation(uint8_t animIndex, AnimationConf
 		return false;
 	}
 
-	parseConfiguration(configFile, config);
+	parseConfiguration(&configFile, config);
 
 	// done with the file
 	SDCardUtil::closeFile(configFile);
@@ -456,24 +423,24 @@ bool SdCardSource::getConfigurationForAnimation(uint8_t animIndex, AnimationConf
 	return true;
 }
 
-void SdCardSource::parseConfiguration(File configFile, AnimationConfiguration* config) const
+void SdCardSource::parseConfiguration(File* configFile, AnimationConfiguration* config) const
 {
 	byte lineIndex = 0;
 
-	while (SDCardUtil::safeAvailable(configFile))
+	while (SDCardUtil::safeAvailable(*configFile))
 	{
 		SDCardUtil::lockCard();
 		// start of the line
-		char c = configFile.read();
+		char c = configFile->read();
 		SDCardUtil::unlockCard();
 
 		// skip this line, it's a comment
 		if (c == '/')
 		{
-			while (SDCardUtil::safeAvailable(configFile))
+			while (SDCardUtil::safeAvailable(*configFile))
 			{
 				SDCardUtil::lockCard();
-				c = configFile.read();
+				c = configFile->read();
 				SDCardUtil::unlockCard();
 				if (c == '\n' || c == '\r')
 				{
@@ -493,10 +460,10 @@ void SdCardSource::parseConfiguration(File configFile, AnimationConfiguration* c
 		value[0] = c;
 		for (int i = 1; i < 10; i++)
 		{
-			if (SDCardUtil::safeAvailable(configFile))
+			if (SDCardUtil::safeAvailable(*configFile))
 			{
 				SDCardUtil::lockCard();
-				char cNext = configFile.read();
+				char cNext = configFile->read();
 				SDCardUtil::unlockCard();
 				if (cNext == '\n' || cNext == '\r')
 				{
@@ -564,7 +531,8 @@ void SdCardSource::parseConfiguration(File configFile, AnimationConfiguration* c
 			break;
 		case 7:
 			config->buttonLadderMax = parsedValue;
-
+			break;
+		default:
 			break;
 		}
 

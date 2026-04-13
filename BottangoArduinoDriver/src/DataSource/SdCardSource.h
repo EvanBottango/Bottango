@@ -34,21 +34,21 @@ public:
 		char filePath[MAX_FILE_PATH_SIZE];
 	};
 
-	~SdCardSource();
+	~SdCardSource() override;
 
-	void onPhase(Phase p) override;
+	void onPhase(Phase const p) override;
 	void init() override;
 	bool openSetup() override;
-	bool openAnimation(uint8_t animIndex, bool loop) override;
+	bool openAnimation(uint8_t const animIndex, bool const loop) override;
 	void prepareNextCommand() override;
 	bool peekNextCommand(char* out) override;
 	bool tryConsumeData(char** out) override;
 	void resetBuffer() override;
-	bool getConfigurationForAnimation(uint8_t animIndex, AnimationConfiguration* config) const override;
+	bool getConfigurationForAnimation(uint8_t const animIndex, AnimationConfiguration* config) const override;
 
 private:
 	// ==== Buffer and file management ====
-	char _commandBuffer[MAX_COMMAND_LENGTH];
+	char _commandBuffer[MAX_COMMAND_LENGTH] =  {};
 	TxtBuffer<TXT_BUFFER_SIZE_SD> _cardReadBuffer;
 	File _currentFile;
 
@@ -68,9 +68,9 @@ private:
 
 	bool fillBufferChunk();
 
-	bool getNextCommand(char* buffer, bool peek = false);
+	bool getNextCommand(char* buffer, bool const peek = false);
 
-	void parseConfiguration(File configFile, AnimationConfiguration* config) const;
+	static void parseConfiguration(File* configFile, AnimationConfiguration* config) const;
 };
 
 

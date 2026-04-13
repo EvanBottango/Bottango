@@ -22,23 +22,23 @@ enum class Modules : uint8_t
 {
 	DataSource_Serial,			// [Mandatory] Primary data source, always present and active
 #if defined(USE_SD_CARD_COMMAND_STREAM) || defined(USE_CODE_COMMAND_STREAM)
-	DataSource_Offline,			// [Optinal] Offline data source, can be switched between different modules (e.g. SD card, Export to code)
+	DataSource_Offline,			// [Optional] Offline data source, can be switched between different modules (e.g. SD card, Export to code)
 #endif // USE_SD_CARD_COMMAND_STREAM || USE_CODE_COMMAND_STREAM
 #if defined(RELAY_SUPPORTED) || defined(USE_ESP32_WIFI)
-	DataSource_Secondary,		// [Optinal] Secondary data source, can be switched between different modules (e.g. ESP-Now, RS485, etc.)
-	RelayComs,					// [Optinal] Relay communication module, if supported
+	DataSource_Secondary,		// [Optional] Secondary data source, can be switched between different modules (e.g. ESP-Now, RS485, etc.)
+	RelayComs,					// [Optional] Relay communication module, if supported
 #endif // RELAY_SUPPORTED || USE_ESP32_WIFI
 	Decoder,					// [Mandatory] Command decoder, parses raw data into commands. Can be switched between different decoders (e.g. ASCII, binary, etc.)
 	Parser,						// [Mandatory] Command parser, takes parsed commands and executes them
 	EffectorPool,				// [Mandatory] Pool of effectors that can be used by commands
-#if defined (STOP_BUTTON_SUPPORTED)
-	StopButton,					// [Optinal] Stop button module, if supported
+#ifdef STOP_BUTTON_SUPPORTED
+	StopButton,					// [Optional] Stop button module, if supported
 #endif // STOP_BUTTON_SUPPORTED
-#if defined (STATUS_LIGHTS_SUPPORTED)
-	StatusLights,				// [Optinal] Status lights module, if supported
+#ifdef ENABLE_STATUS_LIGHTS
+	StatusLights,				// [Optional] Status lights module, if supported
 #endif // STATUS_LIGHTS_SUPPORTED
-#if defined (USE_I2S_AUDIO)
-	AudioI2S,					// [Optinal] I2S audio module, if supported	
+#ifdef AUDIO_SD_I2S
+	AudioI2S,					// [Optional] I2S audio module, if supported	
 #endif // USE_I2S_AUDIO
 #if defined(USE_SD_CARD_COMMAND_STREAM) || defined(USE_CODE_COMMAND_STREAM)
 	AnimPlaybackCntrl,			// [Mandatory] [Has to be second to last] Animation playback control module, is used automatically, depending on the active BottangoArduinoModules
@@ -47,7 +47,7 @@ enum class Modules : uint8_t
 };
 
 #if defined(USE_SD_CARD_COMMAND_STREAM) || defined(USE_CODE_COMMAND_STREAM) || defined(RELAY_SUPPORTED) || defined(USE_ESP32_WIFI)
-template <Modules slot>
+template <Modules Slot>
 struct SlotSize;
 #endif
 
@@ -57,11 +57,11 @@ struct SlotSize;
 // This is needed, to get the correct size for the buffer in the ModuleSlot, to make sure any of the possible modules that can be placed in the slot will fit.
 template <> struct SlotSize<Modules::DataSource_Offline>
 {
-	static constexpr size_t value = max({
-#if defined (USE_SD_CARD_COMMAND_STREAM)
+	static constexpr size_t value = std::max({
+#ifdef USE_SD_CARD_COMMAND_STREAM
 		sizeof(SdCardSource),
 #endif // USE_SD_CARD_COMMAND_STREAM
-#if defined (USE_CODE_COMMAND_STREAM)
+#ifdef USE_CODE_COMMAND_STREAM
 		sizeof(CodeSource)
 #endif // USE_CODE_COMMAND_STREAM
 		});
@@ -71,14 +71,14 @@ template <> struct SlotSize<Modules::DataSource_Offline>
 #if defined(RELAY_SUPPORTED) || defined(USE_ESP32_WIFI)
 template <> struct SlotSize<Modules::DataSource_Secondary>
 {
-	static constexpr size_t value = max({
+	static constexpr size_t value = std::max({
 		sizeof(RS485Source),
 
-#if defined(RELAY_COMS_ESPNOW)
+#ifdef RELAY_COMS_ESPNOW
 		sizeof(EspNowSource),
 #endif // RELAY_COMS_ESPNOW
 
-#if defined(USE_ESP32_WIFI)
+#ifdef USE_ESP32_WIFI
 		sizeof(WifiSource),
 #endif // USE_ESP32_WIFI
 		});
@@ -127,7 +127,7 @@ public:
 private:
 	// Note: The buffer needs to be aligned, otherwise it might crash
 	// std::max_align_t can be exchanged for a simple "4" for the ESP32
-	alignas(std::max_align_t) uint8_t _buffer[MaxSize];
+	alignas(std::max_align_t) uint8_t _buffer[MaxSize] = {};
 	bool _occupied = false;
 };
 #endif // USE_SD_CARD_COMMAND_STREAM || USE_CODE_COMMAND_STREAM || RELAY_SUPPORTED || USE_ESP32_WIFI

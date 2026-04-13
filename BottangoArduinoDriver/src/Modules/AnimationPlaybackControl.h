@@ -8,18 +8,18 @@
 
 #include <Arduino.h>
 #include "../../BottangoArduinoConfig.h"
-#include "../Module Handling/ModuleLoop.h"
+#include "../Module Handling/LoopModule.h"
 #include "../CircularArray.h"
 #include "../DataSource/StaticSecondaryDataSource.h"
 #include "../Communication/Parser.h"
 #include "AnimationConfiguration.h"
-#include "Modules/RelayComs/Relay.h"
+#include "../Modules/RelayComs/Relay.h"
 
 
 class AnimationPlaybackControl : public LoopModule
 {
 public:
-	void onPhase(Phase p) override;
+	void onPhase(Phase const p) override;
 	void init() override;
 
 	void stop(bool allowSetupStop);
@@ -28,7 +28,7 @@ public:
 
 	bool readyForNextCommand();
 
-	bool complete();
+	bool complete() const;
 
 	void setInvalidState();
 
@@ -39,8 +39,7 @@ private:
 	int _currentPlayingIndex = -1;
 	int _idleAnimIndex = -1;
 	int _startingAnim = -1;
-	bool _setupIsRunning = false;
-	bool _registeredAllPeers = false;
+	bool _setupIsRunning = false;	
 	bool _invalidState = false;
 
 	Parser* _parser = nullptr;
@@ -48,18 +47,19 @@ private:
 
 #ifdef RELAY_SUPPORTED
 	Relay* _relay = nullptr;
+	bool _registeredAllPeers = false;
 #endif // RELAY_SUPPORTED
 
 	int getIndexOfAnimationToTrigger() const;
 
-	void playAnimation(int index, bool loop);
+	void playAnimation(uint8_t const index, bool const loop) const;
 
 //#ifdef USE_SD_CARD_COMMAND_STREAM
 	void loadConfig();
 //#endif // USE_SD_CARD_COMMAND_STREAM
 
 #ifdef EXPORTED_ANIM_LOGGING
-	void logConfig(AnimationConfiguration* config);
+	static void logConfig(const AnimationConfiguration* config);
 #endif // EXPORTED_ANIM_LOGGING
 };
 

@@ -1,7 +1,3 @@
-// 
-// 
-// 
-
 #include "Parser.h"
 #include "../BasicCommands.h"
 #include "../System/SystemStatus.h"
@@ -14,7 +10,7 @@
 #include "../Module Handling/ModuleMaster.h"
 #endif
 
-void Parser::onPhase(Phase p)
+void Parser::onPhase(Phase const p)
 {
 	// Only parse commands during the 'Logic' phase
 	if (p != Phase::Logic)
@@ -23,12 +19,13 @@ void Parser::onPhase(Phase p)
 	}
 
 	char** splitCommandBuffer = _decoder->tryConsumeCommand();
-	bool sourceIsUsbSerial = _decoder->isSourceUsbSerial();
-	bool sendReady = false;
+	bool sourceIsUsbSerial = _decoder->isSourceUsbSerial();	
 
 	// Split the command and execute it
 	if (splitCommandBuffer != nullptr)
 	{
+		bool sendReady = false;
+
 		while (splitCommandBuffer)
 		{
 			if (commandIsAllowed(splitCommandBuffer[0], sourceIsUsbSerial))
@@ -54,7 +51,7 @@ void Parser::setCommandDecoder(CommandDecoder* cmdDecoder)
 	_decoder = cmdDecoder;
 }
 
-bool Parser::parseCommand(char** splitCommandBuffer, bool sourceIsUsbSerial) const
+bool Parser::parseCommand(char** splitCommandBuffer, bool const sourceIsUsbSerial) const
 {
 	if (splitCommandBuffer == nullptr)
 	{
@@ -264,7 +261,7 @@ unsigned long Parser::getStartTime(char* command) const
 	CommandDecoder::SplitCommandData data;
 	data.stringToSplit = command;
 
-	unsigned long startTime = (unsigned long)-1;
+	unsigned long startTime = static_cast<unsigned long>(-1);
 	bool commandWithTimeFound = false;
 
 	// Split the incoming command
@@ -385,7 +382,7 @@ unsigned long Parser::getEndTime(char* command) const
 	return Time::getCurrentTimeInMs();
 }
 
-bool Parser::commandHasStartTime(char* commandName) const
+bool Parser::commandHasStartTime(char* const commandName) const
 {
 	if (commandName == nullptr || *commandName == '\0')
 	{
@@ -403,7 +400,7 @@ bool Parser::commandHasStartTime(char* commandName) const
 	return false;
 }
 
-bool Parser::commandHasDuration(char* commandName) const
+bool Parser::commandHasDuration(char* const commandName) const
 {
 	if (commandName == nullptr || *commandName == '\0')
 	{
@@ -419,26 +416,26 @@ bool Parser::commandHasDuration(char* commandName) const
 	return false;
 }
 
-bool Parser::commandIsAllowed(char* commandName, bool sourceIsUsbSerial) const
+bool Parser::commandIsAllowed(char* const commandName, bool const sourceIsUsbSerial) const
 {
-	bool limitiedCmdSet = false;
+	bool limitedCmdSet = false;
 
 #if defined(USE_CODE_COMMAND_STREAM) || defined(USE_SD_CARD_COMMAND_STREAM)
 	if (sourceIsUsbSerial && SystemStatus::systemStatus.ConnectionStatus == SystemStatus::eConnectionStatus::Export_Playback)
 	{
-		limitiedCmdSet = true;
+		limitedCmdSet = true;
 	}
 #endif
 
 #ifdef RELAY_SUPPORTED
 	if (sourceIsUsbSerial && BottangoCore::mMaster.getModule<Relay>(Modules::RelayComs)->getRole() == Relay::RelayRole::Peer)
 	{
-		limitiedCmdSet = true;
+		limitedCmdSet = true;
 	}
 #endif // RELAY_SUPPORTED
 
 #if defined(USE_CODE_COMMAND_STREAM) || defined(USE_SD_CARD_COMMAND_STREAM) || defined(RELAY_SUPPORTED)
-	if (limitiedCmdSet)
+	if (limitedCmdSet)
 	{
 		// Handshake request is allowed
 		if (strcmp_P(commandName, BasicCommands::HANDSHAKE_REQUEST) == 0)

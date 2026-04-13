@@ -2,7 +2,7 @@
 #include "../Modules/Outgoing.h"
 #include "../BasicCommands.h"
 
-void SerialSource::onPhase(Phase p)
+void SerialSource::onPhase(Phase const p)
 {
 	// Only read data during the Communication phase
 	if (p != Phase::Communication)

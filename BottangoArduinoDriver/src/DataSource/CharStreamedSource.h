@@ -13,7 +13,7 @@ public:
 	void resetBuffer() override;
 
 protected:
-	void processData(char incomingChar);
+	void processData(char const incomingChar);
 	void checkTimeout();
 
 private:
@@ -22,7 +22,7 @@ private:
 	 * @param cmdString Pointer to the command string to check.
 	 * @return true if the hash is valid, false otherwise.
 	 */
-	bool checkHash(const char* cmdString);
+	static bool checkHash(const char* cmdString);
 
 	/**
 	 * @brief Stores the time of the last received character for timeout handling.
@@ -37,7 +37,7 @@ private:
 	/** @brief The buffer for a command. This buffer is used for all following phases: Decode, Parse and Execute, until the command is consumed.
 	 * It is not copied, we work directly with this buffer
 	 */
-	char _serialCommandBuffer[MAX_COMMAND_LENGTH];
+	char _serialCommandBuffer[MAX_COMMAND_LENGTH] = {};
 
 	/**
 	 * @brief Helper, to point to the current position in the buffer for storing incoming characters.

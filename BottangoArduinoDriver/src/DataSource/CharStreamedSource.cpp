@@ -2,7 +2,7 @@
 #include "../Modules/Outgoing.h"
 #include "../BasicCommands.h"
 
-void CharStreamedSource::processData(char incomingChar)
+void CharStreamedSource::processData(char const incomingChar)
 {
 	_commandInProgress = true;
 	_timeOfLastChar = millis();
@@ -88,7 +88,7 @@ bool CharStreamedSource::checkHash(const char* cmdString)
 {
 	if (cmdString[0] == '\0')
 	{
-		return 0;
+		return false;
 	}
 
 	char c = cmdString[0];

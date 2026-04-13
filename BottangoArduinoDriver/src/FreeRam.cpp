@@ -17,6 +17,7 @@ extern char* __brkval;
 
 int freeMemory()
 {
+#ifdef BOTTANGO_DEBUG
 	char top;
 #ifdef __arm__
 	return &top - reinterpret_cast<char*>(sbrk(0));
@@ -25,4 +26,6 @@ int freeMemory()
 #else  // __arm__
 	return __brkval ? &top - __brkval : &top - __malloc_heap_start;
 #endif  // __arm__
+#endif
+	return 0;
 }

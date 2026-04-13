@@ -1,9 +1,8 @@
-// I2SAudioEffector.h
-#include "../BottangoArduinoModules.h"
-
-#ifdef AUDIO_SD_I2S
 #ifndef I2SAudioEffector_h
 #define I2SAudioEffector_h
+
+#include "../BottangoArduinoModules.h"
+#ifdef AUDIO_SD_I2S
 
 #include "AbstractEffector.h"
 #include "DataSource/SDCardUtil.h"
@@ -13,7 +12,7 @@
 class I2SAudioEffector : public AbstractEffector
 {
 public:
-    I2SAudioEffector(char* identifier, char* hash);
+    I2SAudioEffector(const char* identifier, const char* hash);
 
     virtual void updateOnLoop() override;
     virtual void driveOnLoop() override;
@@ -27,7 +26,7 @@ private:
 
     char _myIdentifier[9];
     bool _shouldFire = false;
-	uint32_t _offsetMS = 0;
+	uint32_t _offsetMs = 0;
 };
 
 #endif

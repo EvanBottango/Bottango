@@ -20,7 +20,7 @@ namespace BottangoCore
 	unsigned long lastWaitForConnectLog = 0;
 #endif // RELAY_LOGGING
 
-#if defined(RELAY_SUPPORTED)
+#ifdef RELAY_SUPPORTED
 	unsigned long lastPollTimeAsPeer;
 #endif // RELAY_SUPPORTED
 
@@ -36,8 +36,6 @@ namespace BottangoCore
 
 		mMaster.setupModules();
 		mMaster.initModules();
-
-		pinMode(10, OUTPUT);
 
 #ifdef NAMED_BOARD_STARTUP
 		NamedBoardStartup::runNamedBoardStartup();
@@ -68,7 +66,7 @@ namespace BottangoCore
 		mMaster.getModule<AnimationPlaybackControl>(Modules::AnimPlaybackCntrl)->stop(doUninitialize);
 #endif // USE_CODE_COMMAND_STREAM || USE_SD_CARD_COMMAND_STREAM
 
-#if defined(RELAY_SUPPORTED)
+#ifdef RELAY_SUPPORTED
 		if (mMaster.getModule<Relay>(Modules::RelayComs)->stop(doUninitialize))
 		{
 			return false;
@@ -77,7 +75,7 @@ namespace BottangoCore
 		return true;
 	}
 
-	static void hardStop()
+	void hardStop()
 	{
 		Callbacks::onThisControllerStopped();
 		uninitialize();
@@ -133,7 +131,7 @@ namespace BottangoCore
 		}
 	}
 
-	void stop(bool doUninitialize)
+	void stop(bool const doUninitialize)
 	{
 		// ToDo: doUninitialize is more or less unused with this version of stop(). Its only called from the Parser and is always true
 		if (stopPlaybackModule(doUninitialize) && doUninitialize)
@@ -147,7 +145,7 @@ namespace BottangoCore
 		BottangoCore::effectorPool.deregisterAll();
 		while (Serial.available() > 0)
 		{
-			char t = Serial.read();
+			Serial.read();
 		}
 		SystemStatus::systemStatus.initialized = false;
 
@@ -157,7 +155,6 @@ namespace BottangoCore
 
 	void bottangoLoop()
 	{
-		digitalWrite(10, !digitalRead(10));
 
 		Callbacks::onEarlyLoop();
 		mMaster.executePhase(Phase::Input);
