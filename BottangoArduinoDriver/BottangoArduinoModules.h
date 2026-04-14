@@ -28,8 +28,8 @@
 // selecting nothing is USB control
 // otherwise select one of the below:
 
-#define USE_CODE_COMMAND_STREAM                             // uncomment this line to drive animations from exported code instead of live control
-//#define USE_SD_CARD_COMMAND_STREAM                       // uncomment this line to drive animations from files on an SD card instead of live control (Note, arduino Uno / Nano / mega not supported)
+//#define USE_CODE_COMMAND_STREAM                             // uncomment this line to drive animations from exported code instead of live control
+#define USE_SD_CARD_COMMAND_STREAM                       // uncomment this line to drive animations from files on an SD card instead of live control (Note, arduino Uno / Nano / mega not supported)
 
 
 // if you have selected one of the above, enable this to dynamically switch between USB or the selected above exported animation source

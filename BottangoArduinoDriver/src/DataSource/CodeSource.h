@@ -15,7 +15,7 @@ public:
 	bool peekNextCommand(char* out) override;
 	bool tryConsumeData(char** out) override;
 	void resetBuffer() override;
-	bool getConfigurationForAnimation(uint8_t animIndex, AnimationConfiguration* config) const override;
+	bool getConfigurationForAnimation(uint8_t animIndex, AnimationConfiguration* config) override;
 
 private:
 	// ==== Buffer and file management ====
@@ -29,7 +29,7 @@ private:
 	bool _shouldLoop = false;
 
 	bool getNextCommand(char* buffer, bool peek = false);
-	void parseConfiguration(AnimationConfiguration* config, const uint16_t* parsedValue) const;
+	static void parseConfiguration(AnimationConfiguration* config, uint16_t* parsedValue) 
 	void incrementArrayIndex();
 };
 

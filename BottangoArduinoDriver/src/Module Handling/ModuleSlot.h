@@ -110,7 +110,7 @@ public:
 		return reinterpret_cast<T*>(_buffer);
 	}
 
-	LoopModule* get() const
+	LoopModule* get()
 	{
 		return _occupied ? reinterpret_cast<LoopModule*>(_buffer) : nullptr;
 	}

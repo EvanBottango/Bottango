@@ -48,7 +48,7 @@ public:
 	 * @param config A pointer to an AnimationConfiguration struct to be filled with the retrieved configuration. Should not be null.
 	 * @return True if the configuration was successfully retrieved and parsed, false if an error occurred (e.g. file not found, parse error) or if no configuration exists for the given index.
 	 */
-	virtual bool getConfigurationForAnimation(uint8_t animIndex, AnimationConfiguration* config) const
+	virtual bool getConfigurationForAnimation(uint8_t animIndex, AnimationConfiguration* config)
 	{
 		return false;
 	}

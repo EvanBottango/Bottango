@@ -4,6 +4,7 @@
  */
 
 #include "ModuleMaster.h"
+#include "ModuleFactory.h"
 #include "../BottangoCore.h"
 #include "../../BottangoArduinoModules.h"
 
@@ -24,59 +25,43 @@
 #include "../Modules/OutgoingRelay.h"
 #endif
 
+ // Global Factory instance
+static ModuleFactory g_moduleFactory;
+
 void ModuleMaster::setupModules()
 {
-	// ==== Serial data source ====
-	// The serial data source is always present and active
-	SerialSource* serialSource = registerModule<SerialSource>(Modules::DataSource_Serial);
-	serialSource->setActiveSource(true);
+	// Delegate to factory
+	g_moduleFactory.setup();
+	g_moduleFactory.wireModules();
 
-	// ==== Offline Playback Control ====
+	// Register modules in the local array (for backward compatibility)
+	// This allows existing code using getModule() to continue working
+	_modules[static_cast<int>(Modules::DataSource_Serial)] = g_moduleFactory.get<SerialSource>();
+	_modules[static_cast<int>(Modules::Decoder)] = g_moduleFactory.get<AsciiCmdDecoder>();
+	_modules[static_cast<int>(Modules::Parser)] = g_moduleFactory.get<Parser>();
+
 #if defined(USE_SD_CARD_COMMAND_STREAM) || defined(USE_CODE_COMMAND_STREAM)
-	registerModule<AnimationPlaybackControl>(Modules::AnimPlaybackCntrl);
+	_modules[static_cast<int>(Modules::AnimPlaybackCntrl)] = g_moduleFactory.get<AnimationPlaybackControl>();
 #endif
 
-	// ==== Relay Modules ====
 #ifdef RELAY_SUPPORTED
-	registerModule<RelayESPNow>(Modules::RelayComs);
-
-	// Relay Output
-	static OutgoingRelayImpl outgoingRelay;
-	OutgoingRelay::bind(&outgoingRelay);
-	outgoingRelay.setRelayComs(getModule<Relay>(Modules::RelayComs));
+	_modules[static_cast<int>(Modules::RelayComs)] = g_moduleFactory.get<RelayESPNow>();
 #endif
 
-	// ==== Command Decoder ====
-	AsciiCmdDecoder* asciiDecoder = registerModule<AsciiCmdDecoder>(Modules::Decoder);
-	asciiDecoder->setDataSource(serialSource);
-
-	// ==== Command Parser ====
-	Parser* parser = registerModule<Parser>(Modules::Parser);
-	parser->setCommandDecoder(asciiDecoder);
-
-	// ==== Effector Pool ====
-	_modules[static_cast<int>(Modules::EffectorPool)] = &BottangoCore::effectorPool;
-
-	// ===== Optional Modules ====
 #ifdef STOP_BUTTON_SUPPORTED
-	registerModule<StopButtonModule>(Modules::StopButton);
-#endif // STOP_BUTTON_SUPPORTED
+	_modules[static_cast<int>(Modules::StopButton)] = g_moduleFactory.get<StopButtonModule>();
+#endif
 
 #ifdef ENABLE_STATUS_LIGHTS
-	registerModule<StatusLightsModule>(Modules::StatusLights);
-#endif // ENABLE_STATUS_LIGHTS
-
-#ifdef AUDIO_SD_I2S
-	registerModule<I2SAudioModule>(Modules::AudioI2S);
+	_modules[static_cast<int>(Modules::StatusLights)] = g_moduleFactory.get<StatusLightsModule>();
 #endif
 
-	// ==== Setup Output bindings ====
-	// Serial Output
-	static OutgoingSerialImpl outgoingSerialImpl;
-	OutgoingSerial::bind(&outgoingSerialImpl);
+#ifdef AUDIO_SD_I2S
+	_modules[static_cast<int>(Modules::AudioI2S)] = g_moduleFactory.get<I2SAudioModule>();
+#endif
 
-	// Host Output (default to Serial)
-	Outgoing::bind(&outgoingSerialImpl);
+	// ==== Effector Pool (still managed by BottangoCore) ====
+	_modules[static_cast<int>(Modules::EffectorPool)] = &BottangoCore::effectorPool;
 }
 
 void ModuleMaster::initModules() const

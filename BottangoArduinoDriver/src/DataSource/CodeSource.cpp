@@ -81,20 +81,20 @@ void CodeSource::resetBuffer()
 	_commandBuffer[0] = '\0';
 }
 
-bool CodeSource::getConfigurationForAnimation(uint8_t animIndex, AnimationConfiguration* config) const
+bool CodeSource::getConfigurationForAnimation(uint8_t animIndex, AnimationConfiguration* config)
 {
 	if (animIndex >= GeneratedCodeAnimations::getAnimationCount())
 	{
 		return false;
 	}
 
-	const uint16_t* parsedValue = GeneratedCodeAnimations::getConfigValues(animIndex);
+	uint16_t* parsedValue = GeneratedCodeAnimations::getConfigValues(animIndex);
 	parseConfiguration(config, parsedValue);
 
 	return true;
 }
 
-void CodeSource::parseConfiguration(AnimationConfiguration* config, const uint16_t* parsedValue) const
+void CodeSource::parseConfiguration(AnimationConfiguration* config, uint16_t* parsedValue)
 {
 	if (parsedValue[0] > 0)
 	{

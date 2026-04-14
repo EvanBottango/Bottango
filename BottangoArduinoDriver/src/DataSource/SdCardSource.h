@@ -44,7 +44,7 @@ public:
 	bool peekNextCommand(char* out) override;
 	bool tryConsumeData(char** out) override;
 	void resetBuffer() override;
-	bool getConfigurationForAnimation(uint8_t const animIndex, AnimationConfiguration* config) const override;
+	bool getConfigurationForAnimation(uint8_t animIndex, AnimationConfiguration* config) override;
 
 private:
 	// ==== Buffer and file management ====
@@ -70,7 +70,7 @@ private:
 
 	bool getNextCommand(char* buffer, bool const peek = false);
 
-	static void parseConfiguration(File* configFile, AnimationConfiguration* config) const;
+	void parseConfiguration(File* configFile, AnimationConfiguration* config);
 };
 
 

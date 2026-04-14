@@ -390,7 +390,7 @@ void SdCardSource::resetBuffer()
 #endif*/
 }
 
-bool SdCardSource::getConfigurationForAnimation(uint8_t const animIndex, AnimationConfiguration* config) const
+bool SdCardSource::getConfigurationForAnimation(uint8_t animIndex, AnimationConfiguration* config)
 {
 	char path[MAX_FILE_PATH_SIZE];
 	SDCardUtil::SDFileError fileError;
@@ -423,7 +423,7 @@ bool SdCardSource::getConfigurationForAnimation(uint8_t const animIndex, Animati
 	return true;
 }
 
-void SdCardSource::parseConfiguration(File* configFile, AnimationConfiguration* config) const
+void SdCardSource::parseConfiguration(File* configFile, AnimationConfiguration* config)
 {
 	byte lineIndex = 0;
 
