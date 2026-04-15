@@ -10,7 +10,7 @@ class SerialSource;
 class AsciiCmdDecoder;
 class Parser;
 class AnimationPlaybackControl;
-class RelayESPNow;
+class Relay;
 class StopButtonModule;
 class StatusLightsModule;
 class I2SAudioModule;
@@ -109,7 +109,7 @@ private:
 #endif
 
 #ifdef RELAY_SUPPORTED
-	RelayESPNow* _relayComs = nullptr;
+	Relay* _relay = nullptr;
 #endif
 
 #if defined(RELAY_SUPPORTED) || defined(USE_ESP32_WIFI)
@@ -140,8 +140,10 @@ template<> inline Parser* ModuleFactory::get<Parser>() { return _parser; }
 template<> inline AnimationPlaybackControl* ModuleFactory::get<AnimationPlaybackControl>() { return _animPlaybackControl; }
 #endif
 
+// made this template derived class agnostic by requesting the base class
+// not derived espnow only
 #ifdef RELAY_SUPPORTED
-template<> inline RelayESPNow* ModuleFactory::get<RelayESPNow>() { return _relayComs; }
+template<> inline Relay* ModuleFactory::get<Relay>() { return _relay; }
 #endif
 
 #ifdef STOP_BUTTON_SUPPORTED

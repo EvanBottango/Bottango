@@ -17,22 +17,8 @@ enum class Phase : uint8_t
 };
 
 /**
- * @brief Priority levels for module execution order.
- * @details Lower numeric values execute first. Core modules use fixed priorities,
- *          user modules can use Normal or Late priorities.
- */
-enum class Priority : uint8_t
-{
-	VeryEarly = 0,      // Reserved for critical core modules (DataSources)
-	Early = 50,         // Reserved for core processing modules (Decoder, Parser)
-	Normal = 100,       // Default priority for user modules
-	Late = 150,         // For modules that should run after most other modules
-	VeryLate = 200      // Reserved for cleanup/finalization modules
-};
-
-/**
  * @brief Base class for modules that can respond to different phases of the main loop.
- * 
+ *
  * Derive from this class to create modules that can hook into various phases of the main loop.
  */
 class LoopModule

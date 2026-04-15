@@ -41,15 +41,10 @@ namespace BottangoCore
 		g_moduleFactory.setup();
 		g_moduleFactory.wireModules();
 
-		// 2. Scheduler registers core modules in priority order
-		g_phaseScheduler.setupCorePhases();
+		// 2. Scheduler builds a hard coded list of  modules
+		g_phaseScheduler.buildModules();
 
-		// 3. USER-HOOK: User can register custom modules here
-#ifdef USER_MODULE_SETUP_ENABLED
-		onUserModuleSetup(g_phaseScheduler, g_moduleFactory);
-#endif
-
-		// 4. Initialize all modules (core + user)
+		// 4. Initialize all modules
 		g_phaseScheduler.initModules();
 
 #ifdef NAMED_BOARD_STARTUP

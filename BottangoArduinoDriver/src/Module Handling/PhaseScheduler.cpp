@@ -12,159 +12,96 @@
 #include "../Communication/AsciiCmdDecoder.h"
 #include "../Communication/Parser.h"
 #include "../Modules/AnimationPlaybackControl.h"
-#include "../Modules/RelayComs/RelayESPNow.h"
 #include "../Modules/StopButtonModule.h"
 #include "../Modules/StatusLightsModule.h"
 #include "../Modules/Audio/I2SAudioModule.h"
 
- // Forward declaration of global factory (defined in BottangoCore)
+// Forward declaration of global factory (defined in BottangoCore)
 extern ModuleFactory g_moduleFactory;
 
-void PhaseScheduler::registerCoreModule(LoopModule* module, Priority priority)
+void PhaseScheduler::buildModules()
 {
-	if (_coreModuleCount < MAX_CORE_MODULES && module != nullptr)
-	{
-		_coreModules[_coreModuleCount].module = module;
-		_coreModules[_coreModuleCount].priority = priority;
-		_coreModuleCount++;
-	}
-	// TODO: Error handling if array is full
-}
+	// add modules in STRICT order.
 
-void PhaseScheduler::setupCorePhases()
-{
-	// ==== Register Core Modules with Priorities ====
+	// will init in the order shown below after they are all added to the list
+	// During each loop phase, each module will respond to phase in the order added to the internal list here.
 
-	// VeryEarly: Data Sources (need to run first to receive data)
-	registerCoreModule(g_moduleFactory.get<SerialSource>(), Priority::VeryEarly);
+	// note that no creation of the moduels, configuraiton, etc. is handled here. It leaves that job up to
+	// module factory.
 
+	// This just grabs what it wants in the right order
+
+	// numbers in comments are if every module is enabled. We don't ever get by index, so just for readability
+	// here in comments.
+
+	static LoopModule *const orderedModules[] = {
+		// 1 - Core - Serial Source
+		g_moduleFactory.get<SerialSource>(),
+
+		// 2 - Optional - Offline Playback Control
+		// side note - in your latest, you had this after effector pool
+		// in earlier modulemaster version, you had this as item 2 in the list (which I recreated here)
+		// eventually this will need to live in the right real slot
+		// all of this is just an example for now
 #if defined(USE_SD_CARD_COMMAND_STREAM) || defined(USE_CODE_COMMAND_STREAM)
-	// Offline data source (if present in slot)
-	LoopModule* offlineSource = g_moduleFactory.getOfflineDataSource();
-	if (offlineSource != nullptr)
-	{
-		registerCoreModule(offlineSource, Priority::VeryEarly);
-	}
+		g_moduleFactory.get<AnimationPlaybackControl>(),
 #endif
 
-#if defined(RELAY_SUPPORTED) || defined(USE_ESP32_WIFI)
-	// Secondary data source (if present in slot)
-	LoopModule* secondarySource = g_moduleFactory.getSecondaryDataSource();
-	if (secondarySource != nullptr)
-	{
-		registerCoreModule(secondarySource, Priority::VeryEarly);
-	}
-
-	// Relay communication module
-	registerCoreModule(g_moduleFactory.get<RelayESPNow>(), Priority::VeryEarly);
+		// 3 - Optional - Relay
+#ifdef RELAY_SUPPORTED
+		g_moduleFactory.get<Relay>(),
 #endif
 
-	// Early: Command processing pipeline
-	registerCoreModule(g_moduleFactory.get<AsciiCmdDecoder>(), Priority::Early);
-	registerCoreModule(g_moduleFactory.get<Parser>(), Priority::Early);
+		// 4 - Core - Command Decoder
+		g_moduleFactory.get<AsciiCmdDecoder>(),
 
-	// Normal: Effector Pool (from BottangoCore)
-	registerCoreModule(&BottangoCore::effectorPool, Priority::Normal);
+		// 5 - Core - Command Parser
+		g_moduleFactory.get<Parser>(),
 
-	// Late: Optional modules and playback control
+		// 6 - Core - EffectorPool
+		// Heads up! This is an example of adding something to the scheduler
+		// without it being a module owned by module factory
+		// because it will never change, it doesn't need to be dynamic and owned by module factory.
+		// BottangoCore just makes the object, and phase scheduler hard codes it into it's own list by adding it at the right time.
+		// effectorPool is loop valid just by implementing LoopModule
+		&BottangoCore::effectorPool,
+
+		// 7 - Optional - Stop Button
 #ifdef STOP_BUTTON_SUPPORTED
-	registerCoreModule(g_moduleFactory.get<StopButtonModule>(), Priority::Late);
+		g_moduleFactory.get<StopButtonModule>(),
 #endif
 
+		// 8 - Optional - Status Lights
 #ifdef ENABLE_STATUS_LIGHTS
-	registerCoreModule(g_moduleFactory.get<StatusLightsModule>(), Priority::Late);
+		g_moduleFactory.get<StatusLightsModule>(),
 #endif
 
+		// 9 - Optional - I2S Audio
 #ifdef AUDIO_SD_I2S
-	registerCoreModule(g_moduleFactory.get<I2SAudioModule>(), Priority::Late);
+		g_moduleFactory.get<I2SAudioModule>(),
 #endif
 
-#if defined(USE_SD_CARD_COMMAND_STREAM) || defined(USE_CODE_COMMAND_STREAM)
-	// Animation playback must run after effector pool
-	registerCoreModule(g_moduleFactory.get<AnimationPlaybackControl>(), Priority::Late);
+		// 10 - example someday we want to add a button debouncer
+		// anything can own it, and we can put it anywhere in the list hardcoded
+		// all you need to do is make it implement LoopModule and add it here.
+		// the compiler will size the table from the entries.
+#ifdef BUTTON_DEBOUNCING
+		&thingThatOwnsButtonDebouncer.ButtonDebouncer,
 #endif
+	};
 
-	// Sort all core modules by priority
-	sortModulesByPriority();
-}
-
-void PhaseScheduler::addToLoop(LoopModule* userModule, Priority priority)
-{
-	if (_userModuleCount >= MAX_USER_MODULES)
-	{
-		// TODO: Error handling (array full)
-		return;
-	}
-
-	if (userModule == nullptr)
-	{
-		// TODO: Error handling (null pointer)
-		return;
-	}
-
-	// Add to user module array
-	_userModules[_userModuleCount].module = userModule;
-	_userModules[_userModuleCount].priority = priority;
-	_userModuleCount++;
-
-	// Initialize immediately
-	userModule->init();
-
-	// Re-sort execution order to include new module
-	sortModulesByPriority();
-}
-
-void PhaseScheduler::sortModulesByPriority()
-{
-	// Combine core and user modules into execution order array
-	_executionCount = 0;
-
-	// Simple insertion sort (suitable for small arrays)
-	// We build a sorted array by merging core and user modules
-
-	uint8_t coreIdx = 0;
-	uint8_t userIdx = 0;
-
-	while (coreIdx < _coreModuleCount || userIdx < _userModuleCount)
-	{
-		// Determine which module to add next (lowest priority first)
-		bool takeCore = false;
-
-		if (coreIdx >= _coreModuleCount)
-		{
-			takeCore = false; // No more core modules, take user
-		}
-		else if (userIdx >= _userModuleCount)
-		{
-			takeCore = true; // No more user modules, take core
-		}
-		else
-		{
-			// Both available, compare priorities
-			takeCore = (_coreModules[coreIdx].priority <= _userModules[userIdx].priority);
-		}
-
-		if (takeCore)
-		{
-			_executionOrder[_executionCount++] = _coreModules[coreIdx].module;
-			coreIdx++;
-		}
-		else
-		{
-			_executionOrder[_executionCount++] = _userModules[userIdx].module;
-			userIdx++;
-		}
-	}
+	_orderedModules = orderedModules;
+	moduleCount = sizeof(orderedModules) / sizeof(orderedModules[0]);
 }
 
 void PhaseScheduler::initModules() const
 {
 	// Initialize all modules in execution order
-	for (uint8_t i = 0; i < _executionCount; i++)
+	for (uint8_t i = 0; i < moduleCount; i++)
 	{
-		if (_executionOrder[i] != nullptr)
+		if (_orderedModules[i] != nullptr)
 		{
-			_executionOrder[i]->init();
+			_orderedModules[i]->init();
 		}
 	}
 }
@@ -172,11 +109,11 @@ void PhaseScheduler::initModules() const
 void PhaseScheduler::executePhase(Phase p) const
 {
 	// Execute all modules in priority order
-	for (uint8_t i = 0; i < _executionCount; i++)
+	for (uint8_t i = 0; i < moduleCount; i++)
 	{
-		if (_executionOrder[i] != nullptr)
+		if (_orderedModules[i] != nullptr)
 		{
-			_executionOrder[i]->onPhase(p);
+			_orderedModules[i]->onPhase(p);
 		}
 	}
 }

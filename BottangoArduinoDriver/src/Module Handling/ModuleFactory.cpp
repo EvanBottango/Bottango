@@ -43,7 +43,7 @@ void ModuleFactory::setup()
 #endif
 
 #ifdef RELAY_SUPPORTED
-	_relayComs = createModule<RelayESPNow>();
+	_relay = createModule<RelayESPNow>();
 #endif
 
 	// ==== Create Optional Modules ====
@@ -75,7 +75,7 @@ void ModuleFactory::wireModules()
 	// ==== Wire Relay Coms ====
 	static OutgoingRelayImpl outgoingRelay;
 	OutgoingRelay::bind(&outgoingRelay);
-	outgoingRelay.setRelayComs(_relayComs);
+	outgoingRelay.setRelayComs(_relay);
 #endif
 
 	// ==== Setup Output bindings ====
