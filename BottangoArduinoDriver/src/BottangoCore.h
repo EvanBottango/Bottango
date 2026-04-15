@@ -8,7 +8,8 @@
 #include "../BottangoArduinoConfig.h"
 #include "../BottangoArduinoCallbacks.h"
 #include "../BottangoArduinoModules.h"
-#include "Module Handling/ModuleMaster.h"
+#include "Module Handling/PhaseScheduler.h"
+#include "Module Handling/ModuleFactory.h"
 #include "System/Time.h"
 #include "Modules/OutgoingSerial.h"
 #include <Arduino.h>
@@ -38,7 +39,11 @@ namespace BottangoCore
 
 	extern EffectorPool effectorPool;
 	extern AbstractMultiMessageOutgoingSource* activeOutgoingMultimessage;
-	extern ModuleMaster mMaster;
+	//extern ModuleMaster mMaster;
+
+	// Global instances for module management
+	extern ModuleFactory g_moduleFactory;
+	extern PhaseScheduler g_phaseScheduler;
 
 	extern char delimiters[];
 

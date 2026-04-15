@@ -12,42 +12,18 @@
 #include "../../BottangoArduinoModules.h"
 
 /**
- * @brief Enumeration of available modules.
+ * @brief Slot identifiers for dynamic module slots.
+ * @details These are only used for compile-time size calculation via SlotSize template.
+ *          NOT used for runtime service lookup (use ModuleFactory::get<T>() instead).
  */
- // Note: There are two ways of doing this. We can use this enum class, or we can use a registration system where modules register themselves.
- // The second approach would need a Map<> to have a way to look up modules by name or type.
- // First approach is simple and straight forward, but requires updating this enum class whenever a new module is added.
- // Second approach is more flexible and extensible, but adds complexity.
-enum class Modules : uint8_t
+enum class ModuleSlotType : uint8_t
 {
-	DataSource_Serial,			// [Mandatory] Primary data source, always present and active
-#if defined(USE_SD_CARD_COMMAND_STREAM) || defined(USE_CODE_COMMAND_STREAM)
-	DataSource_Offline,			// [Optional] Offline data source, can be switched between different modules (e.g. SD card, Export to code)
-#endif // USE_SD_CARD_COMMAND_STREAM || USE_CODE_COMMAND_STREAM
-#if defined(RELAY_SUPPORTED) || defined(USE_ESP32_WIFI)
-	DataSource_Secondary,		// [Optional] Secondary data source, can be switched between different modules (e.g. ESP-Now, RS485, etc.)
-	RelayComs,					// [Optional] Relay communication module, if supported
-#endif // RELAY_SUPPORTED || USE_ESP32_WIFI
-	Decoder,					// [Mandatory] Command decoder, parses raw data into commands. Can be switched between different decoders (e.g. ASCII, binary, etc.)
-	Parser,						// [Mandatory] Command parser, takes parsed commands and executes them
-	EffectorPool,				// [Mandatory] Pool of effectors that can be used by commands
-#ifdef STOP_BUTTON_SUPPORTED
-	StopButton,					// [Optional] Stop button module, if supported
-#endif // STOP_BUTTON_SUPPORTED
-#ifdef ENABLE_STATUS_LIGHTS
-	StatusLights,				// [Optional] Status lights module, if supported
-#endif // STATUS_LIGHTS_SUPPORTED
-#ifdef AUDIO_SD_I2S
-	AudioI2S,					// [Optional] I2S audio module, if supported	
-#endif // USE_I2S_AUDIO
-#if defined(USE_SD_CARD_COMMAND_STREAM) || defined(USE_CODE_COMMAND_STREAM)
-	AnimPlaybackCntrl,			// [Mandatory] [Has to be second to last] Animation playback control module, is used automatically, depending on the active BottangoArduinoModules
-#endif // USE_SD_CARD_COMMAND_STREAM || USE_CODE_COMMAND_STREAM
-	Max							// [Mandatory] [Has to be the last] Sentinel value to indicate the number of modules, must always be last
+	DataSource_Offline,
+	DataSource_Secondary
 };
 
 #if defined(USE_SD_CARD_COMMAND_STREAM) || defined(USE_CODE_COMMAND_STREAM) || defined(RELAY_SUPPORTED) || defined(USE_ESP32_WIFI)
-template <Modules Slot>
+template <ModuleSlotType Slot>
 struct SlotSize;
 #endif
 
@@ -55,7 +31,7 @@ struct SlotSize;
 // Note: the sizeof() calls can be guarded with #ifdef, as the max() function takes any amount of arguments
 // Any new DataSource needs to be added here, in order to make sure its size is taken into account
 // This is needed, to get the correct size for the buffer in the ModuleSlot, to make sure any of the possible modules that can be placed in the slot will fit.
-template <> struct SlotSize<Modules::DataSource_Offline>
+template <> struct SlotSize<ModuleSlotType::DataSource_Offline>
 {
 	static constexpr size_t value = std::max({
 #ifdef USE_SD_CARD_COMMAND_STREAM
@@ -69,7 +45,7 @@ template <> struct SlotSize<Modules::DataSource_Offline>
 #endif // USE_SD_CARD_COMMAND_STREAM || USE_CODE_COMMAND_STREAM
 
 #if defined(RELAY_SUPPORTED) || defined(USE_ESP32_WIFI)
-template <> struct SlotSize<Modules::DataSource_Secondary>
+template <> struct SlotSize<ModuleSlotType::DataSource_Secondary>
 {
 	static constexpr size_t value = std::max({
 		sizeof(RS485Source),
@@ -86,7 +62,7 @@ template <> struct SlotSize<Modules::DataSource_Secondary>
 #endif // RELAY_SUPPORTED || USE_ESP32_WIFI
 
 // Note: This also works with any other module:
-/*template <> struct SlotSize<Modules::Decoder>
+/*template <> struct SlotSize<ModuleSlotType::Decoder>
 {
 	static constexpr size_t value = max({
 		sizeof(AsciiCmdDecoder),

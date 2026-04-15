@@ -12,7 +12,10 @@ namespace BottangoCore
 	EffectorPool effectorPool = EffectorPool();
 	AbstractMultiMessageOutgoingSource* activeOutgoingMultimessage = nullptr;
 
-	ModuleMaster mMaster = ModuleMaster();
+	//ModuleMaster mMaster = ModuleMaster();
+	// Global module management instances
+	ModuleFactory g_moduleFactory = ModuleFactory();
+	PhaseScheduler g_phaseScheduler = PhaseScheduler();
 
 	char delimiters[] = ",";
 
@@ -34,8 +37,20 @@ namespace BottangoCore
 		SystemStatus::systemStatus.ConnectionStatus = SystemStatus::eConnectionStatus::No_Connection_Serial;
 		SystemStatus::systemStatus.Signal = SystemStatus::eSignal::SDError;
 
-		mMaster.setupModules();
-		mMaster.initModules();
+		// 1. Factory creates all core modules
+		g_moduleFactory.setup();
+		g_moduleFactory.wireModules();
+
+		// 2. Scheduler registers core modules in priority order
+		g_phaseScheduler.setupCorePhases();
+
+		// 3. USER-HOOK: User can register custom modules here
+#ifdef USER_MODULE_SETUP_ENABLED
+		onUserModuleSetup(g_phaseScheduler, g_moduleFactory);
+#endif
+
+		// 4. Initialize all modules (core + user)
+		g_phaseScheduler.initModules();
 
 #ifdef NAMED_BOARD_STARTUP
 		NamedBoardStartup::runNamedBoardStartup();
@@ -63,11 +78,12 @@ namespace BottangoCore
 	bool stopPlaybackModule(bool doUninitialize)
 	{
 #if defined(USE_CODE_COMMAND_STREAM) || defined(USE_SD_CARD_COMMAND_STREAM)
-		mMaster.getModule<AnimationPlaybackControl>(Modules::AnimPlaybackCntrl)->stop(doUninitialize);
+		//mMaster.getModule<AnimationPlaybackControl>(Modules::AnimPlaybackCntrl)->stop(doUninitialize);
+		ModuleFactory::get<AnimationPlaybackControl>()->stop(doUninitialize);
 #endif // USE_CODE_COMMAND_STREAM || USE_SD_CARD_COMMAND_STREAM
 
 #ifdef RELAY_SUPPORTED
-		if (mMaster.getModule<Relay>(Modules::RelayComs)->stop(doUninitialize))
+		if (ModuleFactory::get<Relay>()->stop(doUninitialize))
 		{
 			return false;
 		}
@@ -83,13 +99,13 @@ namespace BottangoCore
 #ifdef ENABLE_STATUS_LIGHTS
 #ifdef RELAY_SUPPORTED
 		// peers reboot after getting stop
-		if (mMaster.getModule<Relay>(Modules::RelayComs)->isPeer())
+		if (ModuleFactory::get<Relay>()->isPeer())
 		{
 			BasicCommands::reboot(false);
 		}
 		else
 		{
-			if (mMaster.getModule<Relay>(Modules::RelayComs)->isBridge())
+			if (ModuleFactory::get<Relay>()->isBridge())
 			{
 				SystemStatus::systemStatus.ConnectionStatus = SystemStatus::eConnectionStatus::Red;
 			}
@@ -149,7 +165,7 @@ namespace BottangoCore
 		}
 		SystemStatus::systemStatus.initialized = false;
 
-		DataSource* dataSource = mMaster.getModule<DataSource>(Modules::DataSource_Serial);
+		DataSource* dataSource = ModuleFactory::get<DataSource>();
 		dataSource->resetBuffer();
 	}
 
@@ -157,16 +173,16 @@ namespace BottangoCore
 	{
 
 		Callbacks::onEarlyLoop();
-		mMaster.executePhase(Phase::Input);
-		mMaster.executePhase(Phase::Communication);
-		mMaster.executePhase(Phase::Logic);
-		mMaster.executePhase(Phase::Output);
+		g_phaseScheduler.executePhase(Phase::Input);
+		g_phaseScheduler.executePhase(Phase::Communication);
+		g_phaseScheduler.executePhase(Phase::Logic);
+		g_phaseScheduler.executePhase(Phase::Output);
 
 		// update relay pool
 #ifdef RELAY_SUPPORTED
 		if (SystemStatus::systemStatus.initialized)
 		{
-			if (mMaster.getModule<Relay>(Modules::RelayComs)->isPeer() && millis() - lastPollTimeAsPeer > RELAY_POLL_TIMEOUT_AS_PEER)
+			if (ModuleFactory::get<Relay>()->isPeer() && millis() - lastPollTimeAsPeer > RELAY_POLL_TIMEOUT_AS_PEER)
 			{
 				OutgoingSerial::printOutputStringFlash(F("Lost Bridge!"));
 				OutgoingSerial::printLine();
@@ -204,7 +220,7 @@ namespace BottangoCore
 		if (PersistentConfigUtil::debugEnabled())
 #endif // TOGGLE_DEBUG
 		{
-			if (mMaster.getModule<Relay>(Modules::RelayComs)->isPeer() && !SystemStatus::systemStatus.initialized && Time::getCurrentTimeInMs() - lastWaitForConnectLog >= 1000)
+			if (ModuleFactory::get<Relay>()->isPeer() && !SystemStatus::systemStatus.initialized && Time::getCurrentTimeInMs() - lastWaitForConnectLog >= 1000)
 			{
 				OutgoingSerial::printOutputStringFlash(F("Waiting for bridge...\n"));
 				lastWaitForConnectLog = Time::getCurrentTimeInMs();

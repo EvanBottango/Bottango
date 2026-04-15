@@ -105,7 +105,7 @@ private:
 
 #if defined(USE_SD_CARD_COMMAND_STREAM) || defined(USE_CODE_COMMAND_STREAM)
 	AnimationPlaybackControl* _animPlaybackControl = nullptr;
-	ModuleSlot<SlotSize<Modules::DataSource_Offline>::value> _slotOfflineDataSource;
+	ModuleSlot<SlotSize<ModuleSlotType::DataSource_Offline>::value> _slotOfflineDataSource;
 #endif
 
 #ifdef RELAY_SUPPORTED
@@ -113,7 +113,7 @@ private:
 #endif
 
 #if defined(RELAY_SUPPORTED) || defined(USE_ESP32_WIFI)
-	ModuleSlot<SlotSize<Modules::DataSource_Secondary>::value> _slotSecondaryDataSource;
+	ModuleSlot<SlotSize<ModuleSlotType::DataSource_Secondary>::value> _slotSecondaryDataSource;
 #endif
 
 	// === Optional Modules ===

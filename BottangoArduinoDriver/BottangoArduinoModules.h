@@ -10,6 +10,8 @@
 
 // ---------------------------------- //
 
+//#define USER_MODULE_SETUP_ENABLED
+
 // !! RELAY !!
 
 #define RELAY_SUPPORTED                                  // uncomment this line to allow for relay bridge / relay peer behavior

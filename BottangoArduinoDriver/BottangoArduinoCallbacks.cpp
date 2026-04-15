@@ -5,6 +5,35 @@
 
 namespace Callbacks
 {
+	// Forward declarations for user module setup hook
+	class PhaseScheduler;
+	class ModuleFactory;
+
+	/**
+	 * @brief User-Hook: Called after core modules are set up, before init.
+	 * @details Users can register custom modules here without modifying core code.
+	 *
+	 * Example usage in user code file (e.g., UserModules.cpp):
+	 * @code
+	 * #include "Module Handling/PhaseScheduler.h"
+	 * #include "Module Handling/LoopModule.h"
+	 *
+	 * class MyCustomModule : public LoopModule {
+	 *     void init() override { ... }
+	 *     void onPhase(Phase p) override { ... }
+	 * };
+	 *
+	 * static MyCustomModule g_myModule;
+	 *
+	 * void onUserModuleSetup(PhaseScheduler& scheduler, ModuleFactory& factory) {
+	 *     scheduler.addToLoop(&g_myModule, Priority::Normal);
+	 * }
+	 * @endcode
+	 */
+#ifdef USER_MODULE_SETUP_ENABLED
+	void onUserModuleSetup(PhaseScheduler& scheduler, ModuleFactory& factory);
+#endif
+
     // !!!!!!!!!!!!!!! //
     // !! CONTROLLER LIFECYCLE CALLBACKS !! //
     // !!!!!!!!!!!!!!! //

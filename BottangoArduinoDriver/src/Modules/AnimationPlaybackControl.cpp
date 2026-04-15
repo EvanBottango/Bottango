@@ -6,7 +6,7 @@
 #include "../PersistentConfigUtil.h"
 #include "../DataSource/SdCardSource.h"
 #include "../DataSource/CodeSource.h"
-#include "../Module Handling/ModuleMaster.h"
+#include "../Module Handling/ModuleFactory.h"
 #include "Modules/Outgoing.h"
 #include "../Communication/CommandDecoder.h"
 
