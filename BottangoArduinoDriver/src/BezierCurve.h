@@ -16,8 +16,6 @@ public:
 
     virtual unsigned long getEndTimeMs() = 0;
 
-    virtual unsigned long getStartTimeMs() = 0;
-
     virtual float getStartMovement() = 0;
     virtual float getEndMovement() = 0;
 };

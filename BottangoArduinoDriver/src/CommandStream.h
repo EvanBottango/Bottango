@@ -13,6 +13,7 @@ public:
     bool readyForNextCommand();
     bool complete();
     void setShouldLoop();
+    void updateOnLoop();
     ~CommandStream();
 
 private:

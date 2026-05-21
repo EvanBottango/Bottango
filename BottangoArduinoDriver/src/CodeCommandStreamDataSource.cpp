@@ -22,38 +22,9 @@ CodeCommandStreamDataSource::CodeCommandStreamDataSource(const char *const *data
     this->currentDataStringLength = strlen_P(ptr);
 }
 
-void CodeCommandStreamDataSource::getNextCommand(char *output, bool shouldLoop, unsigned long &msEndOfThisCommand, unsigned long &msStartOfNextCommand)
+void CodeCommandStreamDataSource::getNextCommand(char *output, bool shouldLoop, bool peek)
 {
-    msStartOfNextCommand = 0;
-    msEndOfThisCommand = 0;
-
-    internalGetCharCommand(output, shouldLoop, true); // get the next command, write it to the output string
-
-    char copy[strlen(output) + 1]; // +1 for the null terminator
-    strcpy(copy, output);
-    msEndOfThisCommand = BottangoCore::getMSEndTimeOfCommand(copy);
-
-    // at end of loop
-    if (shouldLoop && travel >= currentDataStringLength)
-    {
-        // end of loop reached
-        return;
-    }
-
-    // at end of data array
-    if (!shouldLoop && dataComplete)
-    {
-        Outgoing::printLine();
-        return;
-    }
-
-    // otherwise get the next command's time
-    char nextCommand[MAX_COMMAND_LENGTH];
-    internalGetCharCommand(nextCommand, shouldLoop, false);
-    if (nextCommand[0] != '\0')
-    {
-        msStartOfNextCommand = BottangoCore::getMSStartTimeOfCommand(nextCommand);
-    }
+    internalGetCharCommand(output, shouldLoop, !peek); // get the next command, write it to the output string
 }
 
 void CodeCommandStreamDataSource::internalGetCharCommand(char *output, bool shouldLoop, bool persistTravel)

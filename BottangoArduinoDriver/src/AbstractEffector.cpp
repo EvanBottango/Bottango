@@ -1,5 +1,4 @@
 #include "AbstractEffector.h"
-#include "Log.h"
 #include "BottangoCore.h"
 
 AbstractEffector::AbstractEffector(int minSignal, int maxSignal)
@@ -14,6 +13,10 @@ AbstractEffector::AbstractEffector(int minSignal, int maxSignal)
 }
 
 void AbstractEffector::setSync(int syncValue)
+{
+}
+
+void AbstractEffector::setAutoSync(int syncValue)
 {
 }
 
@@ -41,7 +44,31 @@ void AbstractEffector::addCurve(Curve *curve)
 
     if (curves[curvesIdx] != NULL)
     {
-        free(curves[curvesIdx]);
+
+        // #ifdef TOGGLE_DEBUG
+        //         if (PersistentConfigUtil::debugEnabled() || ALWAYS_LOG_ERROR_CASE)
+        //         {
+        //             unsigned long replacementCurveStartTime = (curves[curvesIdx])->getStartTimeMs();
+        //             long dT = replacementCurveStartTime - Time::getCurrentTimeInMs();
+
+        // #ifdef RELAY_SUPPORTED
+        //             Outgoing::toggleOnSecondaryOutgoing();
+        // #endif
+
+        //             if (dT >= 0)
+        //             {
+        //                 Outgoing::printOutputStringFlash(F("WARN: Curve dropped at dT "));
+        //                 Outgoing::printOutputStringMem(dT);
+        //                 Outgoing::printLine();
+        //             }
+
+        // #ifdef RELAY_SUPPORTED
+        //             Outgoing::endToggleOnSecondaryOutgoing();
+        // #endif
+        //         }
+        // #endif
+
+        delete curves[curvesIdx];
     }
 
     curves[curvesIdx] = curve;
@@ -102,12 +129,20 @@ void AbstractEffector::clearCurves()
     stop();
     for (int i = 0; i < MAX_NUM_CURVES; ++i)
     {
-        free(curves[i]);
+        delete curves[i];
         curves[i] = NULL;
     }
 }
 
 void AbstractEffector::stop()
+{
+}
+
+void AbstractEffector::setHome()
+{
+}
+
+void AbstractEffector::resetHome()
 {
 }
 
@@ -118,7 +153,7 @@ bool AbstractEffector::useFloatCurve()
 #elif defined(DEFAULT_FIXED_CURVE)
     return false;
 #else
-    retue true;
+    return true;
 #endif
 }
 

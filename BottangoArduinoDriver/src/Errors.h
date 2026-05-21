@@ -4,35 +4,34 @@
 
 namespace Error
 {
-    /** User tried to perform an operation on a pin with no servo registered to it */
-    void reportError_NoServoOnPin();
+    /** User tried to perform an operation on an identifier with no effector registered to it */
+    void reportError_NoEffectorOnPin(const char *identifer);
 
     /** User tried to register a servo with a pin already reigistered */
-    void reportError_ServoCollision();
+    void reportError_EffectorCollision(const char *identifer);
 
     /** We ran out of space */
     void reportError_NoSpaceAvailable();
 
-    /** User tried to send a command that exceeded the max length */
-    void reportError_CmdTooLong();
+#ifdef NAMED_BOARD
+    void reportError_InvalidPin();
+#endif
 
-    /** We registered too many command handlers */
-    void reportError_TooManyCommands();
+    /** User tried to send a command that exceeded the max length */
+    void reportError_CmdTooLong(int length);
 
     /** Command had too many paramaters */
-    void reportError_TooManyParams();
-
-    /** Registering too many i2c drivers */
-    void reportError_TooManyI2c();
+    void reportError_TooManyParams(int length);
 
     /** register an effector without including the required library */
-    void reportError_MissingLibrary();
+    void reportError_MissingLibrary(const char *libName);
 
-    /** regtister an effector without including the required library */
-    void reportError_InvalidPin();
+    /** multi-message response timed out waiting for a continue */
+    void reportError_MultiMessageTimeout();
 
-#ifdef RELAY_PARENT
-    void reportWarning_RelayTimeout(const char *ident);
+#ifdef RELAY_SUPPORTED
+    void reportError_NoRelayForID(int id);
+    void reportError_RelayCollision(byte mac[6]);
 #endif
 
 } // namespace Error

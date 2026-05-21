@@ -11,3 +11,8 @@ TriggerCurve::TriggerCurve(unsigned long startTimeInMs) : Curve()
     this->startTimeInMs = startTimeInMs;
     consumed = false;
 };
+
+unsigned long TriggerCurve::getStartTimeMs()
+{
+    return startTimeInMs;
+}

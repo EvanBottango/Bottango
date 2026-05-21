@@ -1,7 +1,6 @@
 
 #include "FloatBezierCurve.h"
 #include "Arduino.h"
-#include "Log.h"
 #include "../BottangoArduinoConfig.h"
 
 FloatBezierCurve::FloatBezierCurve(

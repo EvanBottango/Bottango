@@ -1,6 +1,5 @@
 #include "FixedBezierCurve.h"
 #include "Arduino.h"
-#include "Log.h"
 #include "../BottangoArduinoConfig.h"
 
 // Returns roughly the same value as a FloatBezierCurve.cpp, but in fixed point math!

@@ -21,6 +21,12 @@ public:
 
     void syncEffector(char *identifier, int syncValue);
 
+    void autoSyncEffector(char *identifer, int direction);
+
+    void homeEffector(char *identifier);
+
+    void resetHomeEffector(char *identifier);
+
     void clearCurvesForEffector(char *identifier);
 
     void updateAllDriveTargets();
@@ -31,9 +37,9 @@ public:
 
     bool effectorUsesFloatCurve(char *identifier);
 
-private:
     AbstractEffector *getEffector(char *identifier);
 
+private:
     CircularArray<AbstractEffector> effectors = CircularArray<AbstractEffector>(MAX_REGISTERED_EFFECTORS);
 };
 

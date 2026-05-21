@@ -3,19 +3,24 @@
 #include "Outgoing.h"
 #include "../BottangoArduinoModules.h"
 
+#ifdef RELAY_SUPPORTED
+#include "UDIDHelper.h"
+#endif
 namespace Error
 {
-    void reportError_NoServoOnPin()
+    void reportError_NoEffectorOnPin(const char *identifer)
     {
         Outgoing::printLine();
-        Outgoing::printOutputStringFlash(F("errNoServoOnPin"));
+        Outgoing::printOutputStringFlash(F("errNoEffectorOnPin: "));
+        Outgoing::printOutputStringMem(identifer);
         Outgoing::printLine();
     }
 
-    void reportError_ServoCollision()
+    void reportError_EffectorCollision(const char *identifer)
     {
         Outgoing::printLine();
-        Outgoing::printOutputStringFlash(F("errServoCollision"));
+        Outgoing::printOutputStringFlash(F("errServoCollision: "));
+        Outgoing::printOutputStringMem(identifer);
         Outgoing::printLine();
     }
 
@@ -26,41 +31,6 @@ namespace Error
         Outgoing::printLine();
     }
 
-    void reportError_CmdTooLong()
-    {
-        Outgoing::printLine();
-        Outgoing::printOutputStringFlash(F("errCmdTooLong"));
-        Outgoing::printLine();
-    }
-
-    void reportError_TooManyCommands()
-    {
-        Outgoing::printLine();
-        Outgoing::printOutputStringFlash(F("errTooManyCommands"));
-        Outgoing::printLine();
-    }
-
-    void reportError_TooManyParams()
-    {
-        Outgoing::printLine();
-        Outgoing::printOutputStringFlash(F("errTooManyParams"));
-        Outgoing::printLine();
-    }
-
-    void reportError_MissingLibrary()
-    {
-        Outgoing::printLine();
-        Outgoing::printOutputStringFlash(F("errMissingLibrary"));
-        Outgoing::printLine();
-    }
-
-    void reportError_TooManyI2c()
-    {
-        Outgoing::printLine();
-        Outgoing::printOutputStringFlash(F("errI2COverrun"));
-        Outgoing::printLine();
-    }
-
     void reportError_InvalidPin()
     {
         Outgoing::printLine();
@@ -68,12 +38,53 @@ namespace Error
         Outgoing::printLine();
     }
 
-#ifdef RELAY_PARENT
-    void reportWarning_RelayTimeout(const char *ident)
+    void reportError_CmdTooLong(int length)
     {
         Outgoing::printLine();
-        Outgoing::printOutputStringFlash(F("warnRelayTO,"));
-        Outgoing::printOutputStringMem(ident);
+        Outgoing::printOutputStringFlash(F("errCmdTooLong: "));
+        Outgoing::printOutputStringMem(length);
+        Outgoing::printLine();
+    }
+
+    void reportError_TooManyParams(int length)
+    {
+        Outgoing::printLine();
+        Outgoing::printOutputStringFlash(F("errTooManyParams "));
+        Outgoing::printOutputStringMem(length);
+        Outgoing::printLine();
+    }
+
+    void reportError_MissingLibrary(const char *libName)
+    {
+        Outgoing::printLine();
+        Outgoing::printOutputStringFlash(F("errMissingLibrary"));
+        Outgoing::printOutputStringMem(libName);
+        Outgoing::printLine();
+    }
+
+    void reportError_MultiMessageTimeout()
+    {
+        Outgoing::printLine();
+        Outgoing::printOutputStringFlash(F("errMultiMessageTimeout"));
+        Outgoing::printLine();
+    }
+
+#ifdef RELAY_SUPPORTED
+    void reportError_NoRelayForID(int id)
+    {
+        Outgoing::printLine();
+        Outgoing::printOutputStringFlash(F("errNoRelay: "));
+        Outgoing::printOutputStringMem(id);
+        Outgoing::printLine();
+    }
+
+    void reportError_RelayCollision(byte mac[6])
+    {
+        Outgoing::printLine();
+        Outgoing::printOutputStringFlash(F("errRelayCollision: "));
+        char buffer[20];
+        UDIDHelper::convertMACToCStr(mac, buffer);
+        Outgoing::printOutputStringMem(buffer);
         Outgoing::printLine();
     }
 #endif

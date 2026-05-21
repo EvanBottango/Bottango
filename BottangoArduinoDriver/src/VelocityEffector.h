@@ -17,16 +17,25 @@ public:
     virtual void updateOnLoop() override;
     virtual void driveOnLoop() override;
     virtual void setSync(int syncValue) override;
+    virtual void setAutoSync(int syncValue) override;
+    virtual void updateSync(int delta);
     virtual bool useFloatCurve() override;
+
+    virtual void setHome() override;
+    virtual void resetHome() override;
 
 protected:
     // for speed limiting
     unsigned long minMicrosPerSignal = 0;
 
+    bool homed = false;
+
     // for driving
     int targetSignal = 0;
     int currentSignal = 0;
+    int autoSync = 0;
     int sync = 0;
+    bool postAutoSyncInProgress = false;
     int drive = 0;
     unsigned int signalChangePeriodUs = 0;
 
@@ -38,7 +47,7 @@ protected:
     byte inProgressCurveIdx;
 
     bool updateDrive(unsigned long nowUS, unsigned long currentTimeMs);
-    void endAutoSync();
+    void notifyEndAutoSync();
 };
 
 #endif

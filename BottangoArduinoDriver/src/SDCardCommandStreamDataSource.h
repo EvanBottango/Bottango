@@ -1,5 +1,4 @@
 #include "../BottangoArduinoModules.h"
-
 #ifdef USE_SD_CARD_COMMAND_STREAM
 #ifndef SDCardCommandStreamDataSource_h
 #define SDCardCommandStreamDataSource_h
@@ -9,22 +8,40 @@
 #include "SDCardUtil.h"
 #include "TxtBuffer.h"
 
+#ifdef ESP32
+#include <freertos/FreeRTOS.h>
+#include <freertos/task.h>
+#endif
+
 class SDCardCommandStreamDataSource : public AbstractCommandStreamDataSource
 {
 public:
     SDCardCommandStreamDataSource();
     SDCardCommandStreamDataSource(byte index, bool shouldLoop);
-    virtual void update(bool shouldLoop);
-    virtual void getNextCommand(char *output, bool shouldLoop, unsigned long &msEndOfThisCommand, unsigned long &msStartOfNextCommand) override;
+
+    virtual void getNextCommand(char *output, bool shouldLoop, bool peek) override;
     virtual void reset() override;
+    virtual void updateOnLoop() override;
     ~SDCardCommandStreamDataSource();
+
     bool isValid = false;
 
 private:
-    byte index;
-    bool setup;
+    void checkIsValid();
+    bool fillBufferChunk();
+
+    byte index = 0;
+    bool setup = false;
     bool onLoop = false;
-    bool cardReadComplete = false;
+    volatile bool cardReadComplete = false;
+    bool shouldLoop = false;
+
+#ifdef ESP32
+    void startFillTask();
+    static void fillTask(void *param);
+    volatile TaskHandle_t fillTaskHandle = nullptr;
+#endif
+
     TxtBuffer<TXT_BUFFER_SIZE_SD> cardReadBuffer;
     File currentFile;
 };

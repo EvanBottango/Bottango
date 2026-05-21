@@ -19,8 +19,10 @@
 #include "I2SAudioEffector.h"
 #endif
 
-#ifdef RELAY_PARENT
+#ifdef RELAY_SUPPORTED
 #include "RelayChild.h"
+#include "UDIDHelper.h"
+#include "MACResponder.h"
 #endif
 
 #ifdef ENABLE_STATUS_LIGHTS
@@ -31,15 +33,29 @@
 #include "OTAUpdateUtil.h"
 #endif
 
+#ifdef ENABLE_DYNAMIC_ANIMATION_SOURCE_SWITCH
+#include "PersistentConfigUtil.h"
+#endif
+
+#ifdef RELAY_SUPPORTED
+#include "IRelayComms.h"
+#include "PersistentConfigUtil.h"
+#endif
+
+#if defined(ARDUINO_ARCH_AVR) || defined(ARDUINO_ARCH_MEGAAVR)
+#include <avr/wdt.h>
+#endif
+
 namespace BasicCommands
 {
-    // [0] command, [1] driver version, [2]  hash code, [3] accepting incoming commands
-    void sendHandshakeResponse(char *args[])
+    // input [0] command, [1] hash code
+    // output [0] command, [1] driver version, [2] repeat back hash code
+    void sendHandshakeResponse(char *args[], bool secondary)
     {
         bool offlinePlayback = false;
 #if defined(USE_CODE_COMMAND_STREAM) || defined(USE_SD_CARD_COMMAND_STREAM)
 #ifdef ENABLE_DYNAMIC_ANIMATION_SOURCE_SWITCH
-        if (DynamicAnimationSwitch::shouldRunCommandStreams)
+        if (PersistentConfigUtil::getUseExportedCommandStream())
         {
             offlinePlayback = true;
         }
@@ -48,22 +64,15 @@ namespace BasicCommands
 #endif
 #endif
 
-        if (BottangoCore::initialized)
+        if (!secondary)
         {
-            LOG_LN(F("WARN: already init"))
-        }
-        if (BottangoCore::handshake)
-        {
-            LOG_LN(F("WARN: already handshake"))
-        }
-        LOG_LN(F("sendHandshakeResponse"))
+            BottangoCore::initialized = true;
+            BottangoCore::handshake = true;
 
-        BottangoCore::initialized = true;
-        BottangoCore::handshake = true;
-
-        if (!offlinePlayback)
-        {
-            deregisterAllEffectors(NULL);
+            if (!offlinePlayback)
+            {
+                deregisterAllEffectors(NULL);
+            }
         }
 
         char *code = args[1];
@@ -78,54 +87,75 @@ namespace BasicCommands
 
         // repeat back hash code
         Outgoing::printOutputStringMem(code);
-        Outgoing::printOutputStringFlash(F(","));
 
-        // true if accepting incoming commands, false if not (IE offline playback)
-        if (offlinePlayback)
-        {
-            Outgoing::printOutputStringFlash(F("0"));
-        }
-        else
-        {
-            Outgoing::printOutputStringFlash(F("1"));
-        }
-
-        Outgoing::printOutputStringFlash(F("\n"));
+        // complete
+        Outgoing::printLine();
 
         Serial.flush();
 
+        if (!secondary)
+        {
 #ifdef ENABLE_STATUS_LIGHTS
-#if defined(RELAY_CHILD) && defined(RELAY_COMS_ESPNOW)
-        StatusLights::setDesiredColor(CONNECTION_STATUS_LIGHT, STATUS_COLOR_HAS_CONNECTION);
-        StatusLights::setDesiredColor(SIGNAL_STATUS_LIGHT, STATUS_COLOR_SIGNAL_CHILD);
+#if defined(RELAY_SUPPORTED)
+            if (!offlinePlayback)
+            {
+                StatusLights::setDesiredColor(CONNECTION_STATUS_LIGHT, STATUS_COLOR_HAS_CONNECTION);
+                StatusLights::setLightMode(CONNECTION_STATUS_LIGHT, StatusLights::LightMode::MODE_PULSE);
+            }
+
 #elif defined(USE_USB_SERIAL)
-        StatusLights::setDesiredColor(CONNECTION_STATUS_LIGHT, STATUS_COLOR_HAS_CONNECTION);
-        StatusLights::setDesiredColor(SIGNAL_STATUS_LIGHT, STATUS_COLOR_SIGNAL_SERIAL);
+            StatusLights::setDesiredColor(CONNECTION_STATUS_LIGHT, STATUS_COLOR_HAS_CONNECTION);
+            StatusLights::setLightMode(CONNECTION_STATUS_LIGHT, StatusLights::LightMode::MODE_PULSE);
 #endif
 #endif
 
-        Callbacks::onThisControllerStarted();
+#if defined(RELAY_SUPPORTED)
+            if (BottangoCore::isRelayPeer)
+            {
+                BottangoCore::lastPollTimeAsPeer = millis();
+            }
+#endif
+
+            Callbacks::onThisControllerStarted();
+        }
+    }
+
+    // initialize modules response
+    void startModulesResponse(char *args[])
+    {
+        // this is the only modules response allowed to execute in offline mode
+        BottangoCore::replaceActiveOutgoingMultimessage(new ModulesResponder());
+    }
+
+    void continueInProgressMultiMessageResponse(char *args[])
+    {
+        if (BottangoCore::activeOutgoingMultimessage == nullptr)
+        {
+            // should have an active...
+            return;
+        }
+        BottangoCore::activeOutgoingMultimessage->setRecievedContinue();
     }
 
     void stop(char *args[])
     {
-        BottangoCore::effectorPool.deregisterAll();
-        BottangoCore::stop();
-#ifdef ENABLE_STATUS_LIGHTS
-        StatusLights::setDesiredColor(CONNECTION_STATUS_LIGHT, STATUS_COLOR_LOST_CONNECTION);
-        StatusLights::setDesiredColor(SIGNAL_STATUS_LIGHT, CRGB::Black);
-#endif
-        Callbacks::onThisControllerStopped();
+        BottangoCore::stop(true);
     }
 
     void syncTime(char *args[])
     {
+#ifdef RELAY_SUPPORTED
+        if (strcmp_P(args[1], BasicCommands::RELAY_PEER_STOP_TIME) == 0)
+        {
+            Time::stopTime();
+            return;
+        }
+#endif
         Time::syncTime(atol(args[1]));
     }
 
     void deregisterAllEffectors(char **args)
     {
-        LOG_LN(F("deregister all"));
         BottangoCore::effectorPool.deregisterAll();
     }
 
@@ -153,18 +183,6 @@ namespace BasicCommands
         int maxPWMSec = atoi(args[4]);
         int startPWM = atoi(args[5]);
 
-        LOG_MKBUF
-        LOG_LN(F("registerServo()"))
-        LOG(F("    pinId="))
-        LOG_INT(pinId)
-        LOG(F("    minPWM="))
-        LOG_INT(minPWM)
-        LOG(F("    maxPWM="))
-        LOG_INT(maxPWM)
-        LOG(F("    startPWM="))
-        LOG_INT(startPWM)
-        LOG_NEWLINE()
-
         PinServoEffector *newEffector = new PinServoEffector(pinId, minPWM, maxPWM, maxPWMSec, startPWM);
         BottangoCore::effectorPool.addEffector(newEffector);
     }
@@ -173,7 +191,7 @@ namespace BasicCommands
     {
 
 #ifndef USE_ADAFRUIT_PWM_LIBRARY
-        Error::reportError_MissingLibrary();
+        Error::reportError_MissingLibrary("i2c servo");
         return;
 #endif
 
@@ -183,20 +201,6 @@ namespace BasicCommands
         int maxPWM = atoi(args[4]);
         int maxPWMSec = atoi(args[5]);
         int startPWM = atoi(args[6]);
-
-        LOG_MKBUF
-        LOG_LN(F("register i2c Servo()"))
-        LOG(F("    address="))
-        LOG_INT(address)
-        LOG(F("    pinId="))
-        LOG_INT(pinId)
-        LOG(F("    minPWM="))
-        LOG_INT(minPWM)
-        LOG(F("    maxPWM="))
-        LOG_INT(maxPWM)
-        LOG(F("    startPWM="))
-        LOG_INT(startPWM)
-        LOG_NEWLINE()
 
         I2CServoEffector *newEffector = new I2CServoEffector(address, pinId, minPWM, maxPWM, maxPWMSec, startPWM);
         BottangoCore::effectorPool.addEffector(newEffector);
@@ -215,24 +219,6 @@ namespace BasicCommands
         int maxStepsPerSecond = atoi(args[7]);
         int startingStepOffset = atoi(args[8]);
 
-        LOG_MKBUF
-        LOG_LN(F("register pin stepper()"))
-        LOG(F("    pin0="))
-        LOG_INT(pin0)
-        LOG(F("    pin1="))
-        LOG_INT(pin1)
-        LOG(F("    pin2="))
-        LOG_INT(pin2)
-        LOG(F("    pin3="))
-        LOG_INT(pin3)
-        LOG(F("    maxCC="))
-        LOG_INT(maxCounterClockwiseSteps)
-        LOG(F("    maxC="))
-        LOG_INT(maxClockwiseSteps)
-        LOG(F("    speed="))
-        LOG_INT(maxStepsPerSecond)
-        LOG_NEWLINE()
-
         PinStepperEffector *newEffector = new PinStepperEffector(pin0, pin1, pin2, pin3, maxCounterClockwiseSteps, maxClockwiseSteps, maxStepsPerSecond, startingStepOffset);
         BottangoCore::effectorPool.addEffector(newEffector);
     }
@@ -250,20 +236,6 @@ namespace BasicCommands
         int maxStepsPerSecond = atoi(args[6]);
         int startingStepOffset = atoi(args[7]);
 
-        LOG_MKBUF
-        LOG_LN(F("register dir stepper()"))
-        LOG(F("    step="))
-        LOG_INT(stepPin)
-        LOG(F("    dir="))
-        LOG_INT(dirPin)
-        LOG(F("    maxCC="))
-        LOG_INT(maxCounterClockwiseSteps)
-        LOG(F("    maxC="))
-        LOG_INT(maxClockwiseSteps)
-        LOG(F("    speed="))
-        LOG_INT(maxStepsPerSecond)
-        LOG_NEWLINE()
-
         StepDirStepperEffector *newEffector = new StepDirStepperEffector(stepPin, dirPin, clockwiseIsLow, maxCounterClockwiseSteps, maxClockwiseSteps, maxStepsPerSecond, startingStepOffset);
         BottangoCore::effectorPool.addEffector(newEffector);
     }
@@ -275,12 +247,6 @@ namespace BasicCommands
         float startingMovement = atof(args[3]);
         byte pin = atoi(args[4]);
 
-        LOG_MKBUF
-        LOG_LN(F("register curved event"))
-        LOG(F("    id="))
-        LOG(identifier)
-        LOG_NEWLINE()
-
         CurvedCustomEvent *newEffector = new CurvedCustomEvent(identifier, maxSpeed, startingMovement, pin);
         BottangoCore::effectorPool.addEffector(newEffector);
     }
@@ -290,12 +256,6 @@ namespace BasicCommands
         char *identifier = args[1];
         bool startOn = atoi(args[2]) != 0;
         byte pin = atoi(args[3]);
-
-        LOG_MKBUF
-        LOG_LN(F("register on off event"))
-        LOG(F("    id="))
-        LOG(identifier)
-        LOG_NEWLINE()
 
         OnOffCustomEvent *newEffector = new OnOffCustomEvent(identifier, startOn, pin);
         BottangoCore::effectorPool.addEffector(newEffector);
@@ -307,37 +267,20 @@ namespace BasicCommands
         byte pin = atoi(args[2]);
         bool fireIsHigh = atoi(args[3]) != 0;
 
-        LOG_MKBUF
-        LOG_LN(F("register trigger event"))
-        LOG(F("    id="))
-        LOG(identifier)
-        LOG_NEWLINE()
-
         TriggerCustomEvent *newEffector = new TriggerCustomEvent(identifier, pin, fireIsHigh);
         BottangoCore::effectorPool.addEffector(newEffector);
     }
 
+#ifdef AUDIO_SD_I2S
     void registerAudioEvent(char **args)
     {
         char *identifier = args[1];
-        byte index = atoi(args[2]);
+        char *hash = args[2];
 
-#ifdef AUDIO_TRIGGER_EVENT
-        // should not be hit
-        Outgoing::printLine();
-        Outgoing::printOutputStringFlash(F("errInvalidAudioKeyframe"));
-        Outgoing::printLine();
-#elif defined(AUDIO_SD_I2S)
-        LOG_MKBUF
-        LOG_LN(F("register audio i2s event"))
-        LOG(F("    id="))
-        LOG(identifier)
-        LOG_NEWLINE()
-
-        I2SAudioEffector *newEffector = new I2SAudioEffector(identifier, index);
+        I2SAudioEffector *newEffector = new I2SAudioEffector(identifier, hash);
         BottangoCore::effectorPool.addEffector(newEffector);
-#endif
     }
+#endif
 
     void registerColorEvent(char **args)
     {
@@ -346,12 +289,6 @@ namespace BasicCommands
         byte r = atoi(args[2]);
         byte g = atoi(args[3]);
         byte b = atoi(args[4]);
-
-        LOG_MKBUF
-        LOG_LN(F("register color event"))
-        LOG(F("    id="))
-        LOG(identifier)
-        LOG_NEWLINE()
 
         ColorCustomEvent *newEffector = new ColorCustomEvent(identifier, r, g, b);
         BottangoCore::effectorPool.addEffector(newEffector);
@@ -365,18 +302,6 @@ namespace BasicCommands
         int maxSignalSec = atoi(args[4]);
         int startSignal = atoi(args[5]);
 
-        LOG_MKBUF
-        LOG_LN(F("register custom motor"))
-        LOG(F("    identifier="))
-        LOG(identifier)
-        LOG(F("    minSignal="))
-        LOG_INT(minSignal)
-        LOG(F("    maxSignal="))
-        LOG_INT(maxSignal)
-        LOG(F("    startSignal="))
-        LOG_INT(startSignal)
-        LOG_NEWLINE()
-
         CustomMotorEffector *newEffector = new CustomMotorEffector(identifier, minSignal, maxSignal, maxSignalSec, startSignal);
         BottangoCore::effectorPool.addEffector(newEffector);
     }
@@ -384,12 +309,6 @@ namespace BasicCommands
     void deregisterEffector(char **args)
     {
         char *identifier = args[1];
-
-        LOG_MKBUF
-        LOG_LN(F("deregister"))
-        LOG(F("    identifier="))
-        LOG(identifier)
-        LOG_NEWLINE()
 
         BottangoCore::effectorPool.removeEffector(identifier);
     }
@@ -460,17 +379,6 @@ namespace BasicCommands
         // end movement is int 0 - COMPRESSED_SIGNAL_MAX
         int endMovement = atoi(args[2]);
 
-        LOG_MKBUF
-        LOG_LN(F("addInstantCurve"));
-
-        LOG(F("    identifier="))
-        LOG(identifier)
-
-        LOG(F("    endMovement("))
-        LOG(args[2])
-        LOG(F(")="))
-        LOG_INT(endMovement)
-
         if (BottangoCore::effectorPool.effectorUsesFloatCurve(identifier))
         {
             BottangoCore::effectorPool.addCurveToEffector(identifier, new FloatBezierCurve(Time::getCurrentTimeInMs(), 0, endMovement, 0, 0, endMovement, 0, 0));
@@ -505,26 +413,6 @@ namespace BasicCommands
 
         bool on = atoi(args[3]) != 0;
 
-        LOG_MKBUF
-        LOG_LN(F("addOnOffCurve"));
-
-        LOG(F("    last Sync="))
-        LOG_ULONG(Time::getLastSyncedTimeInMs())
-
-        LOG(F("    identifier="))
-        LOG(identifier)
-
-        LOG(F("    startTime("))
-        LOG(args[2])
-        LOG(F(")="))
-        LOG_ULONG(startTime)
-
-        LOG(F("    on("))
-        LOG(args[3])
-        LOG(F(")="))
-        LOG(on)
-        LOG_NEWLINE()
-
         BottangoCore::effectorPool.addCurveToEffector(identifier, new OnOffCurve(startTime, on));
     }
 
@@ -555,22 +443,6 @@ namespace BasicCommands
 #else
         BottangoCore::effectorPool.addCurveToEffector(identifier, new TriggerCurve(startTime));
 #endif
-
-        LOG_MKBUF
-        LOG_LN(F("addTriggerCurve"));
-
-        LOG(F("    last Sync="))
-        LOG_ULONG(Time::getLastSyncedTimeInMs())
-
-        LOG(F("    identifier="))
-        LOG(identifier)
-
-        LOG(F("    startTime("))
-        LOG(args[2])
-        LOG(F(")="))
-        LOG_ULONG(startTime)
-
-        LOG_NEWLINE()
     }
 
     void addColorCurve(char **args)
@@ -602,41 +474,6 @@ namespace BasicCommands
         int endG = atoi(args[8]);
         int endB = atoi(args[9]);
 
-        LOG_MKBUF
-        LOG_LN(F("addColorCurve"));
-
-        LOG(F("    last Sync="))
-        LOG_ULONG(Time::getLastSyncedTimeInMs())
-
-        LOG(F("    identifier="))
-        LOG(identifier)
-
-        LOG(F("    startTime("))
-        LOG(args[2])
-        LOG(F(")="))
-        LOG_ULONG(startX)
-
-        LOG(F("    duration("))
-        LOG(args[3])
-        LOG(F(")="))
-        LOG_ULONG(duration)
-
-        LOG(F("    startColor("))
-        LOG_INT(startR)
-        LOG(F(","))
-        LOG_INT(startG)
-        LOG(F(","))
-        LOG_INT(startB)
-        LOG(F(")="))
-
-        LOG(F("    endColor("))
-        LOG_INT(endR)
-        LOG(F(","))
-        LOG_INT(endG)
-        LOG(F(","))
-        LOG_INT(endB)
-        LOG(F(")="))
-
         BottangoCore::effectorPool.addCurveToEffector(identifier, new ColorCurve(startX, duration, startR, startG, startB, endR, endG, endB));
     }
 
@@ -652,20 +489,6 @@ namespace BasicCommands
         int g = atoi(args[3]);
         int b = atoi(args[4]);
 
-        LOG_MKBUF
-        LOG_LN(F("addInstColorCrve"));
-
-        LOG(F("    identifier="))
-        LOG(identifier)
-
-        LOG(F("    endColor("))
-        LOG_INT(args[2])
-        LOG(F(","))
-        LOG_INT(args[3])
-        LOG(F(","))
-        LOG_INT(args[4])
-        LOG(F(")="))
-
         BottangoCore::effectorPool.addCurveToEffector(identifier, new ColorCurve(Time::getCurrentTimeInMs(), 0, r, g, b, r, g, b));
     }
 
@@ -676,174 +499,404 @@ namespace BasicCommands
     void stepperSync(char **args)
     {
         char *identifier = args[1];
-        int syncVal = atoi(args[2]);
 
-        LOG_MKBUF
-        LOG_LN(F("manual sync"))
-        LOG(F("    identifier="))
-        LOG(identifier)
-        LOG_NEWLINE()
-
-        BottangoCore::effectorPool.syncEffector(identifier, syncVal);
+        if (strncmp(args[2], BasicCommands::STEPPER_SYNC_MANUALHOME, 3) == 0)
+        {
+            BottangoCore::effectorPool.homeEffector(identifier);
+        }
+        else if (strncmp(args[2], BasicCommands::STEPPER_SYNC_RESET, 4) == 0)
+        {
+            BottangoCore::effectorPool.resetHomeEffector(identifier);
+        }
+        else if (strncmp(args[2], BasicCommands::STEPPER_SYNC_AUTO_CLOCKWISE, 4) == 0)
+        {
+            BottangoCore::effectorPool.autoSyncEffector(identifier, 1);
+        }
+        else if (strncmp(args[2], BasicCommands::STEPPER_SYNC_AUTO_COUNTERCLOCKWISE, 4) == 0)
+        {
+            BottangoCore::effectorPool.autoSyncEffector(identifier, -1);
+        }
+        else
+        {
+            int syncVal = atoi(args[2]);
+            BottangoCore::effectorPool.syncEffector(identifier, syncVal);
+        }
     }
 
     void clearCurvesForEffector(char **args)
     {
         char *identifier = args[1];
 
-        LOG_MKBUF
-        LOG_LN(F("clearCurvesForServo()"));
-
-        LOG(F("    pinId="))
-        LOG(identifier)
-
         BottangoCore::effectorPool.clearCurvesForEffector(identifier);
     }
-#ifdef RELAY_PARENT
+
+#ifdef RELAY_SUPPORTED
     void registerRelayController(char **args)
     {
-        char *identifier = args[1];
-        // ignore type for now, which is token [2]
-        char *macAddress = args[3];
+        if (!BottangoCore::isRelayBridge)
+        {
+            Outgoing::printOutputStringFlash(F("Aborting register relay, Not bridge"));
+            Outgoing::printLine();
+            return;
+        }
 
-        RelayChild *newRelay = new RelayChild(identifier, macAddress);
-        BottangoCore::relayPool.addRelay(newRelay);
+        char *macAddress = args[1];
+
+#ifdef RELAY_LOGGING
+#ifdef TOGGLE_DEBUG
+        if (PersistentConfigUtil::debugEnabled())
+#endif
+        {
+            Outgoing::printOutputStringFlash(F("Reg Relay with Mac: "));
+            Outgoing::printOutputStringMem(macAddress);
+            Outgoing::printLine();
+        }
+#endif
+
+        RelayChild *newRelay = new RelayChild(macAddress);
+        BottangoCore::relayPool->addRelay(newRelay);
+        int relayId = BottangoCore::relayPool->getIdForRelay(newRelay);
+        BottangoCore::relayPool->setRelayIdToReport(relayId);
+
+        if (BottangoCore::isOffline())
+        {
+            return;
+        }
+
+        BottangoCore::replaceActiveOutgoingMultimessage(BottangoCore::relayPool);
     }
 
     void deregisterRelayController(char **args)
     {
-        char *identifier = args[1];
-        BottangoCore::relayPool.removeRelay(identifier);
+        int id = atoi(args[1]);
+        BottangoCore::relayPool->removeRelay(id);
     }
 
     void deregisterAllRelayControllers(char **args)
     {
-        BottangoCore::relayPool.deregisterAll();
+        BottangoCore::relayPool->deregisterAll();
     }
 
-    void passToRelayController(char **args, byte commandCount)
+    void passToRelayController(char **args, byte paramsCount)
     {
-        char *identifier = args[1];
-        BottangoCore::relayPool.passThroughCommandToRelay(identifier, args, commandCount);
+        int id = atoi(args[1]);
+        BottangoCore::relayPool->passThroughCommandToRelay(id, args, paramsCount);
+    }
+
+    void requestBoot(char **args)
+    {
+#ifdef RELAY_LOGGING
+#ifdef TOGGLE_DEBUG
+        if (PersistentConfigUtil::debugEnabled())
+#endif
+        {
+            Outgoing::toggleOnSecondaryOutgoing();
+            Outgoing::printOutputStringFlash(F("Peer recieved boot request from bridge"));
+            Outgoing::printLine();
+            Outgoing::endToggleOnSecondaryOutgoing();
+        }
+#endif
+        Outgoing::printOutputStringPROGMEM(BasicCommands::REPLY_PEER_BOOT);
+        Outgoing::printLine();
+    }
+
+    void requestPoll(char **args)
+    {
+#ifdef RELAY_LOGGING
+#ifdef TOGGLE_DEBUG
+        if (PersistentConfigUtil::debugEnabled())
+#endif
+        {
+            Outgoing::toggleOnSecondaryOutgoing();
+            Outgoing::printOutputStringFlash(F("Peer recieved poll request from bridge"));
+            Outgoing::printLine();
+            Outgoing::endToggleOnSecondaryOutgoing();
+        }
+#endif
+        Outgoing::printOutputStringPROGMEM(BasicCommands::RELAY_POLL_RESPONSE);
+        Outgoing::printLine();
+        BottangoCore::lastPollTimeAsPeer = millis();
+    }
+
+    // initialize mac address response
+    void getMACAddress(char *args[])
+    {
+        if (BottangoCore::isOffline())
+        {
+            return;
+        }
+
+        BottangoCore::replaceActiveOutgoingMultimessage(new MACResponder());
     }
 #endif
 
 #ifdef ALLOW_SYNC_COMMANDS
-    void processSyncronizedCommands(char *args)
+    // Finds the next ';' in inputString, severs it, returns it in output
+    // as one full command (prefix+data), then slides the remainder forward.
+    // Returns true if it consumed a command, false when no ';' remains.
+    bool getNextSyncCommand(char syncCmd[], char prefixBuffer[CMD_PREFIX_SIZE], char outputCommand[MAX_COMMAND_LENGTH])
     {
-        char workingCommand[MAX_COMMAND_LENGTH];
-        int workingCommandCursor = 0;
-        workingCommand[0] = '\0';
-        char cmdID[15];
-        cmdID[0] = '\0';
-
-        int length = strlen(args);
-        int cmdIdLength = 0;
-        bool firstTokenSkipped = false;
-
-        for (int i = 0; i < length; i++)
+        // empty
+        // or starts with newline (export end of command)
+        // or starts with , (live control ends with ,hXYZ hash)
+        if (syncCmd[0] == '\0' || syncCmd[0] == '\n' || syncCmd[0] == ',')
         {
+            return false;
+        }
 
-            char c = args[i];
+        // Update prefix if this chunk starts with '*'
+        if (syncCmd[0] == '*')
+        {
+            char *commaPtr = strchr(syncCmd + 1, ',');
+            int newPrefixLen = int(commaPtr - (syncCmd + 1) + 1);
+            memcpy(prefixBuffer, syncCmd + 1, newPrefixLen);
+            prefixBuffer[newPrefixLen] = '\0';
 
-            // skip the first token which is "sSY,"
-            if (!firstTokenSkipped)
-            {
-                if (c == BottangoCore::delimiters[0])
-                {
-                    firstTokenSkipped = true;
-                }
-                continue;
-            }
+            // Remove the "*prefix," from buffer
+            char *remainder = commaPtr + 1;
+            memmove(syncCmd, remainder, strlen(remainder) + 1);
 
-            bool skipAddChar = false; // so we don't add the last char of the cmd id twice
-            // find the command ID
-            if (cmdID[0] == '\0')
-            {
-                skipAddChar = true;
-                while (i < length)
-                {
-                    cmdID[cmdIdLength] = c;
-                    cmdIdLength++;
+            // Recurse to fetch the actual command next
+            return getNextSyncCommand(syncCmd, prefixBuffer, outputCommand);
+        }
 
-                    i++;
-                    c = args[i];
-                    // break at "," end of command id
-                    // include "," so it's command id and deliniator is appended in each reconstructed command
-                    if (c == BottangoCore::delimiters[0])
-                    {
-                        cmdID[cmdIdLength] = c;
-                        cmdIdLength++;
-                        cmdID[cmdIdLength] = '\0';
-                        break;
-                    }
-                }
-            }
+        // Find the next ';' to isolate a raw chunk
+        char *semicolonPtr = strchr(syncCmd, ';');
+        size_t rawChunkLength;
+        char *nextStart;
 
-            // add the commandID to the working string
-            // at the beginning of the working string
-            // and advance working cursor
-            if (workingCommandCursor == 0)
-            {
-                for (int j = 0; j < cmdIdLength; j++)
-                {
-                    workingCommand[workingCommandCursor] = cmdID[j];
-                    workingCommandCursor++;
-                }
-                if (skipAddChar)
-                {
-                    continue;
-                }
-            }
+        if (semicolonPtr)
+        {
+            rawChunkLength = semicolonPtr - syncCmd;
+            nextStart = semicolonPtr + 1;
+        }
+        else
+        {
+            rawChunkLength = strlen(syncCmd);
+            nextStart = syncCmd + rawChunkLength;
+        }
 
-            // reached end of command
-            if (c == ';')
-            {
-                // don't include ; but instead
-                workingCommand[workingCommandCursor] = '\n'; // newline
-                workingCommandCursor++;
-                workingCommand[workingCommandCursor] = '\0';  // null terminate
-                BottangoCore::executeCommand(workingCommand); // execute the command
+        // Skip over existing prefix in the chunk
+        int prefixLen = strlen(prefixBuffer);
+        char *dataStart = syncCmd;
+        size_t dataLength = rawChunkLength;
 
-                // reset
-                workingCommand[0] = '\0';
-                workingCommandCursor = 0;
-            }
-            // reached new command type
-            else if (c == '*')
-            {
-                // reset command ID
-                cmdID[0] = '\0';
-                cmdIdLength = 0;
-            }
-            // add data to working string
-            else
-            {
-                workingCommand[workingCommandCursor] = c;
-                workingCommandCursor++;
-                workingCommand[workingCommandCursor] = '\0';
-            }
+        if (rawChunkLength >= (size_t)prefixLen &&
+            strncmp(syncCmd, prefixBuffer, prefixLen) == 0)
+        {
+            dataStart = syncCmd + prefixLen;
+            dataLength = rawChunkLength - prefixLen;
+        }
+
+        // Build outputCommand = prefix + dataStart
+        size_t copyLength = dataLength;
+        if ((size_t)prefixLen + copyLength >= MAX_COMMAND_LENGTH)
+        {
+            copyLength = MAX_COMMAND_LENGTH - prefixLen - 1;
+        }
+
+        memcpy(outputCommand, prefixBuffer, prefixLen);
+        memcpy(outputCommand + prefixLen, dataStart, copyLength);
+        outputCommand[prefixLen + copyLength] = '\0';
+
+        // Remove the processed chunk (and its ';') from buffer
+        memmove(syncCmd, nextStart, strlen(nextStart) + 1);
+
+        return true;
+    }
+
+    void beginGetNextSyncCommand(char *syncCmd, char prefixBuffer[CMD_PREFIX_SIZE])
+    {
+        // 1) Strip up to and including the first comma
+        char *commaPtr = strchr(syncCmd, ',');
+        memmove(syncCmd, commaPtr + 1, strlen(commaPtr + 1) + 1);
+
+        // 2) Seed prefixBuffer with the first token
+        commaPtr = strchr(syncCmd, ',');
+        int seedLength = int(commaPtr - syncCmd + 1);
+        memcpy(prefixBuffer, syncCmd, seedLength);
+        prefixBuffer[seedLength] = '\0';
+    }
+
+    void executeSyncronizedCommands(char *syncCmd, bool secondary)
+    {
+        char prefixBuffer[CMD_PREFIX_SIZE] = {0};
+        beginGetNextSyncCommand(syncCmd, prefixBuffer);
+
+        // Loop and execute each command
+        char singleCommand[MAX_COMMAND_LENGTH] = {0};
+        while (getNextSyncCommand(syncCmd, prefixBuffer, singleCommand))
+        {
+            BottangoCore::executeCommand(singleCommand, secondary);
         }
     }
 #endif
+
+    void reboot(bool forceSendReady)
+    {
+        if (forceSendReady)
+        {
+            Outgoing::printOutputStringPROGMEM(BasicCommands::READY);
+// cover all bases, send secondary ok as well, if the config command came over serial
+#ifdef RELAY_SUPPORTED
+            if (!Outgoing::secondaryPeerOutgoing)
+            {
+                Outgoing::setSecondaryPeerOutgoing(true);
+                Outgoing::printOutputStringPROGMEM(BasicCommands::READY);
+                Outgoing::flush();
+                Outgoing::setSecondaryPeerOutgoing(false);
+            }
+#endif
+        }
+
+        Outgoing::flush();
+        delay(150);
+
+#if defined(ESP32) || defined(ARDUINO_ARCH_ESP32) || defined(ESP8266) || defined(ARDUINO_ARCH_ESP8266)
+        ESP.restart();
+        for (;;)
+        {
+        }
+#elif defined(TEENSYDUINO)
+        SCB_AIRCR = 0x05FA0004;
+        for (;;)
+        {
+        }
+#elif defined(ARDUINO_ARCH_AVR)
+        wdt_enable(WDTO_15MS);
+        for (;;)
+        {
+        }
+#elif defined(ARDUINO_ARCH_MEGAAVR)
+#if defined(WDT_PERIOD_8CLK_gc)
+        wdt_enable(WDT_PERIOD_8CLK_gc);
+#elif defined(WDT_PERIOD_8KCLK_gc)
+        wdt_enable(WDT_PERIOD_8KCLK_gc);
+#else
+#warning "megaAVR watchdog reset constant not found"
+#endif
+        for (;;)
+        {
+        }
+#elif defined(ARDUINO_ARCH_SAMD) || defined(ARDUINO_ARCH_RP2040) || defined(ARDUINO_ARCH_STM32) || defined(ARDUINO_ARCH_MBED) || defined(ARDUINO_ARCH_NRF52) || defined(ARDUINO_ARCH_NRF52840) || defined(ARDUINO_ARCH_RENESAS) || (defined(__arm__) && defined(NVIC_SystemReset))
+        NVIC_SystemReset();
+        for (;;)
+        {
+        }
+#else
+#warning "reboot not supported yet for your platform. May see unexpected behavior"
+#endif
+    }
 
 #ifdef ENABLE_ESP_OTA_UPDATE
     void processOTA(char **args)
     {
         char otaMessageType = args[1][0];
 
-        if (otaMessageType == 's')
+        if (otaMessageType == BINARY_FLAG_START)
         {
             OTAUpdateUtil::beginOTA();
         }
-        else if (otaMessageType == 'd')
+        else if (otaMessageType == BINARY_FLAG_DATA)
         {
             OTAUpdateUtil::recvOTAData(args[2]);
         }
-        else if (otaMessageType == 'e')
+        else if (otaMessageType == BINARY_FLAG_END)
         {
             OTAUpdateUtil::finishOTA(args[2]);
         }
+    }
+#endif
+
+#if defined(ENABLE_DYNAMIC_ANIMATION_SOURCE_SWITCH) || defined(RELAY_SUPPORTED)
+    void setConfiguration(char **args)
+    {
+#if defined(ENABLE_DYNAMIC_ANIMATION_SOURCE_SWITCH)
+        // set command source
+        if (strcmp_P(args[1], BasicCommands::SET_CONFIG_COMMAND_SOURCE) == 0)
+        {
+            int setValue = atoi(args[2]);
+            if (setValue != 2 && setValue != 3)
+            {
+                return;
+            }
+            bool shouldUseExported = setValue == 3;
+            bool currentUseExported = PersistentConfigUtil::getUseExportedCommandStream();
+            if (currentUseExported != shouldUseExported)
+            {
+                PersistentConfigUtil::setUseExportedCommandStream(shouldUseExported);
+                reboot(true);
+            }
+            return;
+        }
+#endif
+
+#if defined(DYNAMIC_STOP_BUTTON_BEHAVIOR)
+        // set command source
+        if (strcmp_P(args[1], BasicCommands::SET_CONFIG_STOP_BUTTON) == 0)
+        {
+            int setValue = atoi(args[2]);
+            PersistentConfigUtil::setStopIsShutdown((bool)setValue);
+            return;
+        }
+#endif
+
+#if defined(RELAY_SUPPORTED)
+        if (strcmp_P(args[1], BasicCommands::SET_CONFIG_RELAY_TYPE) == 0)
+        {
+            int setValue = atoi(args[2]);
+            if (setValue > VALUE_RELAY_STATE_PEER)
+            {
+                setValue = 0;
+            }
+
+            int currentState = PersistentConfigUtil::getRelayState();
+
+            // pass bridge address when setting to peer
+            if (setValue == VALUE_RELAY_STATE_PEER)
+            {
+                // may just be updating bridge address
+                uint8_t newMac[6];
+                uint8_t currentMac[6];
+                (void)UDIDHelper::convertCStrToMAC(args[3], newMac);
+                bool gotBridgeMac = PersistentConfigUtil::getBridgeMacAddress(currentMac);
+
+                bool newMatchesCurrent = false;
+                if (gotBridgeMac)
+                {
+                    newMatchesCurrent = true;
+                    for (int i = 0; i < 6; i++)
+                    {
+                        if (newMac[i] != currentMac[i])
+                        {
+                            newMatchesCurrent = false;
+                            break;
+                        }
+                    }
+                }
+
+                if (!newMatchesCurrent)
+                {
+                    PersistentConfigUtil::storeBridgeMacAddress(newMac);
+                }
+                // or may be switching to peer, or both!
+                if (setValue != currentState)
+                {
+                    PersistentConfigUtil::setRelayState(setValue);
+                }
+                reboot(true);
+            }
+            else
+            {
+                if (setValue != currentState)
+                {
+                    PersistentConfigUtil::setRelayState(setValue);
+                    reboot(true);
+                }
+            }
+            return;
+        }
+#endif
     }
 #endif
 

@@ -4,11 +4,11 @@
 #if defined(ENABLE_ESP_OTA_UPDATE)
 #include "Outgoing.h"
 #include "BasicCommands.h"
+#include "HexDataDownloadUtil.h"
 
 namespace OTAUpdateUtil
 {
     bool otaInProgress = false;
-    uint32_t checksum = 0;
 
     void beginOTA()
     {
@@ -16,6 +16,7 @@ namespace OTAUpdateUtil
         {
             // error here
             Outgoing::printOutputStringFlash(F("ERR: OTA-InProgress"));
+            Outgoing::printLine();
             return;
         }
 
@@ -23,11 +24,22 @@ namespace OTAUpdateUtil
         {
             // error here
             Outgoing::printOutputStringFlash(F("ERR: OTA-InitFail"));
+            Outgoing::printLine();
             return;
         }
 
+        if (HexDataDownloadUtil::downloadInProgress)
+        {
+            // error here
+            Outgoing::printOutputStringFlash(F("ERR: Already Download"));
+            Outgoing::printLine();
+            return;
+        }
+
+        Outgoing::printOutputStringFlash(F("OTA Begin!"));
+        Outgoing::printLine();
+        HexDataDownloadUtil::beginData(processHexData);
         otaInProgress = true;
-        checksum = 0;
     }
 
     void recvOTAData(const char *hexData)
@@ -36,67 +48,41 @@ namespace OTAUpdateUtil
         {
             // error here
             Outgoing::printOutputStringFlash(F("ERR: OTA-NotStarted"));
+            Outgoing::printLine();
             return;
         }
 
-        int len = strlen(hexData);
-        if (len % 2 != 0)
-        {
-            // error here
-            Outgoing::printOutputStringFlash(F("ERR: OTA-BadHex"));
-            return;
-        }
+        HexDataDownloadUtil::recvData(hexData);
+    }
 
-        int dataLen = len / 2;
-        uint8_t *buffer = (uint8_t *)malloc(dataLen);
-        if (!buffer)
-        {
-            // error here
-            Outgoing::printOutputStringFlash(F("ERR: OTA-MemAlloc"));
-            return;
-        }
-
-        // Convert hex string to binary data
-        for (int i = 0; i < dataLen; i++)
-        {
-            char c1 = hexData[i * 2];
-            char c2 = hexData[i * 2 + 1];
-            char temp[3] = {c1, c2, '\0'};
-            buffer[i] = (uint8_t)strtol(temp, NULL, 16);
-        }
-
+    void processHexData(uint8_t *buffer, size_t dataLength)
+    {
         // Write the chunk to flash
-        size_t written = Update.write(buffer, dataLen);
-        if (written != (size_t)dataLen)
+        size_t written = Update.write(buffer, dataLength);
+        if (written != (size_t)dataLength)
         {
             // error here
             Outgoing::printOutputStringFlash(F("ERR: OTA-WriteFail"));
-            free(buffer);
-            return;
+            Outgoing::printLine();
         }
-
-        // Update checksum
-        for (int i = 0; i < dataLen; i++)
-        {
-            checksum += buffer[i];
-        }
-
-        free(buffer);
     }
 
     void finishOTA(const char *expectedChecksumStr)
     {
-        if (!otaInProgress)
+        if (!otaInProgress || !HexDataDownloadUtil::downloadInProgress)
         {
             // error here
             Outgoing::printOutputStringFlash(F("ERR: OTA-NotStarted"));
+            Outgoing::printLine();
             return;
         }
 
         uint32_t expectedChecksum = (uint32_t)strtoul(expectedChecksumStr, NULL, 10);
 
-        if (checksum == expectedChecksum)
+        if (HexDataDownloadUtil::checksum == expectedChecksum)
         {
+            HexDataDownloadUtil::finishData();
+
             // Finalize the update
             if (Update.end(true))
             {
@@ -112,16 +98,20 @@ namespace OTAUpdateUtil
             }
             else
             {
-                Outgoing::printOutputStringFlash(F("ERR: OTA-EndFail"));
+                Outgoing::printOutputStringFlash(F("ERR: OTA-EndFail: "));
+                Outgoing::printOutputStringMem(Update.getError());
+                Outgoing::printLine();
                 otaInProgress = false;
                 Update.abort();
             }
         }
         else
         {
-            Outgoing::printOutputStringFlash(F("WARN: OTA-BadChecksum"));
+            Outgoing::printOutputStringFlash(F("ERR: OTA-BadChecksum"));
+            Outgoing::printLine();
             otaInProgress = false;
             Update.abort();
+            HexDataDownloadUtil::finishData();
         }
     }
 }

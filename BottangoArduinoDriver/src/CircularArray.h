@@ -3,7 +3,7 @@
 #define BOTTANGO_CIRCULARARRAY_H
 
 #include "Errors.h"
-#include "Log.h"
+#include <Arduino.h>
 
 template <class T>
 class CircularArray
@@ -110,6 +110,7 @@ void CircularArray<T>::clear()
     {
         array[i] = NULL;
     }
+    idx = 0;
 }
 
 #endif

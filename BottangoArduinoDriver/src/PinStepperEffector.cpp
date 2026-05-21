@@ -1,9 +1,41 @@
 #include "PinStepperEffector.h"
-#include "Log.h"
 #include "BottangoCore.h"
+#include "Errors.h"
 
 PinStepperEffector::PinStepperEffector(byte pin0, byte pin1, byte pin2, byte pin3, int maxCounterClockwiseSteps, int maxClockwiseSteps, int maxSignalPerSec, int startingSignal) : VelocityEffector(maxCounterClockwiseSteps, maxClockwiseSteps, maxSignalPerSec, startingSignal)
 {
+
+#ifdef NAMED_BOARD
+    if (pin0 == 0 || pin1 == 0 || pin2 == 0 || pin3 == 0)
+    {
+        Error::reportError_InvalidPin();
+        return;
+    }
+#endif
+
+#ifdef PIN_REMAPPING
+    for (int i = 0; i < PIN_REMAP_LENGTH; i++)
+    {
+        if (pin0 == inputPins[i])
+        {
+            originalPin0 = pin0;
+            pin0 = onboardPins[i];
+        }
+        else if (pin1 == inputPins[i])
+        {
+            pin1 = onboardPins[i];
+        }
+        else if (pin2 == inputPins[i])
+        {
+            pin2 = onboardPins[i];
+        }
+        else if (pin3 == inputPins[i])
+        {
+            pin3 = onboardPins[i];
+        }
+    }
+#endif
+
     this->pin0 = pin0;
     this->pin1 = pin1;
     this->pin2 = pin2;
@@ -18,17 +50,6 @@ PinStepperEffector::PinStepperEffector(byte pin0, byte pin1, byte pin2, byte pin
     digitalWrite(pin1, LOW);
     digitalWrite(pin2, LOW);
     digitalWrite(pin3, LOW);
-
-    LOG_MKBUF
-    LOG(F("Attaching pin stepper "))
-    LOG_INT(pin0)
-    LOG(F(", "))
-    LOG_INT(pin1)
-    LOG(F(", "))
-    LOG_INT(pin2)
-    LOG(F(", "))
-    LOG_INT(pin3)
-    LOG_NEWLINE()
 
     Callbacks::onEffectorRegistered(this);
 }
@@ -47,19 +68,9 @@ void PinStepperEffector::driveOnLoop()
             stepLoop++;
         }
         pulse();
-        if (sync != 0)
+        if (sync != 0 || autoSync != 0)
         {
-            if (sync < -100)
-            {
-                if (Callbacks::isStepperAutoHomeComplete(this))
-                {
-                    endAutoSync();
-                }
-            }
-            else
-            {
-                sync++;
-            }
+            updateSync(drive);
         }
         else
         {
@@ -79,19 +90,9 @@ void PinStepperEffector::driveOnLoop()
             stepLoop--;
         }
         pulse();
-        if (sync != 0)
+        if (sync != 0 || autoSync != 0)
         {
-            if (sync > 100)
-            {
-                if (Callbacks::isStepperAutoHomeComplete(this))
-                {
-                    endAutoSync();
-                }
-            }
-            else
-            {
-                sync--;
-            }
+            updateSync(drive);
         }
         else
         {
@@ -137,5 +138,9 @@ void PinStepperEffector::pulse()
 
 void PinStepperEffector::getIdentifier(char *outArray, short arraySize)
 {
+#ifdef PIN_REMAPPING
+    snprintf(outArray, arraySize, "%d", (int)originalPin0);
+#else
     snprintf(outArray, arraySize, "%d", (int)pin0);
+#endif
 }

@@ -1,5 +1,4 @@
 #include "CustomMotorEffector.h"
-#include "Log.h"
 
 CustomMotorEffector::CustomMotorEffector(char *identifier, short minSignal, short maxSignal, int maxSignalSec, short startSignal) : LoopDrivenEffector(minSignal, maxSignal, maxSignalSec, startSignal)
 {

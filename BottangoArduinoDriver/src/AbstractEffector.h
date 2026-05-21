@@ -20,6 +20,12 @@ public:
 
     virtual void setSync(int syncValue);
 
+    virtual void setAutoSync(int syncValue);
+
+    virtual void setHome();
+
+    virtual void resetHome();
+
     virtual void addCurve(Curve *curve);
 
     virtual void clearCurves();

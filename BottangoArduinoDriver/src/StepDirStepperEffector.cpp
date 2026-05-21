@@ -1,15 +1,41 @@
 #include "StepDirStepperEffector.h"
-#include "Log.h"
 #include "BottangoCore.h"
+#include "Errors.h"
 
 StepDirStepperEffector::StepDirStepperEffector(byte stepPin, byte dirPin, bool clockwiseIsLow, int maxCounterClockwiseSteps, int maxClockwiseSteps, int maxSignalPerSec, int startingSignalOffset) : VelocityEffector(maxCounterClockwiseSteps, maxClockwiseSteps, maxSignalPerSec, startingSignalOffset)
 {
+
+#ifdef NAMED_BOARD
+    if (stepPin == 0 || dirPin == 0)
+    {
+        Error::reportError_InvalidPin();
+        return;
+    }
+#endif
+
+#ifdef PIN_REMAPPING
+    for (int i = 0; i < PIN_REMAP_LENGTH; i++)
+    {
+        if (stepPin == inputPins[i])
+        {
+            originalStepPin = stepPin;
+            stepPin = onboardPins[i];
+        }
+        else if (dirPin == inputPins[i])
+        {
+            dirPin = onboardPins[i];
+        }
+    }
+#endif
+
     this->stepPin = stepPin;
     this->dirPin = dirPin;
 
     this->clockwiseIsLow = clockwiseIsLow;
 
-    this->pulseStartTimeUs = 0;
+    this->holdStartTimeUs = 0;
+    this->stepHigh = false;
+    this->dirSwitch = false;
 
     pinMode(stepPin, OUTPUT);
     pinMode(dirPin, OUTPUT);
@@ -19,59 +45,85 @@ StepDirStepperEffector::StepDirStepperEffector(byte stepPin, byte dirPin, bool c
 
     currDirectionIsClockwise = true;
 
-    LOG_MKBUF
-    LOG(F("Attaching stepdir stepper. step "))
-    LOG_INT(stepPin)
-    LOG(F(" dir, "))
-    LOG_INT(dirPin)
-    LOG_NEWLINE()
-
     Callbacks::onEffectorRegistered(this);
 }
 
 void StepDirStepperEffector::driveOnLoop()
 {
+    VelocityEffector::driveOnLoop();
+
     unsigned long nowUS = micros();
 
-    if (pulseStartTimeUs > 0)
+    // need to hold before pulsing?
+    if (holdStartTimeUs > 0)
     {
-        if (nowUS - pulseStartTimeUs > minPulseWidthUs)
+        // holding for a direction switch?
+        if (dirSwitch)
         {
-            digitalWrite(stepPin, LOW);
-            pulseStartTimeUs = 0;
-            drive = 0;
+            // direction switch hold complete
+            if (nowUS - holdStartTimeUs >= dirPulseHold)
+            {
+                dirSwitch = false;
+                holdStartTimeUs = 0;
+            }
+            // wait
+            else
+            {
+                return;
+            }
         }
+        // otherwise, holding for a pulse
         else
         {
-            return;
+            // ready to progress the pulse?
+            if (nowUS - holdStartTimeUs >= minPulseWidthSide)
+            {
+                // was high, set low
+                if (stepHigh)
+                {
+                    digitalWrite(stepPin, LOW);
+                    holdStartTimeUs = nowUS;
+                    stepHigh = false;
+                    return;
+                }
+                // has been low long enough
+                else
+                {
+                    holdStartTimeUs = 0;
+                    drive = 0;
+                }
+            }
+            // wait
+            else
+            {
+                return;
+            }
         }
     }
 
     bool didChange = false;
+    // move clockwise
     if (drive > 0)
     {
+        // need to swap dir pin and hold a tiny bit?
         if (!currDirectionIsClockwise)
         {
             digitalWrite(dirPin, clockwiseIsLow ? LOW : HIGH);
             currDirectionIsClockwise = true;
+            holdStartTimeUs = nowUS;
+            dirSwitch = true;
+            return;
         }
 
+        // set pin high
         digitalWrite(stepPin, HIGH);
+        holdStartTimeUs = nowUS;
+        stepHigh = true;
 
-        pulseStartTimeUs = nowUS;
-        if (sync != 0)
+        // update signal or sync value
+        if (autoSync != 0 || sync != 0)
         {
-            if (sync < -100)
-            {
-                if (Callbacks::isStepperAutoHomeComplete(this))
-                {
-                    endAutoSync();
-                }
-            }
-            else
-            {
-                sync++;
-            }
+            updateSync(drive);
         }
         else
         {
@@ -79,31 +131,28 @@ void StepDirStepperEffector::driveOnLoop()
             currentSignal++;
         }
     }
+    // move counterclockwise
     else if (drive < 0)
     {
+        // need to swap dir pin and hold a tiny bit?
         if (currDirectionIsClockwise)
         {
             digitalWrite(dirPin, clockwiseIsLow ? HIGH : LOW);
             currDirectionIsClockwise = false;
+            holdStartTimeUs = nowUS;
+            dirSwitch = true;
+            return;
         }
 
+        // set pin high
         digitalWrite(stepPin, HIGH);
+        holdStartTimeUs = nowUS;
+        stepHigh = true;
 
-        pulseStartTimeUs = nowUS;
-
-        if (sync != 0)
+        // update signal or sync value
+        if (autoSync != 0 || sync != 0)
         {
-            if (sync > 100)
-            {
-                if (Callbacks::isStepperAutoHomeComplete(this))
-                {
-                    endAutoSync();
-                }
-            }
-            else
-            {
-                sync--;
-            }
+            updateSync(drive);
         }
         else
         {
@@ -117,5 +166,9 @@ void StepDirStepperEffector::driveOnLoop()
 
 void StepDirStepperEffector::getIdentifier(char *outArray, short arraySize)
 {
+#ifdef PIN_REMAPPING
+    snprintf(outArray, arraySize, "%d", (int)originalStepPin);
+#else
     snprintf(outArray, arraySize, "%d", (int)stepPin);
+#endif
 }

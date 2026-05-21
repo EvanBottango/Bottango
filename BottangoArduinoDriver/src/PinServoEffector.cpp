@@ -1,11 +1,22 @@
 #include "PinServoEffector.h"
-#include "Log.h"
 #include "../BottangoArduinoModules.h"
+#include "Errors.h"
 
 PinServoEffector::PinServoEffector(byte pin, short minPWM, short maxPWM, int maxPWMSec, short startSignal) : LoopDrivenEffector(minPWM, maxPWM, maxPWMSec, startSignal)
 {
     this->pin = pin;
 
+#ifdef NAMED_BOARD
+    if (pin == 0)
+    {
+        Error::reportError_InvalidPin();
+        return;
+    }
+#endif
+
+#ifdef ESP32
+    servo.setTimerWidth(16);
+#endif
 #ifdef PIN_REMAPPING
     bool matchFound = false;
     for (int i = 0; i < PIN_REMAP_LENGTH; i++)
@@ -25,9 +36,6 @@ PinServoEffector::PinServoEffector(byte pin, short minPWM, short maxPWM, int max
     servo.attach(pin);
 #endif
 
-#ifdef ESP32
-    servo.setTimerWidth(16);
-#endif
     servo.writeMicroseconds(startSignal);
 
     Callbacks::onEffectorRegistered(this);
@@ -62,6 +70,7 @@ void PinServoEffector::destroy(bool systemShutdown)
     delay(25);
     servo.detach();
 #endif
+    servo.detach();
 
     AbstractEffector::destroy(systemShutdown);
 }

@@ -7,41 +7,43 @@ namespace ExportedAnimationPlaybackControl
 {
     CircularArray<AnimationConfiguration> animationConfigs = CircularArray<AnimationConfiguration>(MAX_EXPORTED_ANIMATIONS);
     int currentPlayingIndex = -1;
-    int defaultIndex = -1;
+    int idleAnimIndex = -1;
+    int startingAnim = -1;
 
     void initialize()
     {
 #ifdef USE_SD_CARD_COMMAND_STREAM
-        SDCardUtil::initialize();
-        if (!SDCardUtil::sdCardAvailable)
-        {
-            return;
-        }
+
+        char path[MAX_FILE_PATH_SIZE];
+        SDCardUtil::SDFileError fileError;
 
         // parse and build config files
         for (int i = 0; i < MAX_EXPORTED_ANIMATIONS; i++)
         {
-            char path[MAX_FILE_PATH_SIZE];
-
-            SDCardUtil::getAnimationFilePath(i, path, false, false); // check if data file exists
-            if (!SDCardUtil::fileExists(path))
+            // first verify existance of all required files
+            path[0] = '\0';
+            SDCardUtil::getAnimationFilePath(i, path, false, true); // Get and open CONFIG file
+            bool exists = SDCardUtil::fileExists(path, fileError);
+            if (!exists)
             {
                 continue;
             }
 
-            SDCardUtil::getAnimationFilePath(i, path, false, true); // check if config file exists
-            if (!SDCardUtil::fileExists(path))
-            {
-                continue;
-            }
+            File configFile = SDCardUtil::openFile(path, fileError);
 
-            File configFile = SDCardUtil::openFile(path);
-            if (!configFile)
+            // error case on config
+            if (fileError != SDCardUtil::SDFileError::ERR_NONE)
             {
+                // TODO
+                // better error case handling here!
+                SDCardUtil::closeFile(configFile);
                 continue;
             }
 
             AnimationConfiguration *config = parseConfiguration(configFile);
+
+            // done with the file
+            SDCardUtil::closeFile(configFile);
 
             // set up pins if needed
             if (config->playOnPin > 0)
@@ -95,18 +97,13 @@ namespace ExportedAnimationPlaybackControl
             AnimationConfiguration *checkConfig = animationConfigs.get(i);
             if (checkConfig != nullptr)
             {
-                if (checkConfig->playOnStart == 1 && currentPlayingIndex == -1)
+                if (checkConfig->playOnStart == 1 && startingAnim == -1)
                 {
-#ifdef EXPORTED_ANIM_LOGGING
-                    Outgoing::printOutputStringFlash(F("Starting anim triggered"));
-                    Outgoing::printLine();
-#endif
-                    BottangoCore::commandStreamProvider->startCommandStream(i, checkConfig->loopOnStart == 1);
-                    currentPlayingIndex = i;
+                    startingAnim = i;
                 }
-                if (checkConfig->idleAnim == 1 && defaultIndex == -1)
+                if (checkConfig->idleAnim == 1 && idleAnimIndex == -1)
                 {
-                    defaultIndex = i;
+                    idleAnimIndex = i;
                 }
             }
         }
@@ -117,8 +114,13 @@ namespace ExportedAnimationPlaybackControl
         // something already playing
         if (BottangoCore::commandStreamProvider->streamIsInProgress())
         {
+            // let setup finish, don't interrupt it
+            if (BottangoCore::commandStreamProvider->commandStreamIsSetup)
+            {
+                return;
+            }
             // find an animation that wants to trigger
-            int index = getIndexOfAnimationToTrigger(true);
+            int index = getIndexOfAnimationToTrigger();
             if (index >= 0 && index != currentPlayingIndex) // that isn't also the animation playing currently
             {
                 AnimationConfiguration *nextConfig = animationConfigs.get(index);
@@ -138,7 +140,7 @@ namespace ExportedAnimationPlaybackControl
             }
 
             // something to trigger?
-            int index = getIndexOfAnimationToTrigger(false);
+            int index = getIndexOfAnimationToTrigger();
             if (index >= 0)
             {
                 AnimationConfiguration *nextConfig = animationConfigs.get(index);
@@ -148,18 +150,43 @@ namespace ExportedAnimationPlaybackControl
                     currentPlayingIndex = index;
                 }
             }
-            // default to play when nothing should play?
-            else if (defaultIndex >= 0 && currentPlayingIndex != defaultIndex)
+            // starting hasn't been triggered yet?
+            else if (startingAnim >= 0 && currentPlayingIndex != startingAnim)
             {
-                AnimationConfiguration *nextConfig = animationConfigs.get(defaultIndex);
+                AnimationConfiguration *nextConfig = animationConfigs.get(startingAnim);
                 if (nextConfig != nullptr)
                 {
 #ifdef EXPORTED_ANIM_LOGGING
-                    Outgoing::printOutputStringFlash(F("trigger idle"));
-                    Outgoing::printLine();
+#ifdef TOGGLE_DEBUG
+                    if (PersistentConfigUtil::debugEnabled())
 #endif
-                    BottangoCore::commandStreamProvider->startCommandStream(defaultIndex, true);
-                    currentPlayingIndex = defaultIndex;
+                    {
+                        Outgoing::printOutputStringFlash(F("trigger starting anim"));
+                        Outgoing::printLine();
+                    }
+#endif
+                    BottangoCore::commandStreamProvider->startCommandStream(startingAnim, nextConfig->loopOnStart);
+                    currentPlayingIndex = idleAnimIndex;
+                    startingAnim = -1;
+                }
+            }
+            // default to play when nothing should play?
+            else if (idleAnimIndex >= 0 && currentPlayingIndex != idleAnimIndex)
+            {
+                AnimationConfiguration *nextConfig = animationConfigs.get(idleAnimIndex);
+                if (nextConfig != nullptr)
+                {
+#ifdef EXPORTED_ANIM_LOGGING
+#ifdef TOGGLE_DEBUG
+                    if (PersistentConfigUtil::debugEnabled())
+#endif
+                    {
+                        Outgoing::printOutputStringFlash(F("trigger idle"));
+                        Outgoing::printLine();
+                    }
+#endif
+                    BottangoCore::commandStreamProvider->startCommandStream(idleAnimIndex, true);
+                    currentPlayingIndex = idleAnimIndex;
                 }
             }
         }
@@ -171,17 +198,21 @@ namespace ExportedAnimationPlaybackControl
         AnimationConfiguration *config = new AnimationConfiguration();
         byte lineIndex = 0;
 
-        while (configFile.available())
+        while (SDCardUtil::safeAvailable(configFile))
         {
+            SDCardUtil::lockCard();
             // start of the line
             char c = configFile.read();
+            SDCardUtil::unlockCard();
 
             // skip this line, it's a comment
             if (c == '/')
             {
-                while (configFile.available())
+                while (SDCardUtil::safeAvailable(configFile))
                 {
+                    SDCardUtil::lockCard();
                     c = configFile.read();
+                    SDCardUtil::unlockCard();
                     if (c == '\n' || c == '\r')
                     {
                         break;
@@ -200,9 +231,11 @@ namespace ExportedAnimationPlaybackControl
             value[0] = c;
             for (int i = 1; i < 10; i++)
             {
-                if (configFile.available())
+                if (SDCardUtil::safeAvailable(configFile))
                 {
+                    SDCardUtil::lockCard();
                     char cNext = configFile.read();
+                    SDCardUtil::unlockCard();
                     if (cNext == '\n' || cNext == '\r')
                     {
                         value[i] = '\0';
@@ -254,7 +287,12 @@ namespace ExportedAnimationPlaybackControl
         }
 
 #ifdef EXPORTED_ANIM_LOGGING
-        logConfig(config);
+#ifdef TOGGLE_DEBUG
+        if (PersistentConfigUtil::debugEnabled())
+#endif
+        {
+            logConfig(config);
+        }
 #endif
         return config;
     }
@@ -274,13 +312,18 @@ namespace ExportedAnimationPlaybackControl
         config->buttonLadderMax = configValues[7];
 
 #ifdef EXPORTED_ANIM_LOGGING
-        logConfig(config);
+#ifdef TOGGLE_DEBUG
+        if (PersistentConfigUtil::debugEnabled())
+#endif
+        {
+            logConfig(config);
+        }
 #endif
         return config;
     }
 #endif
 
-    int getIndexOfAnimationToTrigger(bool interruptingAnimationsOnly)
+    int getIndexOfAnimationToTrigger()
     {
         for (int i = 0; i < MAX_EXPORTED_ANIMATIONS; i++)
         {
@@ -292,9 +335,14 @@ namespace ExportedAnimationPlaybackControl
                     if (digitalRead(checkConfig->playOnPin) == LOW)
                     {
 #ifdef EXPORTED_ANIM_LOGGING
-                        Outgoing::printOutputStringFlash(F("trigger pin low "));
-                        Outgoing::printOutputStringMem(checkConfig->playOnPin);
-                        Outgoing::printLine();
+#ifdef TOGGLE_DEBUG
+                        if (PersistentConfigUtil::debugEnabled())
+#endif
+                        {
+                            Outgoing::printOutputStringFlash(F("trigger pin low "));
+                            Outgoing::printOutputStringMem(checkConfig->playOnPin);
+                            Outgoing::printLine();
+                        }
 #endif
                         return i;
                     }
@@ -304,9 +352,14 @@ namespace ExportedAnimationPlaybackControl
                     if (digitalRead(checkConfig->playOnPin) == HIGH)
                     {
 #ifdef EXPORTED_ANIM_LOGGING
-                        Outgoing::printOutputStringFlash(F("trigger pin high "));
-                        Outgoing::printOutputStringMem(checkConfig->playOnPin);
-                        Outgoing::printLine();
+#ifdef TOGGLE_DEBUG
+                        if (PersistentConfigUtil::debugEnabled())
+#endif
+                        {
+                            Outgoing::printOutputStringFlash(F("trigger pin high "));
+                            Outgoing::printOutputStringMem(checkConfig->playOnPin);
+                            Outgoing::printLine();
+                        }
 #endif
                         return i;
                     }
@@ -317,11 +370,16 @@ namespace ExportedAnimationPlaybackControl
                     if (pinV >= checkConfig->buttonLadderMin && pinV <= checkConfig->buttonLadderMax)
                     {
 #ifdef EXPORTED_ANIM_LOGGING
-                        Outgoing::printOutputStringFlash(F("trigger pin range "));
-                        Outgoing::printOutputStringMem(checkConfig->playOnPin);
-                        Outgoing::printOutputStringFlash(F(" : "));
-                        Outgoing::printOutputStringMem(pinV);
-                        Outgoing::printLine();
+#ifdef TOGGLE_DEBUG
+                        if (PersistentConfigUtil::debugEnabled())
+#endif
+                        {
+                            Outgoing::printOutputStringFlash(F("trigger pin range "));
+                            Outgoing::printOutputStringMem(checkConfig->playOnPin);
+                            Outgoing::printOutputStringFlash(F(" : "));
+                            Outgoing::printOutputStringMem(pinV);
+                            Outgoing::printLine();
+                        }
 #endif
                         return i;
                     }
@@ -334,64 +392,69 @@ namespace ExportedAnimationPlaybackControl
 #ifdef EXPORTED_ANIM_LOGGING
     void logConfig(AnimationConfiguration *config)
     {
-        Outgoing::printOutputStringFlash(F("\n\nnew anim config"));
-        Outgoing::printLine();
-
-        Outgoing::printOutputStringFlash(F("play on start: "));
-        Outgoing::printOutputStringMem(config->playOnStart > 0);
-        Outgoing::printOutputStringFlash(F(" "));
-        Outgoing::printLine();
-
-        Outgoing::printOutputStringFlash(F("loop on start: "));
-        Outgoing::printOutputStringMem(config->loopOnStart > 0);
-        Outgoing::printOutputStringFlash(F(" "));
-        Outgoing::printLine();
-
-        Outgoing::printOutputStringFlash(F("idle: "));
-        Outgoing::printOutputStringMem(config->idleAnim > 0);
-        Outgoing::printOutputStringFlash(F(" "));
-        Outgoing::printLine();
-
-        Outgoing::printOutputStringFlash(F("play on pin: "));
-        Outgoing::printOutputStringMem(config->playOnPin > 0);
-        if (config->playOnPin > 0)
+#ifdef TOGGLE_DEBUG
+        if (PersistentConfigUtil::debugEnabled())
+#endif
         {
-            Outgoing::printOutputStringMem(config->playOnPin);
-        }
-        Outgoing::printLine();
-
-        if (config->playOnPin > 0)
-        {
-            Outgoing::printOutputStringFlash(F("loop: "));
-            Outgoing::printOutputStringMem(config->loop > 0);
+            Outgoing::printOutputStringFlash(F("\nnew anim config"));
             Outgoing::printLine();
-        }
 
-        if (config->playOnPin > 0)
-        {
-            Outgoing::printOutputStringFlash(F("trigger type: "));
-            if (config->playOnPinHigh == 0)
+            Outgoing::printOutputStringFlash(F("play on start: "));
+            Outgoing::printOutputStringMem(config->playOnStart > 0);
+            Outgoing::printOutputStringFlash(F(" "));
+            Outgoing::printLine();
+
+            Outgoing::printOutputStringFlash(F("loop on start: "));
+            Outgoing::printOutputStringMem(config->loopOnStart > 0);
+            Outgoing::printOutputStringFlash(F(" "));
+            Outgoing::printLine();
+
+            Outgoing::printOutputStringFlash(F("idle: "));
+            Outgoing::printOutputStringMem(config->idleAnim > 0);
+            Outgoing::printOutputStringFlash(F(" "));
+            Outgoing::printLine();
+
+            Outgoing::printOutputStringFlash(F("play on pin: "));
+            Outgoing::printOutputStringMem(config->playOnPin > 0);
+            if (config->playOnPin > 0)
             {
-                Outgoing::printOutputStringFlash(F("LOW"));
-            }
-            else if (config->playOnPinHigh == 1)
-            {
-                Outgoing::printOutputStringFlash(F("HIGH"));
-            }
-            else
-            {
-                Outgoing::printOutputStringFlash(F("ANLG"));
+                Outgoing::printOutputStringMem(config->playOnPin);
             }
             Outgoing::printLine();
-        }
 
-        if (config->playOnPinHigh == 2)
-        {
-            Outgoing::printOutputStringFlash(F("range: "));
-            Outgoing::printOutputStringMem(config->buttonLadderMin);
-            Outgoing::printOutputStringFlash(F(" / "));
-            Outgoing::printOutputStringMem(config->buttonLadderMax);
-            Outgoing::printLine();
+            if (config->playOnPin > 0)
+            {
+                Outgoing::printOutputStringFlash(F("loop: "));
+                Outgoing::printOutputStringMem(config->loop > 0);
+                Outgoing::printLine();
+            }
+
+            if (config->playOnPin > 0)
+            {
+                Outgoing::printOutputStringFlash(F("trigger type: "));
+                if (config->playOnPinHigh == 0)
+                {
+                    Outgoing::printOutputStringFlash(F("LOW"));
+                }
+                else if (config->playOnPinHigh == 1)
+                {
+                    Outgoing::printOutputStringFlash(F("HIGH"));
+                }
+                else
+                {
+                    Outgoing::printOutputStringFlash(F("ANLG"));
+                }
+                Outgoing::printLine();
+            }
+
+            if (config->playOnPinHigh == 2)
+            {
+                Outgoing::printOutputStringFlash(F("range: "));
+                Outgoing::printOutputStringMem(config->buttonLadderMin);
+                Outgoing::printOutputStringFlash(F(" / "));
+                Outgoing::printOutputStringMem(config->buttonLadderMax);
+                Outgoing::printLine();
+            }
         }
     }
 #endif

@@ -1,25 +1,14 @@
 #include <Arduino.h>
+#include <limits.h>
+#if !defined(ARDUINO_ARCH_AVR) && !defined(ARDUINO_ARCH_MEGAAVR) && !defined(ESP32) && !defined(ARDUINO_ARCH_ESP32) && !defined(ESP8266) && !defined(ARDUINO_ARCH_ESP8266)
+#include <stdio.h>
+#endif
 #include "BottangoCore.h"
 
 #include "../BottangoArduinoModules.h"
-#if defined(RELAY_CHILD) && defined(RELAY_COMS_ESPNOW)
-#include "ESPNOWUtil.h"
-#endif
 
 namespace Outgoing
 {
-    /** Request E Stop */
-    const char ESTOP[] PROGMEM = "\nreqStop\n";
-
-    /** Request pause anim */
-    const char STOP_PLAY[] PROGMEM = "\nreqPause\n";
-
-    /** Request start anim */
-    const char START_PLAY[] PROGMEM = "\nreqPlay,";
-
-    /** Stepper/Custom Motor Auto Sync is Complete */
-    const char SYNC_COMPLETE[] PROGMEM = "\nsycMDone,";
-
     void printOutputStringPROGMEM(const char *targetOutput)
     {
         char outputString[MAX_COMMAND_LENGTH];
@@ -36,9 +25,25 @@ namespace Outgoing
 
     void printOutputStringFlash(const __FlashStringHelper *str)
     {
-
-#if defined(RELAY_CHILD) && defined(RELAY_COMS_ESPNOW)
-        ESPNowUtil::print(str);
+#ifdef RELAY_SUPPORTED
+        if (BottangoCore::isRelayPeer)
+        {
+            if (secondaryPeerOutgoing)
+            {
+                Serial.print(str);
+            }
+            else
+            {
+                if (BottangoCore::relayComs != nullptr)
+                {
+                    BottangoCore::relayComs->peerPrint(str);
+                }
+            }
+        }
+        else
+        {
+            Serial.print(str);
+        }
 #elif defined(USE_USB_SERIAL)
         Serial.print(str);
 #elif defined(USE_ESP32_WIFI)
@@ -48,8 +53,25 @@ namespace Outgoing
 
     void printOutputStringMem(const char *str)
     {
-#if defined(RELAY_CHILD) && defined(RELAY_COMS_ESPNOW)
-        ESPNowUtil::print(str);
+#ifdef RELAY_SUPPORTED
+        if (BottangoCore::isRelayPeer)
+        {
+            if (secondaryPeerOutgoing)
+            {
+                Serial.print(str);
+            }
+            else
+            {
+                if (BottangoCore::relayComs != nullptr)
+                {
+                    BottangoCore::relayComs->peerPrint(str);
+                }
+            }
+        }
+        else
+        {
+            Serial.print(str);
+        }
 #elif defined(USE_USB_SERIAL)
         Serial.print(str);
 #elif defined(USE_ESP32_WIFI)
@@ -59,15 +81,39 @@ namespace Outgoing
 
     void printOutputStringMem(int value)
     {
+#if INT_MAX == 2147483647
         char buffer[12];
+#elif INT_MAX == 32767
+        char buffer[7];
+#else
+        char buffer[12];
+#endif
         itoa(value, buffer, 10);
         printOutputStringMem(buffer);
     }
 
     void printOutputStringMem(long value)
     {
-        char buffer[10];
+#if LONG_MAX == 2147483647L
+        char buffer[12];
+#elif LONG_MAX == 9223372036854775807L
+        char buffer[21];
+#else
+        char buffer[21];
+#endif
+#if defined(ARDUINO_ARCH_AVR) || defined(ARDUINO_ARCH_MEGAAVR) || defined(ESP32) || defined(ARDUINO_ARCH_ESP32) || defined(ESP8266) || defined(ARDUINO_ARCH_ESP8266)
         ltoa(value, buffer, 10);
+#else
+        snprintf(buffer, sizeof(buffer), "%ld", value);
+#endif
+        printOutputStringMem(buffer);
+    }
+
+    void printOutputStringMem(char value)
+    {
+        char buffer[2];
+        buffer[0] = value;
+        buffer[1] = '\0';
         printOutputStringMem(buffer);
     }
 
@@ -87,8 +133,25 @@ namespace Outgoing
 
     void printLine()
     {
-#if defined(RELAY_CHILD) && defined(RELAY_COMS_ESPNOW)
-        ESPNowUtil::println();
+#ifdef RELAY_SUPPORTED
+        if (BottangoCore::isRelayPeer)
+        {
+            if (secondaryPeerOutgoing)
+            {
+                Serial.print('\n');
+            }
+            else
+            {
+                if (BottangoCore::relayComs != nullptr)
+                {
+                    BottangoCore::relayComs->peerPrintln();
+                }
+            }
+        }
+        else
+        {
+            Serial.print('\n');
+        }
 #elif defined(USE_USB_SERIAL)
         Serial.println();
 #elif defined(USE_ESP32_WIFI)
@@ -96,9 +159,9 @@ namespace Outgoing
 #endif
     }
 
-    void outgoing_requestEStop()
+    void outgoing_requestShutdown()
     {
-        printOutputStringPROGMEM(ESTOP);
+        printOutputStringPROGMEM(REQ_SHUTDOWN);
     }
 
     void outgoing_requestStopPlay()
@@ -112,18 +175,74 @@ namespace Outgoing
         printOutputStringMem(String(index).c_str());
         printOutputStringFlash(F(","));
         printOutputStringMem(String(time).c_str());
-        printOutputStringFlash(F("\n"));
+        printLine();
     }
+
+#ifdef ONLINE_BUTTON_ACTIONS
+    void outgoing_requestStartPlayViaButton(int btnIdex)
+    {
+        printOutputStringPROGMEM(START_PLAY_BUTTON);
+        printOutputStringMem(String(btnIdex).c_str());
+        printLine();
+    }
+#endif
 
     void outgoing_requestStartPlay()
     {
         printOutputStringPROGMEM(START_PLAY);
-        printOutputStringFlash(F("-1,-1\n"));
+        printOutputStringFlash(F("-1,-1"));
+        printLine();
     }
 
     void outgoing_notifySyncComplete()
     {
         printOutputStringPROGMEM(SYNC_COMPLETE);
     }
+
+    void flush()
+    {
+#ifdef RELAY_SUPPORTED
+        if (secondaryPeerOutgoing)
+        {
+            Serial.flush();
+        }
+        else
+        {
+            if (BottangoCore::relayComs != nullptr)
+            {
+                BottangoCore::relayComs->peerFlush();
+            }
+        }
+#elif defined(USE_USB_SERIAL)
+        Serial.flush();
+#elif defined(USE_ESP32_WIFI)
+        // BottangoCore::client.print(str);
+#endif
+    }
+
+#ifdef RELAY_SUPPORTED
+    void setSecondaryPeerOutgoing(bool enabled)
+    {
+        secondaryPeerOutgoing = enabled;
+    }
+    void toggleOnSecondaryOutgoing()
+    {
+        if (secondaryPeerOutgoing)
+        {
+            ignoreToggleOff = true;
+        }
+        secondaryPeerOutgoing = true;
+    }
+    void endToggleOnSecondaryOutgoing()
+    {
+        if (ignoreToggleOff)
+        {
+            return;
+        }
+        secondaryPeerOutgoing = false;
+    }
+    bool ignoreToggleOff = false;
+    bool secondaryPeerOutgoing = false;
+#endif
 
 } // namespace Outgoing

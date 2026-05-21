@@ -1,40 +1,122 @@
 #include "../BottangoArduinoModules.h"
-#if defined(RELAY_PARENT)
+#if defined(RELAY_SUPPORTED)
 
 #ifndef RelayChildPool_h
 #define RelayChildPool_h
 
 #include "CircularArray.h"
 #include "../BottangoArduinoConfig.h"
+#include "Outgoing.h"
+#include "AbstractMultiMessageOutgoingSource.h"
+#include "RelayChildMessageQueue.h"
+
+#ifdef ESP32
+#include <freertos/semphr.h>
+#endif
 
 // Forward declaration of RelayChild
 class RelayChild;
 
-class RelayChildPool
+const char RELAY_ID_RESPONSE_PREFIX[] PROGMEM = "rlyId,";
+
+class RelayChildPool : public AbstractMultiMessageOutgoingSource
 {
 
 public:
     RelayChildPool();
 
+#ifdef ESP32
+    // lock / unlock relay pool access (task-safe)
+    // Required because ESP-NOW task and main loop both access relay list/lifetime.
+    // Keep lock holds short to avoid stalling the main loop.
+    inline void lockPool()
+    {
+        configASSERT(relayMutex);
+        xSemaphoreTakeRecursive(relayMutex, portMAX_DELAY);
+    }
+
+    inline void unlockPool()
+    {
+        configASSERT(relayMutex);
+        xSemaphoreGiveRecursive(relayMutex);
+    }
+#else
+    inline void lockPool() {}
+    inline void unlockPool() {}
+#endif
+
     void addRelay(RelayChild *relay);
 
-    void removeRelay(char *identifier);
+    void removeRelay(int id);
 
-    void passThroughCommandToRelay(char *identifier, char **commands, byte commandCount);
+    void passThroughCommandToRelay(int id, char **commands, byte paramsCount);
 
     void deregisterAll();
 
     void update();
 
-    RelayChild *getRelay(char *identifier);
+    bool bridgeIsConnectedToAllPeers();
+
+    void resumeTimeConnectedPeers(bool clearCurves);
+    void stopTimeOnConnectedPeers();
+
+    void sendHandshakeCommand(RelayChild *peer);
+
+    void clearCurvesOnConnectedPeers();
+
+    void beginPoolTeardown();
+
+    RelayChild *getRelay(int id);
     RelayChild *getRelay(const uint8_t *mac_addr);
+    int getIdForRelay(RelayChild *relayChild);
+
+    bool toPeerQueueFull() const { return toPeerQueue.full(); }
+    bool toPeerQueueEmpty() const { return toPeerQueue.empty(); }
+
+    virtual void cleanUpMultiMessage() override;
+
+    void setRelayIdToReport(int id);
+
+    bool enqueueUnicastToPeerQueue(RelayChild *peer, char *commandString, MessageIntent intent = MessageIntent::Normal);
+
+    RelayChildMessageQueue &outgoingQueue() { return toPeerQueue; }
+
+    void getConnectedRelayIds(int *outIds, uint8_t &outCount, bool includeTeardown = false);
+    void getUnconnectedRelayIds(int *outIds, uint8_t &outCount);
+    void markPeerTx(int peerId);
+    void markPeerPollOutstanding(int peerId);
+    void markRelayTeardownReadyToFinalize(int peerId);
+    void reportLostPeer(int peerId);
+
+    bool isUninitializing = false;
 
 private:
     bool isMacEqual(const uint8_t *mac1, const uint8_t *mac2);
     int hash(const char *str);
-    // bool isMacEmpty(const uint8_t *mac);
+    int allocateRelayId();
 
-    CircularArray<RelayChild> relays = CircularArray<RelayChild>(MAX_RELAY_CHILD);
+    bool buildPassThroughCommand(char *outBuffer, const char *commandString);
+    void executePassThrough(RelayChild *peer, char *commandString);
+    bool enqueueBroadcastPassThrough(char *commandString, MessageIntent intent, TargetGroup target);
+    void enqueuePollBroadcast();
+    void enqueueBootBroadcast();
+    void finalizeRelayTeardown(int peerId);
+
+    RelayChildMessageQueue toPeerQueue;
+    int relayIdToReport = -1;
+    int nextRelayId = 0;
+    unsigned long lastPollEnqueueTime = 0;
+    unsigned long lastBootEnqueueTime = 0;
+
+    CircularArray<RelayChild>
+        relays = CircularArray<RelayChild>(MAX_RELAY_CHILD);
+
+#ifdef ESP32
+    SemaphoreHandle_t relayMutex = nullptr;
+#endif
+
+    void onMultiMessageStart() override;
+    bool emitNextChunk() override;
 };
 
 #endif

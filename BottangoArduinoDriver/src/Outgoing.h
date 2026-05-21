@@ -3,11 +3,28 @@
 #define BOTTANGO_OUTGOING_H
 
 #include <Arduino.h>
+#include "../BottangoArduinoModules.h"
 
 namespace Outgoing
 {
-    /** User request to e stop */
-    void outgoing_requestEStop();
+    /** Request Shutdown */
+    const char REQ_SHUTDOWN[] PROGMEM = "reqStop\n";
+
+    /** Request pause anim */
+    const char STOP_PLAY[] PROGMEM = "reqPause\n";
+
+    /** Request start anim */
+    const char START_PLAY[] PROGMEM = "reqPlay,";
+
+#ifdef ONLINE_BUTTON_ACTIONS
+    const char START_PLAY_BUTTON[] PROGMEM = "reqPlayBtn,";
+#endif
+
+    /** Stepper/Custom Motor Auto Sync is Complete */
+    const char SYNC_COMPLETE[] PROGMEM = "sycMDone,";
+
+    /** User request to shutdown */
+    void outgoing_requestShutdown();
 
     /** User request to stop playing animation */
     void outgoing_requestStopPlay();
@@ -17,6 +34,10 @@ namespace Outgoing
 
     /** User request to start playing animation in current state*/
     void outgoing_requestStartPlay();
+
+#ifdef ONLINE_BUTTON_ACTIONS
+    void outgoing_requestStartPlayViaButton(int btnIdex);
+#endif
 
     /** User request to notify that a stepper is now syncronized*/
     void outgoing_notifySyncComplete();
@@ -28,6 +49,7 @@ namespace Outgoing
     void printOutputStringMem(int value);
     void printOutputStringMem(long value);
     void printOutputStringMem(bool value);
+    void printOutputStringMem(char value);
     void printOutputStringMem(uint16_t value);
     void printOutputStringMem(uint32_t value);
 
@@ -38,6 +60,16 @@ namespace Outgoing
     void printOutputStringFlash(const __FlashStringHelper *str);
 
     void printLine();
+
+    void flush();
+
+#ifdef RELAY_SUPPORTED
+    void setSecondaryPeerOutgoing(bool enabled);
+    void toggleOnSecondaryOutgoing();
+    void endToggleOnSecondaryOutgoing();
+    extern bool ignoreToggleOff;
+    extern bool secondaryPeerOutgoing;
+#endif
 
 } // namespace Outgoing
 

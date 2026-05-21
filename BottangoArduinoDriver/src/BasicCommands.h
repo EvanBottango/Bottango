@@ -1,7 +1,6 @@
 #ifndef BOTTANGO_BASICCOMMANDS_H
 #define BOTTANGO_BASICCOMMANDS_H
 
-#include "Log.h"
 #include "EffectorPool.h"
 #include "Errors.h"
 #include "Time.h"
@@ -17,8 +16,16 @@ namespace BasicCommands
     /** !!!!!!!!!! */
     /** !!!!!!!!!! */
 
-    /** Request to establish that the serial port is still open */
+    /** Request to begin the handshake between app and driver */
     const char HANDSHAKE_REQUEST[] PROGMEM = "hRQ";
+
+    /** Request to enumerate supported modules on this driver */
+    const char MODULES_REQUEST[] PROGMEM = "hMOD";
+
+    /** Flag that the sender is ready for the next response */
+    const char READY_FOR_NEXT_RESPONSE[] PROGMEM = "OK";
+
+    /** Request to establish that the serial port is still open */
     const char TIME_SYNC[] PROGMEM = "tSYN";
 
     /** Stop this controller */
@@ -59,9 +66,6 @@ namespace BasicCommands
 
     /** Register a Trigger Custom Event type effector with a [0] identifier, [1] pin, [2] pin high or low */
     const char REGISTER_TRIGGER_EVENT[] PROGMEM = "rECTrig";
-
-    /** Register an audio effector with a [0] identifier, [1] pin or index, [2] pin high or low (only used by trigger) */
-    const char REGISTER_AUDIO_EVENT[] PROGMEM = "rAud";
 
     /** Register an On Off Custom Event type effector with a [0] identifier, [1] starting r, [2] starting g, [3] starting b */
     const char REGISTER_COLOR_EVENT[] PROGMEM = "rECColor";
@@ -113,8 +117,12 @@ namespace BasicCommands
      * [0]identifier, [1] syncValue
      */
     const char STEPPER_SYNC[] PROGMEM = "sycM";
+    const char STEPPER_SYNC_RESET[] PROGMEM = "rst";
+    const char STEPPER_SYNC_MANUALHOME[] PROGMEM = "home";
+    const char STEPPER_SYNC_AUTO_CLOCKWISE[] PROGMEM = "aCW";
+    const char STEPPER_SYNC_AUTO_COUNTERCLOCKWISE[] PROGMEM = "aCC";
 
-#ifdef RELAY_PARENT
+#ifdef RELAY_SUPPORTED
     /**
      * Command to register a relay controller
      * [0]identifier, [1] relay connection type, additional tokens connection type dependent
@@ -138,7 +146,23 @@ namespace BasicCommands
      * [0]identifier of relay controller, the rest of tokens are the command to be passed.
      */
     const char PASS_TO_RELAY[] PROGMEM = "sR";
+
+    /**
+     * Command from bridge to peer to check if it's connectable via a BOOT print
+     */
+    const char REQUEST_PEER_BOOT[] PROGMEM = "rBOOT";
+
+    /**
+     * reply From Peer that is now booted and can connect
+     */
+    const char REPLY_PEER_BOOT[] PROGMEM = "sBOOT";
+
+    /**
+     * Command to get ESPNOW mac address
+     */
+    const char GET_MAC_ADDRESS[] PROGMEM = "rMAC";
 #endif
+
 #ifdef ALLOW_SYNC_COMMANDS
     /**
      * Command to identify a syncronized command
@@ -156,6 +180,48 @@ namespace BasicCommands
     const char OTA_UPDATE[] PROGMEM = "ota";
 #endif
 
+#ifdef AUDIO_SD_I2S
+
+    /** Register an audio effector with a [0] identifier, [1] audio file hash */
+    const char REGISTER_AUDIO_EVENT[] PROGMEM = "rAud";
+#endif
+
+#if defined(ENABLE_DYNAMIC_ANIMATION_SOURCE_SWITCH) || defined(RELAY_SUPPORTED)
+    /**
+     * Command to set a configuration option
+     * [0] config type
+     * [1] config switch option (see below)
+     */
+    const char SET_CONFIG[] PROGMEM = "sCfg";
+#endif
+
+#ifdef ENABLE_DYNAMIC_ANIMATION_SOURCE_SWITCH
+    /**
+     * [1 on sCfg] config switch option, command source
+     */
+    const char SET_CONFIG_COMMAND_SOURCE[] PROGMEM = "CMD"; // set command source sub param
+#endif
+
+#ifdef DYNAMIC_STOP_BUTTON_BEHAVIOR
+    /**
+     * [1 on sCfg] stop button option, 0 is pause, 1 is shutdown
+     */
+    const char SET_CONFIG_STOP_BUTTON[] PROGMEM = "STP_BTN"; // set stop button behavior
+#endif
+
+#ifdef RELAY_SUPPORTED
+    /**
+     * [1 on sCfg] config switch option, relay
+     * [2 on relay type 2, peer] bridge mac address
+     */
+    const char SET_CONFIG_RELAY_TYPE[] PROGMEM = "RLY"; // set relay type sub param
+
+    const char RELAY_PEER_STOP_TIME[] PROGMEM = "STOP_TIME"; // set command source sub param
+    const char RELAY_POLL_REQUEST[] PROGMEM = "RLY_POLL";    // Relay poll request
+    const char RELAY_POLL_RESPONSE[] PROGMEM = "RLY_ACK";    // Relay poll response
+
+#endif
+
     /** !!!!!!!!!! */
     /** OUTGOING STRINGS */
     /** !!!!!!!!!! */
@@ -169,16 +235,22 @@ namespace BasicCommands
     const char HANDSHAKE[] PROGMEM = "btngoHSK";
 
     /** The version code of this driver */
-    const char DRIVER_VERSION[] PROGMEM = "0.7.0a1";
+    const char DRIVER_VERSION[] PROGMEM = "0.8.0b1";
 
     /** Arduino is ready for the next command */
-    const char READY[] PROGMEM = "\nOK\n";
+    const char READY[] PROGMEM = "OK\n";
 
-    const char HASH_FAIL[] PROGMEM = "\nHASH_FAIL\n";
+    const char HASH_FAIL[] PROGMEM = "HASH_FAIL\n";
 
-    const char TIMEOUT[] PROGMEM = "\nTIMEOUT\n";
+    const char TIMEOUT[] PROGMEM = "TIMEOUT\n";
 
-    void sendHandshakeResponse(char *args[]);
+    const char LOST_PEER[] PROGMEM = "LOST_PEER,";
+
+    void sendHandshakeResponse(char *args[], bool secondary);
+
+    void startModulesResponse(char *args[]);
+
+    void continueInProgressMultiMessageResponse(char *args[]);
 
     void stop(char *args[]);
 
@@ -204,8 +276,6 @@ namespace BasicCommands
 
     void registerTriggerEvent(char **args);
 
-    void registerAudioEvent(char **args);
-
     void registerColorEvent(char **args);
 
     void registerCustomMotor(char **args);
@@ -228,21 +298,46 @@ namespace BasicCommands
 
     void clearCurvesForEffector(char **args);
 
-#ifdef RELAY_PARENT
+#ifdef RELAY_SUPPORTED
     void registerRelayController(char **args);
 
     void deregisterRelayController(char **args);
 
     void deregisterAllRelayControllers(char **args);
 
-    void passToRelayController(char **args, byte commandsCount);
+    void passToRelayController(char **args, byte paramsCount);
+
+    void requestBoot(char **args);
+
+    void requestPoll(char **args);
+
+    void getMACAddress(char **args);
 #endif
+
 #ifdef ALLOW_SYNC_COMMANDS
-    void processSyncronizedCommands(char *args);
+    bool getNextSyncCommand(char syncCmd[], char prefixBuffer[CMD_PREFIX_SIZE], char outputCommand[MAX_COMMAND_LENGTH]);
+    void beginGetNextSyncCommand(char *syncCmd, char prefixBuffer[CMD_PREFIX_SIZE]);
+    void executeSyncronizedCommands(char *syncCmd, bool secondary);
 #endif
 #ifdef ENABLE_ESP_OTA_UPDATE
     void processOTA(char **args);
 #endif
+
+#ifdef AUDIO_SD_I2S
+    void registerAudioEvent(char **args);
+#endif
+
+#if defined(AUDIO_SD_I2S) || defined(ENABLE_ESP_OTA_UPDATE)
+#define BINARY_FLAG_START 's'
+#define BINARY_FLAG_DATA 'd'
+#define BINARY_FLAG_END 'e'
+#endif
+
+#if defined(ENABLE_DYNAMIC_ANIMATION_SOURCE_SWITCH) || defined(RELAY_SUPPORTED)
+    void setConfiguration(char **args);
+#endif
+
+    void reboot(bool forceSendReady);
 
 } // namespace BasicCommands
 
