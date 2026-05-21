@@ -6,6 +6,8 @@ The desktop Bottango app runs on a Windows, Linux, or Macintosh computer, and co
 
 **If you're just getting started with Bottango, I recommend you download the application from the Bottango website, which includes all the drivers and documentation.** The driver code is provided here as well, especially as a route for others to contribute to the development of the driver code.
 
+Documentation for the Bottango application, as well as the open source firmware and examples can be found at the [Bottango Documentation Site](https://docs.bottango.com/).
+
 
 ## Bottango Arduino Driver and Firmware
 
