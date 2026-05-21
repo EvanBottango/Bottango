@@ -70,7 +70,7 @@ void AbstractMultiMessageOutgoingSource::tryEmitNextChunk()
 
 bool AbstractMultiMessageOutgoingSource::isTimeout()
 {
-    if (hasOutgoingMessage && Time::getCurrentTimeInMs() - lastMessageTime >= OUTGOING_TIMEOUT_RESPONSE_TIME)
+    if (hasOutgoingMessage && millis() - lastMessageTime >= OUTGOING_TIMEOUT_RESPONSE_TIME)
     {
         return true;
     }
@@ -81,7 +81,7 @@ void AbstractMultiMessageOutgoingSource::setTransmitted()
 {
     hasOutgoingMessage = true;
     emittedAny = true;
-    lastMessageTime = Time::getCurrentTimeInMs();
+    lastMessageTime = millis();
 }
 
 void AbstractMultiMessageOutgoingSource::emitPending()

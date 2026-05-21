@@ -17,7 +17,6 @@
 
 #ifdef AUDIO_SD_I2S
 #include "I2SAudioEffector.h"
-#include "AudioBinaryUtil.h"
 #endif
 
 #ifdef RELAY_SUPPORTED
@@ -41,6 +40,10 @@
 #ifdef RELAY_SUPPORTED
 #include "IRelayComms.h"
 #include "PersistentConfigUtil.h"
+#endif
+
+#if defined(ARDUINO_ARCH_AVR) || defined(ARDUINO_ARCH_MEGAAVR)
+#include <avr/wdt.h>
 #endif
 
 namespace BasicCommands
@@ -120,20 +123,8 @@ namespace BasicCommands
     // initialize modules response
     void startModulesResponse(char *args[])
     {
-        if (BottangoCore::activeOutgoingMultimessage != nullptr)
-        {
-            // shouldn't have an active...
-            BottangoCore::activeOutgoingMultimessage->cleanUpMultiMessage();
-            BottangoCore::activeOutgoingMultimessage = nullptr;
-        }
-        BottangoCore::activeOutgoingMultimessage = new ModulesResponder();
-#ifdef RELAY_SUPPORTED
-        if (Outgoing::secondaryPeerOutgoing)
-        {
-            BottangoCore::activeOutgoingMultimessage->setSecondary();
-        }
-#endif
-        BottangoCore::activeOutgoingMultimessage->initializeMultiMessage();
+        // this is the only modules response allowed to execute in offline mode
+        BottangoCore::replaceActiveOutgoingMultimessage(new ModulesResponder());
     }
 
     void continueInProgressMultiMessageResponse(char *args[])
@@ -567,20 +558,12 @@ namespace BasicCommands
         int relayId = BottangoCore::relayPool->getIdForRelay(newRelay);
         BottangoCore::relayPool->setRelayIdToReport(relayId);
 
-        if (BottangoCore::activeOutgoingMultimessage != nullptr)
+        if (BottangoCore::isOffline())
         {
-            // shouldn't have an active...
-            BottangoCore::activeOutgoingMultimessage->cleanUpMultiMessage();
-            BottangoCore::activeOutgoingMultimessage = nullptr;
+            return;
         }
-        BottangoCore::activeOutgoingMultimessage = BottangoCore::relayPool;
-#ifdef RELAY_SUPPORTED
-        if (Outgoing::secondaryPeerOutgoing)
-        {
-            BottangoCore::activeOutgoingMultimessage->setSecondary();
-        }
-#endif
-        BottangoCore::activeOutgoingMultimessage->initializeMultiMessage();
+
+        BottangoCore::replaceActiveOutgoingMultimessage(BottangoCore::relayPool);
     }
 
     void deregisterRelayController(char **args)
@@ -638,18 +621,12 @@ namespace BasicCommands
     // initialize mac address response
     void getMACAddress(char *args[])
     {
-        if (BottangoCore::activeOutgoingMultimessage != nullptr)
+        if (BottangoCore::isOffline())
         {
-            // shouldn't have an active...
-            BottangoCore::activeOutgoingMultimessage->cleanUpMultiMessage();
-            BottangoCore::activeOutgoingMultimessage = nullptr;
+            return;
         }
-        BottangoCore::activeOutgoingMultimessage = new MACResponder();
-        if (Outgoing::secondaryPeerOutgoing)
-        {
-            BottangoCore::activeOutgoingMultimessage->setSecondary();
-        }
-        BottangoCore::activeOutgoingMultimessage->initializeMultiMessage();
+
+        BottangoCore::replaceActiveOutgoingMultimessage(new MACResponder());
     }
 #endif
 
@@ -771,13 +748,43 @@ namespace BasicCommands
             }
 #endif
         }
-#ifdef ESP32
-        // this feels risky?
+
         Outgoing::flush();
         delay(150);
+
+#if defined(ESP32) || defined(ARDUINO_ARCH_ESP32) || defined(ESP8266) || defined(ARDUINO_ARCH_ESP8266)
         ESP.restart();
+        for (;;)
+        {
+        }
 #elif defined(TEENSYDUINO)
         SCB_AIRCR = 0x05FA0004;
+        for (;;)
+        {
+        }
+#elif defined(ARDUINO_ARCH_AVR)
+        wdt_enable(WDTO_15MS);
+        for (;;)
+        {
+        }
+#elif defined(ARDUINO_ARCH_MEGAAVR)
+#if defined(WDT_PERIOD_8CLK_gc)
+        wdt_enable(WDT_PERIOD_8CLK_gc);
+#elif defined(WDT_PERIOD_8KCLK_gc)
+        wdt_enable(WDT_PERIOD_8KCLK_gc);
+#else
+#warning "megaAVR watchdog reset constant not found"
+#endif
+        for (;;)
+        {
+        }
+#elif defined(ARDUINO_ARCH_SAMD) || defined(ARDUINO_ARCH_RP2040) || defined(ARDUINO_ARCH_STM32) || defined(ARDUINO_ARCH_MBED) || defined(ARDUINO_ARCH_NRF52) || defined(ARDUINO_ARCH_NRF52840) || defined(ARDUINO_ARCH_RENESAS) || (defined(__arm__) && defined(NVIC_SystemReset))
+        NVIC_SystemReset();
+        for (;;)
+        {
+        }
+#else
+#warning "reboot not supported yet for your platform. May see unexpected behavior"
 #endif
     }
 
@@ -797,28 +804,6 @@ namespace BasicCommands
         else if (otaMessageType == BINARY_FLAG_END)
         {
             OTAUpdateUtil::finishOTA(args[2]);
-        }
-    }
-#endif
-
-#ifdef AUDIO_SD_I2S
-    void processAudioBinary(char **args)
-    {
-        char binaryMessageType = args[1][0];
-
-        if (binaryMessageType == BINARY_FLAG_START)
-        {
-            char *identifier = args[2];
-            bool isHash = atoi(args[3]) != 0;
-            AudioBinaryUtil::beginAudioBinary(identifier, isHash);
-        }
-        else if (binaryMessageType == BINARY_FLAG_DATA)
-        {
-            AudioBinaryUtil::recvAudioBinaryData(args[2]);
-        }
-        else if (binaryMessageType == BINARY_FLAG_END)
-        {
-            AudioBinaryUtil::finishAudioBinary(args[2]);
         }
     }
 #endif

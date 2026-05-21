@@ -1,5 +1,8 @@
 #include <Arduino.h>
 #include <limits.h>
+#if !defined(ARDUINO_ARCH_AVR) && !defined(ARDUINO_ARCH_MEGAAVR) && !defined(ESP32) && !defined(ARDUINO_ARCH_ESP32) && !defined(ESP8266) && !defined(ARDUINO_ARCH_ESP8266)
+#include <stdio.h>
+#endif
 #include "BottangoCore.h"
 
 #include "../BottangoArduinoModules.h"
@@ -98,7 +101,11 @@ namespace Outgoing
 #else
         char buffer[21];
 #endif
+#if defined(ARDUINO_ARCH_AVR) || defined(ARDUINO_ARCH_MEGAAVR) || defined(ESP32) || defined(ARDUINO_ARCH_ESP32) || defined(ESP8266) || defined(ARDUINO_ARCH_ESP8266)
         ltoa(value, buffer, 10);
+#else
+        snprintf(buffer, sizeof(buffer), "%ld", value);
+#endif
         printOutputStringMem(buffer);
     }
 
@@ -152,9 +159,9 @@ namespace Outgoing
 #endif
     }
 
-    void outgoing_requestEStop()
+    void outgoing_requestShutdown()
     {
-        printOutputStringPROGMEM(ESTOP);
+        printOutputStringPROGMEM(REQ_SHUTDOWN);
     }
 
     void outgoing_requestStopPlay()

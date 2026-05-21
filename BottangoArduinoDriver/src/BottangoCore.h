@@ -49,6 +49,8 @@ namespace BottangoCore
 
     bool isOffline();
 
+    void replaceActiveOutgoingMultimessage(AbstractMultiMessageOutgoingSource *responder);
+
     extern EffectorPool effectorPool;
     extern AbstractMultiMessageOutgoingSource *activeOutgoingMultimessage;
     extern bool initialized;

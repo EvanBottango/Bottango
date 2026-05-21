@@ -184,13 +184,6 @@ namespace BasicCommands
 
     /** Register an audio effector with a [0] identifier, [1] audio file hash */
     const char REGISTER_AUDIO_EVENT[] PROGMEM = "rAud";
-
-    /**
-     * Command to transfer in an audio file
-     * [0] audio bin message type. s == start, d == data, e == end
-     * [1] audio bin param. s is audio file name, d is data in 64 byte or less chunk, e is expected checksum of data
-     */
-    const char AUDIO_BIN[] PROGMEM = "binA";
 #endif
 
 #if defined(ENABLE_DYNAMIC_ANIMATION_SOURCE_SWITCH) || defined(RELAY_SUPPORTED)
@@ -223,9 +216,9 @@ namespace BasicCommands
      */
     const char SET_CONFIG_RELAY_TYPE[] PROGMEM = "RLY"; // set relay type sub param
 
-    const char RELAY_PEER_STOP_TIME[] PROGMEM = "STOP_TIME";   // set command source sub param
-    const char RELAY_POLL_REQUEST[] PROGMEM = "RLY_POLL";   // Relay poll request
-    const char RELAY_POLL_RESPONSE[] PROGMEM = "RLY_ACK";   // Relay poll response
+    const char RELAY_PEER_STOP_TIME[] PROGMEM = "STOP_TIME"; // set command source sub param
+    const char RELAY_POLL_REQUEST[] PROGMEM = "RLY_POLL";    // Relay poll request
+    const char RELAY_POLL_RESPONSE[] PROGMEM = "RLY_ACK";    // Relay poll response
 
 #endif
 
@@ -242,7 +235,7 @@ namespace BasicCommands
     const char HANDSHAKE[] PROGMEM = "btngoHSK";
 
     /** The version code of this driver */
-    const char DRIVER_VERSION[] PROGMEM = "0.7.1p8a";
+    const char DRIVER_VERSION[] PROGMEM = "0.8.0b1";
 
     /** Arduino is ready for the next command */
     const char READY[] PROGMEM = "OK\n";
@@ -331,7 +324,6 @@ namespace BasicCommands
 #endif
 
 #ifdef AUDIO_SD_I2S
-    void processAudioBinary(char **args);
     void registerAudioEvent(char **args);
 #endif
 

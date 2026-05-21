@@ -72,6 +72,30 @@ namespace BottangoCore
     unsigned long lastStopButtonPressTime = 0;
 #endif
 
+    void replaceActiveOutgoingMultimessage(AbstractMultiMessageOutgoingSource *responder)
+    {
+        if (activeOutgoingMultimessage != nullptr)
+        {
+            activeOutgoingMultimessage->cleanUpMultiMessage();
+            activeOutgoingMultimessage = nullptr;
+        }
+
+        activeOutgoingMultimessage = responder;
+        if (activeOutgoingMultimessage == nullptr)
+        {
+            return;
+        }
+
+#ifdef RELAY_SUPPORTED
+        if (Outgoing::secondaryPeerOutgoing)
+        {
+            activeOutgoingMultimessage->setSecondary();
+        }
+#endif
+
+        activeOutgoingMultimessage->initializeMultiMessage();
+    }
+
     void
     bottangoSetup()
     {
@@ -426,31 +450,19 @@ namespace BottangoCore
             Callbacks::onThisControllerStopped();
             uninitialize();
 
-#ifdef ENABLE_STATUS_LIGHTS
-#ifdef RELAY_SUPPORTED
-            // peers reboot after getting stop
-            if (BottangoCore::isRelayPeer)
+            // stop should only reboot, if in live connection mode.
+            // if in
+            if (isOffline())
             {
-                BasicCommands::reboot(false);
+#ifdef ENABLE_STATUS_LIGHTS
+                StatusLights::setDesiredColor(CONNECTION_STATUS_LIGHT, STATUS_COLOR_RED);
+                StatusLights::setLightMode(CONNECTION_STATUS_LIGHT, StatusLights::LightMode::MODE_BLINK);
+#endif
             }
             else
             {
-                if (BottangoCore::isRelayBridge)
-                {
-                    StatusLights::setDesiredColor(CONNECTION_STATUS_LIGHT, STATUS_COLOR_RED);
-                }
-                else
-                {
-                    StatusLights::setDesiredColor(CONNECTION_STATUS_LIGHT, STATUS_COLOR_NO_CONNECTION_SERIAL);
-                }
-
-                StatusLights::setLightMode(CONNECTION_STATUS_LIGHT, StatusLights::LightMode::MODE_BLINK);
+                BasicCommands::reboot(false);
             }
-#else
-            StatusLights::setDesiredColor(CONNECTION_STATUS_LIGHT, STATUS_COLOR_NO_CONNECTION_SERIAL);
-            StatusLights::setLightMode(CONNECTION_STATUS_LIGHT, StatusLights::LightMode::MODE_BLINK);
-#endif
-#endif
         }
     }
 
@@ -716,10 +728,6 @@ namespace BottangoCore
         else if (strcmp_P(commandName, BasicCommands::REGISTER_AUDIO_EVENT) == 0)
         {
             BasicCommands::registerAudioEvent(splitCommandBuffer);
-        }
-        else if (strcmp_P(commandName, BasicCommands::AUDIO_BIN) == 0)
-        {
-            BasicCommands::processAudioBinary(splitCommandBuffer);
         }
 #endif
 #ifdef RELAY_SUPPORTED
@@ -1130,7 +1138,7 @@ namespace BottangoCore
                 {
                     if (stopIsShutdown)
                     {
-                        Outgoing::outgoing_requestEStop();
+                        Outgoing::outgoing_requestShutdown();
                     }
                     else
                     {

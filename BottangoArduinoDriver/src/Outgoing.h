@@ -7,8 +7,8 @@
 
 namespace Outgoing
 {
-    /** Request E Stop */
-    const char ESTOP[] PROGMEM = "reqStop\n";
+    /** Request Shutdown */
+    const char REQ_SHUTDOWN[] PROGMEM = "reqStop\n";
 
     /** Request pause anim */
     const char STOP_PLAY[] PROGMEM = "reqPause\n";
@@ -23,8 +23,8 @@ namespace Outgoing
     /** Stepper/Custom Motor Auto Sync is Complete */
     const char SYNC_COMPLETE[] PROGMEM = "sycMDone,";
 
-    /** User request to e stop */
-    void outgoing_requestEStop();
+    /** User request to shutdown */
+    void outgoing_requestShutdown();
 
     /** User request to stop playing animation */
     void outgoing_requestStopPlay();

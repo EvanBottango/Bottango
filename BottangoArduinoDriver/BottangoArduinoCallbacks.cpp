@@ -45,7 +45,7 @@ namespace Callbacks
     {
 
         // EX: Request stop on driver, and disconnect all active connections
-        // Outgoing::outgoing_requestEStop();
+        // Outgoing::outgoing_requestShutdown();
 
         // EX: Pause Playing in App
         // Outgoing::outgoing_requestStopPlay();

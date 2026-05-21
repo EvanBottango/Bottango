@@ -202,8 +202,6 @@ bool RelayChildPool::isMacEqual(const uint8_t *mac1, const uint8_t *mac2)
 
 void RelayChildPool::update()
 {
-    unsigned long now = millis();
-
     // find and finalize teardown on any that are ready to complete teardown
     int pendingTeardownFinalizeIds[MAX_RELAY_CHILD] = {};
     int pendingTeardownFinalizeCount = 0;
@@ -244,13 +242,15 @@ void RelayChildPool::update()
         }
         iterator->update();
 
-        if (iterator->pollOutstandingAndExpired(now, RELAY_RESPONSE_TIMEOUT))
+        // don't cache now here, can get stale
+        if (iterator->pollOutstandingAndExpired(millis(), RELAY_RESPONSE_TIMEOUT))
         {
             iterator->clearPollOutstanding();
             reportLostPeer(iterator->stableId);
         }
     }
 
+    unsigned long now = millis();
     if (now - lastPollEnqueueTime >= RELAY_POLL_INTERVAL_AS_BRIDGE && !toPeerQueue.full())
     {
         int connectedCount = 0;

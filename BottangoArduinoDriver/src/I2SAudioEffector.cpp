@@ -205,39 +205,25 @@ I2SAudioEffector::I2SAudioEffector(char *identifier, char *hash) : AbstractEffec
         SDCardUtil::closeFile(audioFile);
     }
 
-    // report status of sd card audio file via a multi message responder
-    if (BottangoCore::activeOutgoingMultimessage != nullptr)
+    // In offline/export mode, keep this visible on the serial log without
+    // taking over the host protocol multimessage channel.
+    if (BottangoCore::isOffline())
     {
-        // shouldn't have an active...
-        BottangoCore::activeOutgoingMultimessage->cleanUpMultiMessage();
-        BottangoCore::activeOutgoingMultimessage = nullptr;
+        Outgoing::printOutputStringFlash(F("Aud stat: "));
+        Outgoing::printOutputStringMem(identifier);
+        Outgoing::printOutputStringFlash(F(": "));
+        Outgoing::printOutputStringMem(responderCode);
+        Outgoing::printLine();
     }
-    BottangoCore::activeOutgoingMultimessage = new I2SAudEventStatusResponder(responderCode);
-#ifdef RELAY_SUPPORTED
-    if (Outgoing::secondaryPeerOutgoing)
+    else
     {
-        BottangoCore::activeOutgoingMultimessage->setSecondary();
+        BottangoCore::replaceActiveOutgoingMultimessage(new I2SAudEventStatusResponder(responderCode));
     }
-#endif
-    BottangoCore::activeOutgoingMultimessage->initializeMultiMessage();
 
 #if defined(USE_CODE_COMMAND_STREAM) || defined(USE_SD_CARD_COMMAND_STREAM)
     if (BottangoCore::isOffline() && BottangoCore::commandStreamProvider != nullptr && !(responderCode == I2S_AUDIO_STATUS_READY || responderCode == I2S_AUDIO_STATUS_NO_HASH_MATCH_ON_CARD))
     {
         BottangoCore::commandStreamProvider->setInvalidState();
-#ifdef EXPORTED_ANIM_LOGGING
-#ifdef TOGGLE_DEBUG
-        if (PersistentConfigUtil::debugEnabled() || ALWAYS_LOG_ERROR_CASE)
-#endif
-        {
-            Outgoing::printOutputStringFlash(F("Exported Anim, Audio File SD Error: "));
-            Outgoing::printOutputStringMem(identifier);
-            Outgoing::printOutputStringFlash(F(" code: "));
-            Outgoing::printOutputStringMem(responderCode);
-            Outgoing::printLine();
-        }
-
-#endif
     }
 #endif
 }

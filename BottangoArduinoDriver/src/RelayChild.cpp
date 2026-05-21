@@ -199,7 +199,7 @@ void RelayChild::update()
         if (BottangoCore::isOffline())
         {
             // handle requests from peer
-            if (strncmp_P(message, Outgoing::ESTOP, 7) == 0)
+            if (strncmp_P(message, Outgoing::REQ_SHUTDOWN, 7) == 0)
             {
                 BottangoCore::stop(true);
             }
