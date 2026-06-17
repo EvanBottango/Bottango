@@ -1,10 +1,8 @@
-#include "../BottangoArduinoModules.h"
-
-#ifndef PERSISTENT_CONFIG_UTIL_H
-#define PERSISTENT_CONFIG_UTIL_H
+#pragma once
 
 #include <Arduino.h>
-#include "../BottangoArduinoConfig.h"
+#include "../../BottangoArduinoConfig.h"
+#include "../../BottangoArduinoModules.h"
 
 #ifdef ESP32
 #include <Preferences.h>
@@ -58,39 +56,39 @@ namespace PersistentConfigUtil
 #define ESP32_PREFS_KEY_STOP_BTN "STP_BTN"
 #endif
 
-    void begin();
-    void end();
-    extern Preferences prefs;
+	void begin();
+	void end();
+	extern Preferences prefs;
 #elif defined(EEPROM_FALLBACK)
 
-    // Version to bump when the eeprom layout changes
-    constexpr uint8_t EEPROM_CONFIG_VERSION = 1;
+	// Version to bump when the eeprom layout changes
+	constexpr uint8_t EEPROM_CONFIG_VERSION = 1;
 
-    struct EepromConfig
-    {
-        uint8_t configVersion;
-        uint8_t uid[8];
-        bool commandSource; // commandSource: false = Live USB, true = Exported
-        bool debugEnabled;
-        bool stopIsShutdown;
-    };
+	struct EepromConfig
+	{
+		uint8_t configVersion;
+		uint8_t uid[8];
+		bool commandSource; // commandSource: false = Live USB, true = Exported
+		bool debugEnabled;
+		bool stopIsShutdown;
+	};
 
-    static_assert(sizeof(EepromConfig) == 12, "EepromConfig size changed—update version/migrations.");
+	static_assert(sizeof(EepromConfig) == 12, "EepromConfig size changed—update version/migrations.");
 
-    void SetDefaults(EepromConfig &configToSet);
-    bool LoadFromEeprom(EepromConfig &out);
-    void SaveToEeprom(const EepromConfig &in);
-    void begin();
-    void end();
+	void SetDefaults(EepromConfig& configToSet);
+	bool LoadFromEeprom(EepromConfig& out);
+	void SaveToEeprom(const EepromConfig& in);
+	void begin();
+	void end();
 #endif
 
 #ifdef RESET_PREFS_SUPPORTED
-    void update();
+	void update();
 #endif
 
 #ifdef ENABLE_DYNAMIC_ANIMATION_SOURCE_SWITCH
-    bool getUseExportedCommandStream();
-    void setUseExportedCommandStream(bool value);
+	bool getUseExportedCommandStream();
+	void setUseExportedCommandStream(bool value);
 #endif
 
 #ifdef RELAY_SUPPORTED
@@ -98,35 +96,33 @@ namespace PersistentConfigUtil
 #define VALUE_RELAY_STATE_BRIDGE 1
 #define VALUE_RELAY_STATE_PEER 2
 
-    int getRelayState();
-    void setRelayState(int value);
+	int getRelayState();
+	void setRelayState(int value);
 
-    void storeBridgeMacAddress(uint8_t mac[6]);
-    bool getBridgeMacAddress(uint8_t mac[6]);
+	void storeBridgeMacAddress(uint8_t mac[6]);
+	bool getBridgeMacAddress(uint8_t mac[6]);
 
-    void getThisDeviceMacAddress(uint8_t mac[6]);
-    void getThisDeviceMacAddress(char *str);
+	void getThisDeviceMacAddress(uint8_t mac[6]);
+	void getThisDeviceMacAddress(char* str);
 #endif
 
 #ifdef REPORT_UID
-    void getUID(uint8_t uid[UID_LENGTH]);
+	void getUID(uint8_t uid[UID_LENGTH]);
 #endif
 
 #ifdef NAMED_BOARD
-    void getNamedHWVersion(char str[NAMED_BOARD_HW_VER_LENGTH]);
-    void setNamedHWVersion(const char *version);
+	void getNamedHWVersion(char str[NAMED_BOARD_HW_VER_LENGTH]);
+	void setNamedHWVersion(const char* version);
 #endif
 
 #ifdef TOGGLE_DEBUG
-    bool debugEnabled();
-    bool getDebugEnabledFromPersistent();
-    void toggleDebugEnabled();
+	bool debugEnabled();
+	bool getDebugEnabledFromPersistent();
+	void toggleDebugEnabled();
 #endif
 
 #ifdef DYNAMIC_STOP_BUTTON_BEHAVIOR
-    bool stopIsShutdown();
-    void setStopIsShutdown(bool stopIsShutdown);
+	bool stopIsShutdown();
+	void setStopIsShutdown(bool stopIsShutdown);
 #endif
 }
-
-#endif

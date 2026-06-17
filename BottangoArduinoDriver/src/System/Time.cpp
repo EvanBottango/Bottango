@@ -2,44 +2,44 @@
 
 namespace Time
 {
-    unsigned long lastSyncdTime = 0;
-    long timeOffset = 0;
+	unsigned long lastSyncdTime = 0;
+	long timeOffset = 0;
 #ifdef RELAY_SUPPORTED
-    bool timeStopped = false;
+	bool timeStopped = false;
 #endif
 
-    void syncTime(unsigned long incomingTime)
-    {
+	void syncTime(unsigned long incomingTime)
+	{
 #ifdef RELAY_SUPPORTED
-        timeStopped = false;
+		timeStopped = false;
 #endif
-        lastSyncdTime = incomingTime;
-        timeOffset = incomingTime - millis();
-    }
+		lastSyncdTime = incomingTime;
+		timeOffset = incomingTime - millis();
+	}
 
-    unsigned long getCurrentTimeInMs()
-    {
+	unsigned long getCurrentTimeInMs()
+	{
 #ifdef RELAY_SUPPORTED
-        if (timeStopped)
-        {
-            return 0;
-        }
+		if (timeStopped)
+		{
+			return 0;
+		}
 #endif
-        return millis() + timeOffset;
-    }
+		return millis() + timeOffset;
+	}
 
-    unsigned long getLastSyncedTimeInMs()
-    {
-        return lastSyncdTime;
-    }
+	unsigned long getLastSyncedTimeInMs()
+	{
+		return lastSyncdTime;
+	}
 
 #ifdef RELAY_SUPPORTED
-    void stopTime()
-    {
-        lastSyncdTime = 0;
-        timeOffset = 0;
-        timeStopped = true;
-    }
+	void stopTime()
+	{
+		lastSyncdTime = 0;
+		timeOffset = 0;
+		timeStopped = true;
+	}
 #endif
 
 } // namespace  Time
