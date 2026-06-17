@@ -1,28 +1,25 @@
-#ifndef Callbacks_h
-#define Callbacks_h
+#pragma once
 
-#include "Arduino.h"
+#include <Arduino.h>
 
 class AbstractEffector;
 
 namespace Callbacks
 {
-    void onThisControllerStarted();
-    void onThisControllerStopped();
-    void onLateLoop();
-    void onEarlyLoop();
+	void onThisControllerStarted();
+	void onThisControllerStopped();
+	void onLateLoop();
+	void onEarlyLoop();
 
-    void onEffectorRegistered(AbstractEffector *effector);
-    void onEffectorDeregistered(AbstractEffector *effector);
-    void effectorSignalOnLoop(AbstractEffector *effector, int signal, bool didChange);
+	void onEffectorRegistered(AbstractEffector* effector);
+	void onEffectorDeregistered(AbstractEffector* effector);
+	void effectorSignalOnLoop(AbstractEffector* effector, int signal, bool didChange);
 
-    void onCurvedCustomEventMovementChanged(AbstractEffector *effector, float newMovement);
-    void onOnOffCustomEventOnOffChanged(AbstractEffector *effector, bool on);
-    void onTriggerCustomEventTriggered(AbstractEffector *effector);
-    void onColorCustomEventColorChanged(AbstractEffector *effector, byte newRed, byte newGreen, byte newBlue);
-    bool isEffectorAutoHomeComplete(AbstractEffector *effector, int &postAutoSyncMove, int autoSyncDirection);
-    void onEffectorPostAutoHomeSecondarySyncComplete(AbstractEffector *effector);
-    void onEffectorHomeReset(AbstractEffector *effector);
+	void onCurvedCustomEventMovementChanged(AbstractEffector* effector, float newMovement);
+	void onOnOffCustomEventOnOffChanged(AbstractEffector* effector, bool on);
+	void onTriggerCustomEventTriggered(AbstractEffector* effector);
+	void onColorCustomEventColorChanged(AbstractEffector* effector, byte newRed, byte newGreen, byte newBlue);
+	bool isEffectorAutoHomeComplete(AbstractEffector* effector, int& postAutoSyncMove, int autoSyncDirection);
+	void onEffectorPostAutoHomeSecondarySyncComplete(AbstractEffector* effector);
+	void onEffectorHomeReset(AbstractEffector* effector);
 } // namespace Callbacks
-
-#endif
