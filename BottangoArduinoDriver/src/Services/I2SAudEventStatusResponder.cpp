@@ -2,7 +2,7 @@
 #if defined(AUDIO_SD_I2S)
 
 #include "../Communication/Outgoing.h"
-#include "../Data Source/SDCardUtil.h"
+#include "../DataSource/SDCardUtil.h"
 #include "../../BottangoArduinoConfig.h"
 
 I2SAudEventStatusResponder::I2SAudEventStatusResponder(byte incomingStatus)

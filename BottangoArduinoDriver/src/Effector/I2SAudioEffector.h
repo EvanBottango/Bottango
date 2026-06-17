@@ -4,7 +4,7 @@
 #ifdef AUDIO_SD_I2S
 
 #include "AbstractEffector.h"
-#include "../Data Source/SDCardUtil.h"
+#include "../DataSource/SDCardUtil.h"
 #include "../Services/I2SHelper.h"
 #include "../../BottangoArduinoConfig.h"
 

@@ -21,7 +21,7 @@
 #endif
 
 #if defined(USE_CODE_COMMAND_STREAM) || defined(USE_SD_CARD_COMMAND_STREAM)
-#include "../Data Source/CommandStreamProvider.h"
+#include "../DataSource/CommandStreamProvider.h"
 #endif
 
 #ifdef RELAY_SUPPORTED

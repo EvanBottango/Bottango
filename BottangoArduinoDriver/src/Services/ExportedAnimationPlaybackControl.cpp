@@ -2,7 +2,7 @@
 #if defined(USE_SD_CARD_COMMAND_STREAM) || defined(USE_CODE_COMMAND_STREAM)
 
 #include "../System/BottangoCore.h"
-#include "../Data Source/SDCardUtil.h"
+#include "../DataSource/SDCardUtil.h"
 
 namespace ExportedAnimationPlaybackControl
 {
