@@ -1,8 +1,7 @@
-#ifndef I2cPool_h
-#define I2cPool_h
+#pragma once
 
-#include "CircularArray.h"
-#include "Adafruit_PWMServoDriverContainer.h"
+#include "../Util/CircularArray.h"
+#include "../Effector/Adafruit_PWMServoDriverContainer.h"
 
 #define MAX_I2C_DRIVERS 3
 
@@ -10,8 +9,6 @@
 extern CircularArray<Adafruit_PwmServoDriverContainer> pwmDriverContainers;
 #endif
 
-Adafruit_PwmServoDriverContainer *getPWMDriverContainer(byte i2cAddress);
+Adafruit_PwmServoDriverContainer* getPWMDriverContainer(byte i2cAddress);
 void registerPWMDriverEffector(byte i2cAddress);
 void removePWMDriverEffector(byte i2cAddress);
-
-#endif

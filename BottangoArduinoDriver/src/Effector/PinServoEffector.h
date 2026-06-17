@@ -1,10 +1,9 @@
-#ifndef PinServoEffector_h
-#define PinServoEffector_h
+#pragma once
 
+#include <Arduino.h>
 #include "LoopDrivenEffector.h"
-#include "Arduino.h"
 #ifdef ESP32
-#include "lib/ESP32Servo/src/ESP32Servo.h"
+#include "../lib/ESP32Servo/src/ESP32Servo.h"
 #else
 #include "Servo.h"
 #endif
@@ -12,16 +11,14 @@
 class PinServoEffector : public LoopDrivenEffector
 {
 public:
-    PinServoEffector(byte pin, short minPWM, short maxPWM, int maxPWMSec, short startPWM);
-    virtual void driveOnLoop() override;
+	PinServoEffector(byte pin, short minPWM, short maxPWM, int maxPWMSec, short startPWM);
+	virtual void driveOnLoop() override;
 
-    virtual void getIdentifier(char *outArray, short arraySize) override;
-    virtual void destroy(bool systemShutdown) override;
+	virtual void getIdentifier(char* outArray, short arraySize) override;
+	virtual void destroy(bool systemShutdown) override;
 
 protected:
 private:
-    byte pin = 0;
-    Servo servo;
+	byte pin = 0;
+	Servo servo;
 };
-
-#endif

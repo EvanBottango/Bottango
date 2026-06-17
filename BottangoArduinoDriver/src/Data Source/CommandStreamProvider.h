@@ -1,13 +1,12 @@
-#ifndef CommandStreamProvider_h
-#define CommandStreamProvider_h
+#pragma once
 
+#include <Arduino.h>
 #include "CommandStream.h"
-#include "Arduino.h"
-#include "../BottangoArduinoModules.h"
-#include "../BottangoArduinoConfig.h"
+#include "../../BottangoArduinoModules.h"
+#include "../../BottangoArduinoConfig.h"
 
 #if defined(USE_CODE_COMMAND_STREAM) || defined(USE_SD_CARD_COMMAND_STREAM)
-#include "ExportedAnimationPlaybackControl.h"
+#include "../Services/ExportedAnimationPlaybackControl.h"
 #endif
 
 #ifdef USE_CODE_COMMAND_STREAM
@@ -22,30 +21,29 @@
 class CommandStreamProvider
 {
 public:
-    CommandStreamProvider();
+	CommandStreamProvider();
 
-    void runSetup();
-    void startCommandStream(byte streamID, bool loop);
-    void updateOnLoop();
-    bool streamIsInProgress();
+	void runSetup();
+	void startCommandStream(byte streamID, bool loop);
+	void updateOnLoop();
+	bool streamIsInProgress();
 
-    void stop();
-    void forceStopForTeardown(); // will also stop setup
-    void setInvalidState();
+	void stop();
+	void forceStopForTeardown(); // will also stop setup
+	void setInvalidState();
 
-    bool commandStreamIsSetup = false;
+	bool commandStreamIsSetup = false;
 
 protected:
-    CommandStream *commandStream = nullptr;
-    void runInProgressCommand();
-    bool invalidState = false;
+	CommandStream* commandStream = nullptr;
+	void runInProgressCommand();
+	bool invalidState = false;
 
 private:
-    void executeStop(bool allowSetupStop = false);
+	void executeStop(bool allowSetupStop = false);
 #ifdef RELAY_SUPPORTED
-    bool startingPeerCommandsSent = false;
-    char cachedPostControlRegisterCommand[MAX_COMMAND_LENGTH] = {0};
-    bool waitingForAllPeers = false;
+	bool startingPeerCommandsSent = false;
+	char cachedPostControlRegisterCommand[MAX_COMMAND_LENGTH] = { 0 };
+	bool waitingForAllPeers = false;
 #endif
 };
-#endif

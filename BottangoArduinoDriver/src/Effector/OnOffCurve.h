@@ -1,6 +1,4 @@
-
-#ifndef BOTTANGOARDUINO_ONOFFCURVE_H
-#define BOTTANGOARDUINO_ONOFFCURVE_H
+#pragma once
 
 #include "Curve.h"
 
@@ -12,5 +10,3 @@ public:
     bool on = false;
     virtual unsigned long getStartTimeMs();
 };
-
-#endif // BOTTANGOARDUINO_ONOFFCURVE_H

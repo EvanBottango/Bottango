@@ -1,54 +1,54 @@
 #include "I2CServoEffector.h"
-#include "Errors.h"
-#include "I2CPool.h"
+#include "../System/Errors.h"
+#include "../System/I2CPool.h"
 
 I2CServoEffector::I2CServoEffector(byte i2cAddress, byte pin, short minPWM, short maxPWM, int maxPWMSec, short startSignal) : LoopDrivenEffector(minPWM, maxPWM, maxPWMSec, startSignal)
 {
 #ifdef USE_ADAFRUIT_PWM_LIBRARY
-    this->pin = pin;
-    this->i2cAddress = i2cAddress;
+	this->pin = pin;
+	this->i2cAddress = i2cAddress;
 
-    registerPWMDriverEffector(i2cAddress);
-    this->driver = getPWMDriverContainer(i2cAddress)->driver;
+	registerPWMDriverEffector(i2cAddress);
+	this->driver = getPWMDriverContainer(i2cAddress)->driver;
 
-    this->driver->writeMicroseconds(pin, startSignal);
-    currentSignal = startSignal;
+	this->driver->writeMicroseconds(pin, startSignal);
+	currentSignal = startSignal;
 
 #endif
 
-    Callbacks::onEffectorRegistered(this);
+	Callbacks::onEffectorRegistered(this);
 }
 
 void I2CServoEffector::driveOnLoop()
 {
-    bool didChange = false;
-    if (currentSignal != targetSignal)
-    {
+	bool didChange = false;
+	if (currentSignal != targetSignal)
+	{
 #ifdef USE_ADAFRUIT_PWM_LIBRARY
-        driver->writeMicroseconds(pin, currentSignal);
+		driver->writeMicroseconds(pin, currentSignal);
 #endif
-        currentSignal = targetSignal;
-        didChange = true;
-    }
+		currentSignal = targetSignal;
+		didChange = true;
+	}
 
-    LoopDrivenEffector::driveOnLoop();
-    AbstractEffector::callbackOnDriveComplete(currentSignal, didChange);
+	LoopDrivenEffector::driveOnLoop();
+	AbstractEffector::callbackOnDriveComplete(currentSignal, didChange);
 }
 
-void I2CServoEffector::getIdentifier(char *outArray, short arraySize)
+void I2CServoEffector::getIdentifier(char* outArray, short arraySize)
 {
-    char addressSegment[4];
-    char pinSegment[4];
+	char addressSegment[4];
+	char pinSegment[4];
 
-    sprintf(addressSegment, "%d", (int)i2cAddress);
-    sprintf(pinSegment, "%d", pin);
+	sprintf(addressSegment, "%d", (int)i2cAddress);
+	sprintf(pinSegment, "%d", pin);
 
-    strcpy(outArray, addressSegment);
-    strcat(outArray, pinSegment);
+	strcpy(outArray, addressSegment);
+	strcat(outArray, pinSegment);
 }
 
 void I2CServoEffector::destroy(bool systemShutdown)
 {
-    removePWMDriverEffector(i2cAddress);
-    AbstractEffector::destroy(systemShutdown);
+	removePWMDriverEffector(i2cAddress);
+	AbstractEffector::destroy(systemShutdown);
 }

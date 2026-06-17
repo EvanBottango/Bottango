@@ -1,8 +1,6 @@
+#pragma once
 
-#ifndef BOTTANGOARDUINO_COLOR_H
-#define BOTTANGOARDUINO_COLOR_H
-
-#include "Arduino.h"
+#include <Arduino.h>
 
 class Color
 {
@@ -14,5 +12,3 @@ public:
     byte g = 0;
     byte b = 0;
 };
-
-#endif // BOTTANGOARDUINO_COLOR_H

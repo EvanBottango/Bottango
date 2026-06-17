@@ -1,30 +1,30 @@
 #include "ColorCustomEvent.h"
 
 // Signal is 0 - 255, and just use that for movement calculations, so that this can act like a bog standard loop driven effector
-ColorCustomEvent::ColorCustomEvent(char *identifier, byte startingRed, byte startingGreen, byte startingBlue) : ColorEffector(startingRed, startingGreen, startingBlue)
+ColorCustomEvent::ColorCustomEvent(char* identifier, byte startingRed, byte startingGreen, byte startingBlue) : ColorEffector(startingRed, startingGreen, startingBlue)
 {
-    strcpy(myIdentifier, identifier);
+	strcpy(myIdentifier, identifier);
 
-    Callbacks::onEffectorRegistered(this);
+	Callbacks::onEffectorRegistered(this);
 }
 
 void ColorCustomEvent::driveOnLoop()
 {
-    if (currentColor.r != targetColor.r || currentColor.g != targetColor.g || currentColor.b != targetColor.b)
-    {
-        currentColor.r = targetColor.r;
-        currentColor.g = targetColor.g;
-        currentColor.b = targetColor.b;
+	if (currentColor.r != targetColor.r || currentColor.g != targetColor.g || currentColor.b != targetColor.b)
+	{
+		currentColor.r = targetColor.r;
+		currentColor.g = targetColor.g;
+		currentColor.b = targetColor.b;
 
-        Callbacks::onColorCustomEventColorChanged(this, currentColor.r, currentColor.g, currentColor.b);
+		Callbacks::onColorCustomEventColorChanged(this, currentColor.r, currentColor.g, currentColor.b);
 
-        // todo, cant work with 16 bit int
-        // AbstractEffector::callbackOnDriveComplete(??, true);
-    }
-    ColorEffector::driveOnLoop();
+		// todo, cant work with 16 bit int
+		// AbstractEffector::callbackOnDriveComplete(??, true);
+	}
+	ColorEffector::driveOnLoop();
 }
 
-void ColorCustomEvent::getIdentifier(char *outArray, short arraySize)
+void ColorCustomEvent::getIdentifier(char* outArray, short arraySize)
 {
-    strcpy(outArray, myIdentifier);
+	strcpy(outArray, myIdentifier);
 }

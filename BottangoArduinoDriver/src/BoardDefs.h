@@ -1,8 +1,7 @@
+#pragma once
+
 // enables quick modules settings for Bottango boards
 #include <Arduino.h>
-
-#ifndef BoardDefs_h
-#define BoardDefs_h
 
 // #define BOTTANGO_IMPULSE
 // #define BOTTANGO_NOVA
@@ -100,27 +99,27 @@ const char NAMED_BOARD_MODEL[] PROGMEM = "NOVA";
 #ifdef NAMED_BOARD_STARTUP
 namespace NamedBoardStartup
 {
-    // keep this simple and in-line-able
-    inline void runNamedBoardStartup()
-    {
+	// keep this simple and in-line-able
+	inline void runNamedBoardStartup()
+	{
 #ifdef EN_PIN_ON_STARTUP
-        pinMode(BOARD_EN_PIN, OUTPUT);
-        digitalWrite(BOARD_EN_PIN, HIGH);
+		pinMode(BOARD_EN_PIN, OUTPUT);
+		digitalWrite(BOARD_EN_PIN, HIGH);
 #endif
 
 #ifdef ONLINE_BUTTON_ACTIONS
-        pinMode(NAMED_BUTTON_A_PIN, INPUT);
-        pinMode(NAMED_BUTTON_B_PIN, INPUT);
-        pinMode(NAMED_BUTTON_C_PIN, INPUT);
+		pinMode(NAMED_BUTTON_A_PIN, INPUT);
+		pinMode(NAMED_BUTTON_B_PIN, INPUT);
+		pinMode(NAMED_BUTTON_C_PIN, INPUT);
 #endif
-    }
+	}
 }
 #endif
 
 #ifdef NAMED_BOARD_LOOP
 namespace NamedBoardLoop
 {
-    void runNamedBoardLoop();
+	void runNamedBoardLoop();
 }
 
 #endif
@@ -128,9 +127,7 @@ namespace NamedBoardLoop
 #ifdef TOGGLE_DEBUG
 namespace NamedBoardDebugToggle
 {
-    bool debugEnabled();
-    void onDebugToggled();
+	bool debugEnabled();
+	void onDebugToggled();
 }
-#endif
-
 #endif

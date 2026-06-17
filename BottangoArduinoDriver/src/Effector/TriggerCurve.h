@@ -1,9 +1,7 @@
-
-#ifndef BOTTANGOARDUINO_TRIGGERCURVE_H
-#define BOTTANGOARDUINO_TRIGGERCURVE_H
+#pragma once
 
 #include "Curve.h"
-#include "../BottangoArduinoModules.h"
+#include "../../BottangoArduinoModules.h"
 
 class TriggerCurve : public Curve
 {
@@ -19,5 +17,3 @@ public:
     bool consumed = false;
     virtual unsigned long getStartTimeMs();
 };
-
-#endif // BOTTANGOARDUINO_TRIGGERCURVE_H
