@@ -1,13 +1,11 @@
-#include "../BottangoArduinoModules.h"
-
+#include "RelayChildPool.h"
 #if defined(RELAY_SUPPORTED)
 
-#include "RelayChildPool.h"
 #include "RelayChild.h"
-#include "BasicCommands.h"
+#include "../BasicCommands.h"
 #include <limits.h>
 #ifdef TOGGLE_DEBUG
-#include "PersistentConfigUtil.h"
+#include "../../Services/PersistentConfigUtil.h"
 #endif
 
 #if defined(RELAY_COMS_ESPNOW)
@@ -19,703 +17,704 @@
 RelayChildPool::RelayChildPool()
 {
 #ifdef ESP32
-    relayMutex = xSemaphoreCreateRecursiveMutex();
-    configASSERT(relayMutex);
+	relayMutex = xSemaphoreCreateRecursiveMutex();
+	configASSERT(relayMutex);
 #endif
 }
 
-void RelayChildPool::addRelay(RelayChild *relay)
+void RelayChildPool::addRelay(RelayChild* relay)
 {
-    lockPool();
+	lockPool();
 
-    if (relays.size() >= MAX_RELAY_CHILD)
-    {
-        Error::reportError_NoSpaceAvailable(); // todo unique out of space
-        unlockPool();
-        return;
-    }
+	if (relays.size() >= MAX_RELAY_CHILD)
+	{
+		Error::reportError_NoSpaceAvailable(); // todo unique out of space
+		unlockPool();
+		return;
+	}
 
-    RelayChild *existingRelay = getRelay(relay->mac_addr);
+	RelayChild* existingRelay = getRelay(relay->mac_addr);
 
-    if (existingRelay != nullptr)
-    {
-        Error::reportError_RelayCollision(relay->mac_addr);
-        unlockPool();
-        return;
-    }
-    else
-    {
-        int relayId = allocateRelayId();
-        if (relayId < 0)
-        {
-            unlockPool();
-            return;
-        }
-        relay->stableId = relayId;
-        relays.pushBack(relay);
-    }
+	if (existingRelay != nullptr)
+	{
+		Error::reportError_RelayCollision(relay->mac_addr);
+		unlockPool();
+		return;
+	}
+	else
+	{
+		int relayId = allocateRelayId();
+		if (relayId < 0)
+		{
+			unlockPool();
+			return;
+		}
+		relay->stableId = relayId;
+		relays.pushBack(relay);
+	}
 
-    unlockPool();
+	unlockPool();
 }
 
 void RelayChildPool::removeRelay(int id)
 {
-    lockPool();
+	lockPool();
 
-    RelayChild *relay = BottangoCore::relayPool->getRelay(id);
-    if (relay == nullptr)
-    {
-        Error::reportError_NoRelayForID(id);
-        unlockPool();
-        return;
-    }
+	RelayChild* relay = BottangoCore::relayPool->getRelay(id);
+	if (relay == nullptr)
+	{
+		Error::reportError_NoRelayForID(id);
+		unlockPool();
+		return;
+	}
 
-    // enque a teardown message for the relay
-    char commandBuffer[MAX_COMMAND_LENGTH];
-    commandBuffer[0] = '\0';
-    strcat(commandBuffer, BasicCommands::STOP);
-    char passThroughCommandBuffer[MAX_COMMAND_LENGTH];
-    if (!buildPassThroughCommand(passThroughCommandBuffer, commandBuffer))
-    {
-        unlockPool();
-        return;
-    }
+	// enque a teardown message for the relay
+	char commandBuffer[MAX_COMMAND_LENGTH];
+	commandBuffer[0] = '\0';
+	strcat(commandBuffer, BasicCommands::STOP);
+	char passThroughCommandBuffer[MAX_COMMAND_LENGTH];
+	if (!buildPassThroughCommand(passThroughCommandBuffer, commandBuffer))
+	{
+		unlockPool();
+		return;
+	}
 
-    // flag the peer as being torn down
-    // that will stop all outgoing messages except stop
-    // and it will eventually finalize teardown once stop is actually tx
-    relay->teardown = true;
-    relay->clearPollOutstanding();
+	// flag the peer as being torn down
+	// that will stop all outgoing messages except stop
+	// and it will eventually finalize teardown once stop is actually tx
+	relay->teardown = true;
+	relay->clearPollOutstanding();
 
-    relay->passDownCommands(passThroughCommandBuffer, MessageIntent::Teardown);
+	relay->passDownCommands(passThroughCommandBuffer, MessageIntent::Teardown);
 
-    unlockPool();
+	unlockPool();
 }
 
-void RelayChildPool::passThroughCommandToRelay(int id, char **commands, byte paramsCount)
+void RelayChildPool::passThroughCommandToRelay(int id, char** commands, byte paramsCount)
 {
-    lockPool();
+	lockPool();
 
-    RelayChild *relay = BottangoCore::relayPool->getRelay(id);
-    if (relay == nullptr)
-    {
-        Error::reportError_NoRelayForID(id);
-        unlockPool();
-        return;
-    }
+	RelayChild* relay = BottangoCore::relayPool->getRelay(id);
+	if (relay == nullptr)
+	{
+		Error::reportError_NoRelayForID(id);
+		unlockPool();
+		return;
+	}
 
-    if (relay->teardown)
-    {
-        unlockPool();
-        return;
-    }
+	if (relay->teardown)
+	{
+		unlockPool();
+		return;
+	}
 
-    char commandBuffer[MAX_COMMAND_LENGTH];
-    commandBuffer[0] = '\0';
+	char commandBuffer[MAX_COMMAND_LENGTH];
+	commandBuffer[0] = '\0';
 
-    if (paramsCount != 4)
-    {
-        // always should come in the exact same format, 4 total params
-        // todo error here
-        unlockPool();
-        return;
-    }
+	if (paramsCount != 4)
+	{
+		// always should come in the exact same format, 4 total params
+		// todo error here
+		unlockPool();
+		return;
+	}
 
-    // skip 0 - relay command
-    // skip 1 - relay identifier
-    // use 2 - all commands to pass through
-    // skip 3 - previous hash
+	// skip 0 - relay command
+	// skip 1 - relay identifier
+	// use 2 - all commands to pass through
+	// skip 3 - previous hash
 
-    // add all commands to pass
-    strcat(commandBuffer, commands[2]);
+	// add all commands to pass
+	strcat(commandBuffer, commands[2]);
 
-    executePassThrough(relay, commandBuffer);
+	executePassThrough(relay, commandBuffer);
 
-    unlockPool();
+	unlockPool();
 }
 
 void RelayChildPool::deregisterAll()
 {
-    lockPool();
+	lockPool();
 
-    for (int i = 0; i < relays.size(); i++)
-    {
-        RelayChild *relay = relays.get(i);
-        relay->destroy();
-        delete relays.get(i);
-    }
-    relays.clear();
+	for (int i = 0; i < relays.size(); i++)
+	{
+		RelayChild* relay = relays.get(i);
+		relay->destroy();
+		delete relays.get(i);
+	}
+	relays.clear();
 
-    unlockPool();
+	unlockPool();
 }
 
-RelayChild *RelayChildPool::getRelay(const uint8_t *mac_addr)
+RelayChild* RelayChildPool::getRelay(const uint8_t* mac_addr)
 {
-    lockPool();
-    RelayChild *found = nullptr;
-    for (byte i = 0; i < relays.size(); i++)
-    {
-        RelayChild *iterator = relays.get(i);
-        if (isMacEqual(mac_addr, iterator->mac_addr))
-        {
-            found = iterator;
-            break;
-        }
-    }
-    unlockPool();
-    return found;
+	lockPool();
+	RelayChild* found = nullptr;
+	for (byte i = 0; i < relays.size(); i++)
+	{
+		RelayChild* iterator = relays.get(i);
+		if (isMacEqual(mac_addr, iterator->mac_addr))
+		{
+			found = iterator;
+			break;
+		}
+	}
+	unlockPool();
+	return found;
 }
 
-RelayChild *RelayChildPool::getRelay(int id)
+RelayChild* RelayChildPool::getRelay(int id)
 {
-    lockPool();
-    if (id < 0)
-    {
-        unlockPool();
-        return nullptr;
-    }
-    RelayChild *found = nullptr;
-    for (int i = 0; i < relays.size(); i++)
-    {
-        RelayChild *iterator = relays.get(i);
-        if (iterator != nullptr && iterator->stableId == id)
-        {
-            found = iterator;
-            break;
-        }
-    }
-    unlockPool();
-    return found;
+	lockPool();
+	if (id < 0)
+	{
+		unlockPool();
+		return nullptr;
+	}
+	RelayChild* found = nullptr;
+	for (int i = 0; i < relays.size(); i++)
+	{
+		RelayChild* iterator = relays.get(i);
+		if (iterator != nullptr && iterator->stableId == id)
+		{
+			found = iterator;
+			break;
+		}
+	}
+	unlockPool();
+	return found;
 }
 
-bool RelayChildPool::isMacEqual(const uint8_t *mac1, const uint8_t *mac2)
+bool RelayChildPool::isMacEqual(const uint8_t* mac1, const uint8_t* mac2)
 {
-    for (int i = 0; i < 6; i++)
-    {
-        if (mac1[i] != mac2[i])
-        {
-            return false;
-        }
-    }
-    return true;
+	for (int i = 0; i < 6; i++)
+	{
+		if (mac1[i] != mac2[i])
+		{
+			return false;
+		}
+	}
+	return true;
 }
 
 void RelayChildPool::update()
 {
-    // find and finalize teardown on any that are ready to complete teardown
-    int pendingTeardownFinalizeIds[MAX_RELAY_CHILD] = {};
-    int pendingTeardownFinalizeCount = 0;
-    lockPool();
-    for (int i = 0; i < relays.size() && pendingTeardownFinalizeCount < MAX_RELAY_CHILD; i++)
-    {
-        RelayChild *peer = relays.get(i);
-        if (peer != nullptr && peer->teardownReadyToFinalize)
-        {
-            pendingTeardownFinalizeIds[pendingTeardownFinalizeCount] = peer->stableId;
-            pendingTeardownFinalizeCount++;
-        }
-    }
-    unlockPool();
-    for (int i = 0; i < pendingTeardownFinalizeCount; i++)
-    {
-        finalizeRelayTeardown(pendingTeardownFinalizeIds[i]);
-    }
+	// find and finalize teardown on any that are ready to complete teardown
+	int pendingTeardownFinalizeIds[MAX_RELAY_CHILD] = {};
+	int pendingTeardownFinalizeCount = 0;
+	lockPool();
+	for (int i = 0; i < relays.size() && pendingTeardownFinalizeCount < MAX_RELAY_CHILD; i++)
+	{
+		RelayChild* peer = relays.get(i);
+		if (peer != nullptr && peer->teardownReadyToFinalize)
+		{
+			pendingTeardownFinalizeIds[pendingTeardownFinalizeCount] = peer->stableId;
+			pendingTeardownFinalizeCount++;
+		}
+	}
+	unlockPool();
+	for (int i = 0; i < pendingTeardownFinalizeCount; i++)
+	{
+		finalizeRelayTeardown(pendingTeardownFinalizeIds[i]);
+	}
 
-    // snapshot the peers so we don't hold the mutex very long in everything that follows
-    RelayChild *snapshot[MAX_RELAY_CHILD] = {};
-    int snapshotCount = 0;
-    lockPool();
-    int relayCount = relays.size();
-    for (int i = 0; i < relayCount && i < MAX_RELAY_CHILD; i++)
-    {
-        snapshot[snapshotCount] = relays.get(i);
-        snapshotCount++;
-    }
-    unlockPool();
+	// snapshot the peers so we don't hold the mutex very long in everything that follows
+	RelayChild* snapshot[MAX_RELAY_CHILD] = {};
+	int snapshotCount = 0;
+	lockPool();
+	int relayCount = relays.size();
+	for (int i = 0; i < relayCount && i < MAX_RELAY_CHILD; i++)
+	{
+		snapshot[snapshotCount] = relays.get(i);
+		snapshotCount++;
+	}
+	unlockPool();
 
-    for (int i = 0; i < snapshotCount; i++)
-    {
-        RelayChild *iterator = snapshot[i];
-        if (iterator == nullptr)
-        {
-            continue;
-        }
-        iterator->update();
+	for (int i = 0; i < snapshotCount; i++)
+	{
+		RelayChild* iterator = snapshot[i];
+		if (iterator == nullptr)
+		{
+			continue;
+		}
+		iterator->update();
 
-        // don't cache now here, can get stale
-        if (iterator->pollOutstandingAndExpired(millis(), RELAY_RESPONSE_TIMEOUT))
-        {
-            iterator->clearPollOutstanding();
-            reportLostPeer(iterator->stableId);
-        }
-    }
+		// don't cache now here, can get stale
+		if (iterator->pollOutstandingAndExpired(millis(), RELAY_RESPONSE_TIMEOUT))
+		{
+			iterator->clearPollOutstanding();
+			reportLostPeer(iterator->stableId);
+		}
+	}
 
-    unsigned long now = millis();
-    if (now - lastPollEnqueueTime >= RELAY_POLL_INTERVAL_AS_BRIDGE && !toPeerQueue.full())
-    {
-        int connectedCount = 0;
-        for (int i = 0; i < snapshotCount; i++)
-        {
-            RelayChild *peer = snapshot[i];
-            if (peer != nullptr && peer->connected)
-            {
-                connectedCount++;
-            }
-        }
-        if (connectedCount > 0)
-        {
-            enqueuePollBroadcast();
-            lastPollEnqueueTime = now;
-        }
-    }
+	unsigned long now = millis();
+	if (now - lastPollEnqueueTime >= RELAY_POLL_INTERVAL_AS_BRIDGE && !toPeerQueue.full())
+	{
+		int connectedCount = 0;
+		for (int i = 0; i < snapshotCount; i++)
+		{
+			RelayChild* peer = snapshot[i];
+			if (peer != nullptr && peer->connected)
+			{
+				connectedCount++;
+			}
+		}
+		if (connectedCount > 0)
+		{
+			enqueuePollBroadcast();
+			lastPollEnqueueTime = now;
+		}
+	}
 
-    if (now - lastBootEnqueueTime >= RELAY_BOOT_INTERVAL_AS_BRIDGE && !toPeerQueue.full())
-    {
-        int unconnectedCount = 0;
-        for (int i = 0; i < snapshotCount; i++)
-        {
-            RelayChild *peer = snapshot[i];
-            if (peer != nullptr && !peer->connected)
-            {
-                unconnectedCount++;
-            }
-        }
-        if (unconnectedCount > 0)
-        {
-            enqueueBootBroadcast();
-            lastBootEnqueueTime = now;
-        }
-    }
+	if (now - lastBootEnqueueTime >= RELAY_BOOT_INTERVAL_AS_BRIDGE && !toPeerQueue.full())
+	{
+		int unconnectedCount = 0;
+		for (int i = 0; i < snapshotCount; i++)
+		{
+			RelayChild* peer = snapshot[i];
+			if (peer != nullptr && !peer->connected)
+			{
+				unconnectedCount++;
+			}
+		}
+		if (unconnectedCount > 0)
+		{
+			enqueueBootBroadcast();
+			lastBootEnqueueTime = now;
+		}
+	}
 }
 
-int RelayChildPool::hash(const char *str)
+int RelayChildPool::hash(const char* str)
 {
-    int finalValue = 0;
-    while (*str != '\0')
-    {
-        finalValue += static_cast<unsigned char>(*str);
-        ++str;
-    }
-    return finalValue;
+	int finalValue = 0;
+	while (*str != '\0')
+	{
+		finalValue += static_cast<unsigned char>(*str);
+		++str;
+	}
+	return finalValue;
 }
 
 int RelayChildPool::allocateRelayId()
 {
-    if (nextRelayId >= INT_MAX)
-    {
-        Error::reportError_NoSpaceAvailable();
-        return -1;
-    }
-    return nextRelayId++;
+	if (nextRelayId >= INT_MAX)
+	{
+		Error::reportError_NoSpaceAvailable();
+		return -1;
+	}
+	return nextRelayId++;
 }
 
-int RelayChildPool::getIdForRelay(RelayChild *relayChild)
+int RelayChildPool::getIdForRelay(RelayChild* relayChild)
 {
-    lockPool();
-    int id = relayChild ? relayChild->stableId : -1;
-    unlockPool();
-    return id;
+	lockPool();
+	int id = relayChild ? relayChild->stableId : -1;
+	unlockPool();
+	return id;
 }
 
 void RelayChildPool::onMultiMessageStart()
 {
+
 }
 
 bool RelayChildPool::emitNextChunk()
 {
-    if (relayIdToReport < 0 || hasEmittedAny())
-    {
-        return false;
-    }
+	if (relayIdToReport < 0 || hasEmittedAny())
+	{
+		return false;
+	}
 
-    Outgoing::printOutputStringPROGMEM(RELAY_ID_RESPONSE_PREFIX); // rlyId,
-    Outgoing::printOutputStringMem(relayIdToReport);              // rlyId,2
-    Outgoing::printLine();
-    relayIdToReport = -1;
-    return true;
+	Outgoing::printOutputStringPROGMEM(RELAY_ID_RESPONSE_PREFIX); // rlyId,
+	Outgoing::printOutputStringMem(relayIdToReport);              // rlyId,2
+	Outgoing::printLine();
+	relayIdToReport = -1;
+	return true;
 }
 
 void RelayChildPool::cleanUpMultiMessage()
 {
-    relayIdToReport = -1;
+	relayIdToReport = -1;
 }
 
 void RelayChildPool::setRelayIdToReport(int id)
 {
-    relayIdToReport = id;
+	relayIdToReport = id;
 }
 
 bool RelayChildPool::bridgeIsConnectedToAllPeers()
 {
-    lockPool();
+	lockPool();
 
-    for (byte i = 0; i < relays.size(); i++)
-    {
-        RelayChild *iterator = relays.get(i);
-        if (!iterator->connected)
-        {
-            unlockPool();
-            return false;
-        }
-    }
-    unlockPool();
-    return true;
+	for (byte i = 0; i < relays.size(); i++)
+	{
+		RelayChild* iterator = relays.get(i);
+		if (!iterator->connected)
+		{
+			unlockPool();
+			return false;
+		}
+	}
+	unlockPool();
+	return true;
 }
 
 void RelayChildPool::stopTimeOnConnectedPeers()
 {
-    lockPool();
+	lockPool();
 
-    char commandBuffer[MAX_COMMAND_LENGTH];
-    commandBuffer[0] = '\0';
-    strcat(commandBuffer, BasicCommands::TIME_SYNC);
-    strcat(commandBuffer, BottangoCore::delimiters);
-    strcat(commandBuffer, BasicCommands::RELAY_PEER_STOP_TIME);
+	char commandBuffer[MAX_COMMAND_LENGTH];
+	commandBuffer[0] = '\0';
+	strcat(commandBuffer, BasicCommands::TIME_SYNC);
+	strcat(commandBuffer, BottangoCore::delimiters);
+	strcat(commandBuffer, BasicCommands::RELAY_PEER_STOP_TIME);
 
-    enqueueBroadcastPassThrough(commandBuffer, MessageIntent::Normal, TargetGroup::BroadcastConnected);
+	enqueueBroadcastPassThrough(commandBuffer, MessageIntent::Normal, TargetGroup::BroadcastConnected);
 
-    unlockPool();
+	unlockPool();
 }
 
 void RelayChildPool::clearCurvesOnConnectedPeers()
 {
-    lockPool();
+	lockPool();
 
-    char commandBuffer[MAX_COMMAND_LENGTH];
-    commandBuffer[0] = '\0';
-    strcat(commandBuffer, BasicCommands::CLEAR_ALL_CURVES);
+	char commandBuffer[MAX_COMMAND_LENGTH];
+	commandBuffer[0] = '\0';
+	strcat(commandBuffer, BasicCommands::CLEAR_ALL_CURVES);
 
-    enqueueBroadcastPassThrough(commandBuffer, MessageIntent::Normal, TargetGroup::BroadcastConnected);
+	enqueueBroadcastPassThrough(commandBuffer, MessageIntent::Normal, TargetGroup::BroadcastConnected);
 
-    unlockPool();
+	unlockPool();
 }
 
 void RelayChildPool::beginPoolTeardown()
 {
-    if (isUninitializing)
-    {
-        return;
-    }
+	if (isUninitializing)
+	{
+		return;
+	}
 
-    isUninitializing = true;
+	isUninitializing = true;
 
-    lockPool();
+	lockPool();
 
-    // clear the queue, everything is now stale except stop
-    toPeerQueue.clear();
+	// clear the queue, everything is now stale except stop
+	toPeerQueue.clear();
 
-    // all still-connected peers are now globally tearing down
-    // clear out any unconnected peers
-    RelayChild *unconnectedPeersToRemove[MAX_RELAY_CHILD] = {};
-    int unconnectedPeersToRemoveCount = 0;
+	// all still-connected peers are now globally tearing down
+	// clear out any unconnected peers
+	RelayChild* unconnectedPeersToRemove[MAX_RELAY_CHILD] = {};
+	int unconnectedPeersToRemoveCount = 0;
 
-    // teardown connected, mark for destroy and remove unconneceted
-    for (int i = 0; i < relays.size(); i++)
-    {
-        RelayChild *peer = relays.get(i);
-        if (peer == nullptr)
-        {
-            continue;
-        }
+	// teardown connected, mark for destroy and remove unconneceted
+	for (int i = 0; i < relays.size(); i++)
+	{
+		RelayChild* peer = relays.get(i);
+		if (peer == nullptr)
+		{
+			continue;
+		}
 
-        if (peer->connected)
-        {
-            peer->teardown = true;
-            peer->clearPollOutstanding();
-        }
-        else if (unconnectedPeersToRemoveCount < MAX_RELAY_CHILD)
-        {
-            unconnectedPeersToRemove[unconnectedPeersToRemoveCount] = peer;
-            unconnectedPeersToRemoveCount++;
-        }
-    }
+		if (peer->connected)
+		{
+			peer->teardown = true;
+			peer->clearPollOutstanding();
+		}
+		else if (unconnectedPeersToRemoveCount < MAX_RELAY_CHILD)
+		{
+			unconnectedPeersToRemove[unconnectedPeersToRemoveCount] = peer;
+			unconnectedPeersToRemoveCount++;
+		}
+	}
 
-    // destroy unconnected
-    for (int i = 0; i < unconnectedPeersToRemoveCount; i++)
-    {
-        RelayChild *peer = unconnectedPeersToRemove[i];
-        relays.remove(peer);
-        peer->destroy();
-        delete peer;
-    }
+	// destroy unconnected
+	for (int i = 0; i < unconnectedPeersToRemoveCount; i++)
+	{
+		RelayChild* peer = unconnectedPeersToRemove[i];
+		relays.remove(peer);
+		peer->destroy();
+		delete peer;
+	}
 
-    // enque teardown stop to all connected peers, including peers already marked teardown
-    char commandBuffer[MAX_COMMAND_LENGTH];
-    commandBuffer[0] = '\0';
-    strcat(commandBuffer, BasicCommands::STOP);
+	// enque teardown stop to all connected peers, including peers already marked teardown
+	char commandBuffer[MAX_COMMAND_LENGTH];
+	commandBuffer[0] = '\0';
+	strcat(commandBuffer, BasicCommands::STOP);
 
-    enqueueBroadcastPassThrough(commandBuffer, MessageIntent::Teardown, TargetGroup::BroadcastConnected);
+	enqueueBroadcastPassThrough(commandBuffer, MessageIntent::Teardown, TargetGroup::BroadcastConnected);
 
-    // lock additional message enqueue
-    toPeerQueue.lock();
+	// lock additional message enqueue
+	toPeerQueue.lock();
 
-    unlockPool();
+	unlockPool();
 }
 
-void RelayChildPool::sendHandshakeCommand(RelayChild *peer)
+void RelayChildPool::sendHandshakeCommand(RelayChild* peer)
 {
-    lockPool();
+	lockPool();
 
-    char commandBuffer[MAX_COMMAND_LENGTH];
-    commandBuffer[0] = '\0';
-    strcat(commandBuffer, BasicCommands::HANDSHAKE_REQUEST);
-    strcat(commandBuffer, BottangoCore::delimiters);
-    strcat(commandBuffer, "0");
+	char commandBuffer[MAX_COMMAND_LENGTH];
+	commandBuffer[0] = '\0';
+	strcat(commandBuffer, BasicCommands::HANDSHAKE_REQUEST);
+	strcat(commandBuffer, BottangoCore::delimiters);
+	strcat(commandBuffer, "0");
 
-    executePassThrough(peer, commandBuffer);
+	executePassThrough(peer, commandBuffer);
 
-    unlockPool();
+	unlockPool();
 }
 
-bool RelayChildPool::buildPassThroughCommand(char *outBuffer, const char *commandString)
+bool RelayChildPool::buildPassThroughCommand(char* outBuffer, const char* commandString)
 {
-    outBuffer[0] = '\0';
-    strcat(outBuffer, commandString);
+	outBuffer[0] = '\0';
+	strcat(outBuffer, commandString);
 
-    // generate hash up to last token, which is the hash
-    char hashBuffer[12];
-    int hashResult = hash(outBuffer);
-    itoa(hashResult, hashBuffer, 10);
+	// generate hash up to last token, which is the hash
+	char hashBuffer[12];
+	int hashResult = hash(outBuffer);
+	itoa(hashResult, hashBuffer, 10);
 
-    int used = (int)strlen(outBuffer);
-    int hashLen = (int)strlen(hashBuffer);
-    int totalLen = used + 2 + hashLen + 1; // ",h" + hash + "\n"
-    if (totalLen >= MAX_COMMAND_LENGTH)
-    {
-        Error::reportError_CmdTooLong(totalLen);
-        return false;
-    }
+	int used = (int)strlen(outBuffer);
+	int hashLen = (int)strlen(hashBuffer);
+	int totalLen = used + 2 + hashLen + 1; // ",h" + hash + "\n"
+	if (totalLen >= MAX_COMMAND_LENGTH)
+	{
+		Error::reportError_CmdTooLong(totalLen);
+		return false;
+	}
 
-    // add hash
-    strcat(outBuffer, ",h");
-    strcat(outBuffer, hashBuffer);
+	// add hash
+	strcat(outBuffer, ",h");
+	strcat(outBuffer, hashBuffer);
 
-    // finish with NL
-    strcat(outBuffer, "\n");
+	// finish with NL
+	strcat(outBuffer, "\n");
 
-    return true;
+	return true;
 }
 
-void RelayChildPool::executePassThrough(RelayChild *peer, char *commandString)
+void RelayChildPool::executePassThrough(RelayChild* peer, char* commandString)
 {
-    char commandBuffer[MAX_COMMAND_LENGTH];
-    if (!buildPassThroughCommand(commandBuffer, commandString))
-    {
-        return;
-    }
+	char commandBuffer[MAX_COMMAND_LENGTH];
+	if (!buildPassThroughCommand(commandBuffer, commandString))
+	{
+		return;
+	}
 
-    peer->passDownCommands(commandBuffer);
+	peer->passDownCommands(commandBuffer);
 }
 
-bool RelayChildPool::enqueueBroadcastPassThrough(char *commandString, MessageIntent intent, TargetGroup target)
+bool RelayChildPool::enqueueBroadcastPassThrough(char* commandString, MessageIntent intent, TargetGroup target)
 {
-    char commandBuffer[MAX_COMMAND_LENGTH];
-    if (!buildPassThroughCommand(commandBuffer, commandString))
-    {
-        return false;
-    }
+	char commandBuffer[MAX_COMMAND_LENGTH];
+	if (!buildPassThroughCommand(commandBuffer, commandString))
+	{
+		return false;
+	}
 
-    return toPeerQueue.enqueueMessage(-1, commandBuffer, intent, target);
+	return toPeerQueue.enqueueMessage(-1, commandBuffer, intent, target);
 }
 
 void RelayChildPool::enqueuePollBroadcast()
 {
-    if (toPeerQueue.full())
-    {
-        return;
-    }
+	if (toPeerQueue.full())
+	{
+		return;
+	}
 
-    char payloadBuffer[MAX_COMMAND_LENGTH];
-    payloadBuffer[0] = '\0';
-    strcat(payloadBuffer, BasicCommands::RELAY_POLL_REQUEST);
+	char payloadBuffer[MAX_COMMAND_LENGTH];
+	payloadBuffer[0] = '\0';
+	strcat(payloadBuffer, BasicCommands::RELAY_POLL_REQUEST);
 
-    char commandBuffer[MAX_COMMAND_LENGTH];
-    if (!buildPassThroughCommand(commandBuffer, payloadBuffer))
-    {
-        return;
-    }
+	char commandBuffer[MAX_COMMAND_LENGTH];
+	if (!buildPassThroughCommand(commandBuffer, payloadBuffer))
+	{
+		return;
+	}
 
-    enqueueBroadcastPassThrough(payloadBuffer, MessageIntent::Poll, TargetGroup::BroadcastConnected);
+	enqueueBroadcastPassThrough(payloadBuffer, MessageIntent::Poll, TargetGroup::BroadcastConnected);
 }
 
 void RelayChildPool::enqueueBootBroadcast()
 {
-    if (toPeerQueue.full())
-    {
-        return;
-    }
+	if (toPeerQueue.full())
+	{
+		return;
+	}
 
-    char payloadBuffer[MAX_COMMAND_LENGTH];
-    payloadBuffer[0] = '\0';
-    strcat(payloadBuffer, BasicCommands::REQUEST_PEER_BOOT);
+	char payloadBuffer[MAX_COMMAND_LENGTH];
+	payloadBuffer[0] = '\0';
+	strcat(payloadBuffer, BasicCommands::REQUEST_PEER_BOOT);
 
-    char commandBuffer[MAX_COMMAND_LENGTH];
-    if (!buildPassThroughCommand(commandBuffer, payloadBuffer))
-    {
-        return;
-    }
+	char commandBuffer[MAX_COMMAND_LENGTH];
+	if (!buildPassThroughCommand(commandBuffer, payloadBuffer))
+	{
+		return;
+	}
 
-    enqueueBroadcastPassThrough(payloadBuffer, MessageIntent::Boot, TargetGroup::BroadcastUnconnected);
+	enqueueBroadcastPassThrough(payloadBuffer, MessageIntent::Boot, TargetGroup::BroadcastUnconnected);
 }
 
-bool RelayChildPool::enqueueUnicastToPeerQueue(RelayChild *peer, char *commandString, MessageIntent intent)
+bool RelayChildPool::enqueueUnicastToPeerQueue(RelayChild* peer, char* commandString, MessageIntent intent)
 {
-    lockPool();
+	lockPool();
 
-    if (toPeerQueue.full())
-    {
-        unlockPool();
-        return false;
-    }
+	if (toPeerQueue.full())
+	{
+		unlockPool();
+		return false;
+	}
 
-    bool enqueued = toPeerQueue.enqueueMessage(BottangoCore::relayPool->getIdForRelay(peer), commandString, intent, TargetGroup::Unicast);
-    unlockPool();
-    return enqueued;
+	bool enqueued = toPeerQueue.enqueueMessage(BottangoCore::relayPool->getIdForRelay(peer), commandString, intent, TargetGroup::Unicast);
+	unlockPool();
+	return enqueued;
 }
 
 void RelayChildPool::resumeTimeConnectedPeers(bool clearCurves)
 {
-    lockPool();
+	lockPool();
 
-    char commandBuffer[MAX_COMMAND_LENGTH];
-    commandBuffer[0] = '\0';
+	char commandBuffer[MAX_COMMAND_LENGTH];
+	commandBuffer[0] = '\0';
 
-    if (clearCurves)
-    {
-        strcat(commandBuffer, BasicCommands::CLEAR_ALL_CURVES);
-        enqueueBroadcastPassThrough(commandBuffer, MessageIntent::Normal, TargetGroup::BroadcastConnected);
-        commandBuffer[0] = '\0';
-    }
+	if (clearCurves)
+	{
+		strcat(commandBuffer, BasicCommands::CLEAR_ALL_CURVES);
+		enqueueBroadcastPassThrough(commandBuffer, MessageIntent::Normal, TargetGroup::BroadcastConnected);
+		commandBuffer[0] = '\0';
+	}
 
-    strcat(commandBuffer, BasicCommands::TIME_SYNC);
-    strcat(commandBuffer, BottangoCore::delimiters);
-    strcat(commandBuffer, "0");
-    enqueueBroadcastPassThrough(commandBuffer, MessageIntent::Normal, TargetGroup::BroadcastConnected);
+	strcat(commandBuffer, BasicCommands::TIME_SYNC);
+	strcat(commandBuffer, BottangoCore::delimiters);
+	strcat(commandBuffer, "0");
+	enqueueBroadcastPassThrough(commandBuffer, MessageIntent::Normal, TargetGroup::BroadcastConnected);
 
-    unlockPool();
+	unlockPool();
 }
 
-void RelayChildPool::getConnectedRelayIds(int *outIds, uint8_t &outCount, bool includeTeardown)
+void RelayChildPool::getConnectedRelayIds(int* outIds, uint8_t& outCount, bool includeTeardown)
 {
-    lockPool();
+	lockPool();
 
-    outCount = 0;
-    for (int i = 0; i < relays.size(); i++)
-    {
-        RelayChild *peer = relays.get(i);
-        if (peer != nullptr && peer->connected && (includeTeardown || !peer->teardown))
-        {
-            outIds[outCount] = peer->stableId;
-            outCount++;
-            if (outCount >= MAX_RELAY_CHILD)
-            {
-                unlockPool();
-                return;
-            }
-        }
-    }
-    unlockPool();
+	outCount = 0;
+	for (int i = 0; i < relays.size(); i++)
+	{
+		RelayChild* peer = relays.get(i);
+		if (peer != nullptr && peer->connected && (includeTeardown || !peer->teardown))
+		{
+			outIds[outCount] = peer->stableId;
+			outCount++;
+			if (outCount >= MAX_RELAY_CHILD)
+			{
+				unlockPool();
+				return;
+			}
+		}
+	}
+	unlockPool();
 }
 
-void RelayChildPool::getUnconnectedRelayIds(int *outIds, uint8_t &outCount)
+void RelayChildPool::getUnconnectedRelayIds(int* outIds, uint8_t& outCount)
 {
-    lockPool();
+	lockPool();
 
-    outCount = 0;
-    for (int i = 0; i < relays.size(); i++)
-    {
-        RelayChild *peer = relays.get(i);
-        if (peer != nullptr && !peer->connected)
-        {
-            outIds[outCount] = peer->stableId;
-            outCount++;
-            if (outCount >= MAX_RELAY_CHILD)
-            {
-                unlockPool();
-                return;
-            }
-        }
-    }
-    unlockPool();
+	outCount = 0;
+	for (int i = 0; i < relays.size(); i++)
+	{
+		RelayChild* peer = relays.get(i);
+		if (peer != nullptr && !peer->connected)
+		{
+			outIds[outCount] = peer->stableId;
+			outCount++;
+			if (outCount >= MAX_RELAY_CHILD)
+			{
+				unlockPool();
+				return;
+			}
+		}
+	}
+	unlockPool();
 }
 
 void RelayChildPool::markPeerTx(int peerId)
 {
-    lockPool();
+	lockPool();
 
-    RelayChild *peer = getRelay(peerId);
-    if (peer != nullptr)
-    {
-        peer->markTxTime();
-    }
+	RelayChild* peer = getRelay(peerId);
+	if (peer != nullptr)
+	{
+		peer->markTxTime();
+	}
 
-    unlockPool();
+	unlockPool();
 }
 
 void RelayChildPool::markPeerPollOutstanding(int peerId)
 {
-    lockPool();
+	lockPool();
 
-    RelayChild *peer = getRelay(peerId);
-    if (peer != nullptr)
-    {
-        if (peer->teardown)
-        {
-            unlockPool();
-            return;
-        }
-        peer->markPollOutstanding();
-    }
+	RelayChild* peer = getRelay(peerId);
+	if (peer != nullptr)
+	{
+		if (peer->teardown)
+		{
+			unlockPool();
+			return;
+		}
+		peer->markPollOutstanding();
+	}
 
-    unlockPool();
+	unlockPool();
 }
 
 void RelayChildPool::markRelayTeardownReadyToFinalize(int peerId)
 {
-    lockPool();
+	lockPool();
 
-    RelayChild *peer = getRelay(peerId);
-    if (peer != nullptr)
-    {
-        peer->teardownReadyToFinalize = true;
-    }
+	RelayChild* peer = getRelay(peerId);
+	if (peer != nullptr)
+	{
+		peer->teardownReadyToFinalize = true;
+	}
 
-    unlockPool();
+	unlockPool();
 }
 
 void RelayChildPool::finalizeRelayTeardown(int peerId)
 {
-    lockPool();
+	lockPool();
 
-    RelayChild *peer = getRelay(peerId);
-    if (peer == nullptr)
-    {
-        unlockPool();
-        return;
-    }
+	RelayChild* peer = getRelay(peerId);
+	if (peer == nullptr)
+	{
+		unlockPool();
+		return;
+	}
 
-    relays.remove(peer);
-    peer->destroy();
-    delete peer;
+	relays.remove(peer);
+	peer->destroy();
+	delete peer;
 
-    unlockPool();
+	unlockPool();
 }
 
 void RelayChildPool::reportLostPeer(int peerId)
 {
-    Outgoing::printOutputStringFlash(F("ERR: Lost peer "));
-    Outgoing::printOutputStringMem(peerId);
-    Outgoing::printLine();
+	Outgoing::printOutputStringFlash(F("ERR: Lost peer "));
+	Outgoing::printOutputStringMem(peerId);
+	Outgoing::printLine();
 
-    Outgoing::printOutputStringPROGMEM(BasicCommands::LOST_PEER);
-    Outgoing::printOutputStringMem(peerId);
-    Outgoing::printLine();
+	Outgoing::printOutputStringPROGMEM(BasicCommands::LOST_PEER);
+	Outgoing::printOutputStringMem(peerId);
+	Outgoing::printLine();
 
-    if (BottangoCore::isOffline())
-    {
-        Outgoing::printOutputStringFlash(F("Offline ERR: Teardown Bridge"));
-        BottangoCore::stop(true);
-    }
+	if (BottangoCore::isOffline())
+	{
+		Outgoing::printOutputStringFlash(F("Offline ERR: Teardown Bridge"));
+		BottangoCore::stop(true);
+	}
 }
 
 #endif

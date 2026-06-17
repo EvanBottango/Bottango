@@ -1,5 +1,4 @@
-#ifndef BOTTANGOARDUINO_CURVE_H
-#define BOTTANGOARDUINO_CURVE_H
+#pragma once
 
 class Curve
 {
@@ -8,4 +7,3 @@ public:
     virtual ~Curve() = default;
     virtual unsigned long getStartTimeMs() = 0;
 };
-#endif

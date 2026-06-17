@@ -1,6 +1,4 @@
-
-#ifndef BOTTANGOARDUINO_FIXEDBEZIERCURVE_H
-#define BOTTANGOARDUINO_FIXEDBEZIERCURVE_H
+#pragma once
 
 #include "BezierCurve.h"
 
@@ -52,5 +50,3 @@ private:
 
     unsigned int lastU = 1 << (PRECISION - 1);
 };
-
-#endif // BOTTANGOARDUINO_FIXEDBEZIERCURVE_H

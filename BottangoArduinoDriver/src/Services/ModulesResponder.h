@@ -1,13 +1,12 @@
+#pragma once
 
-#ifndef BOTTANGOARDUINO_MODULESRESPONDER_H
-#define BOTTANGOARDUINO_MODULESRESPONDER_H
 #include <Arduino.h>
-#include "../BottangoArduinoModules.h"
-#include "AbstractMultiMessageOutgoingSource.h"
+#include "../../BottangoArduinoModules.h"
+#include "../Communication/AbstractMultiMessageOutgoingSource.h"
 
 #if defined(ENABLE_DYNAMIC_ANIMATION_SOURCE_SWITCH) || defined(RELAY_SUPPORTED) || defined(REPORT_UID)
 #include "PersistentConfigUtil.h"
-#include "UDIDHelper.h"
+#include "../Util/UDIDHelper.h"
 #endif
 
 #define MODULES_COUNT 8 // number of possible modules to report
@@ -65,24 +64,22 @@ class ModulesResponder : public AbstractMultiMessageOutgoingSource
 {
 
 public:
-    virtual void cleanUpMultiMessage() override;
+	virtual void cleanUpMultiMessage() override;
 
 private:
-    void onMultiMessageStart() override;
-    bool emitNextChunk() override;
+	void onMultiMessageStart() override;
+	bool emitNextChunk() override;
 
-    uint8_t iterator = 0;
-    bool sendUIDResponse();
-    bool sendBoardIDResponse();
-    bool sendNamedBoardResponse();
-    bool sendCommandSourceResponse();
-    bool sendCommandConfigResponse();
-    bool sendPCAResponse();
-    bool sendI2SResponse();
-    bool sendStopButtonResponse();
-    bool sendRelayResponse();
-    void sendClosingModuleResponse();
+	uint8_t iterator = 0;
+	bool sendUIDResponse();
+	bool sendBoardIDResponse();
+	bool sendNamedBoardResponse();
+	bool sendCommandSourceResponse();
+	bool sendCommandConfigResponse();
+	bool sendPCAResponse();
+	bool sendI2SResponse();
+	bool sendStopButtonResponse();
+	bool sendRelayResponse();
+	void sendClosingModuleResponse();
 
 }; // namespace ModulesResponder
-
-#endif // BOTTANGOARDUINO_MODULESRESPONDER_H
