@@ -1,10 +1,9 @@
-#include "../BottangoArduinoModules.h"
+#pragma once
+
+#include "../../../BottangoArduinoModules.h"
 #ifdef RELAY_SUPPORTED
 
-#ifndef MacResponder_h
-#define MacResponder_h
-
-#include "AbstractMultiMessageOutgoingSource.h"
+#include "../../Communication/AbstractMultiMessageOutgoingSource.h"
 
 // -> rMAC
 // <- OK
@@ -17,13 +16,12 @@ const char REPLY_MAC_ADDRESS[] PROGMEM = "sMAC";
 
 class MACResponder : public AbstractMultiMessageOutgoingSource
 {
-    virtual void cleanUpMultiMessage() override; // cleanup if aborting...
+	virtual void cleanUpMultiMessage() override; // cleanup if aborting...
 
 private:
-    void onMultiMessageStart() override;
-    bool emitNextChunk() override;
+	void onMultiMessageStart() override;
+	bool emitNextChunk() override;
 
 };
 
-#endif
 #endif

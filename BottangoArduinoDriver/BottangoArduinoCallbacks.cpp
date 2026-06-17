@@ -1,250 +1,250 @@
 #include "BottangoArduinoCallbacks.h"
-#include "src/AbstractEffector.h"
-#include "src/Outgoing.h"
-#include "src/BottangoCore.h"
+#include "src/Effector/AbstractEffector.h"
+#include "src/Communication/Outgoing.h"
+#include "src/System/BottangoCore.h"
 
 namespace Callbacks
 {
-    // !!!!!!!!!!!!!!! //
-    // !! CONTROLLER LIFECYCLE CALLBACKS !! //
-    // !!!!!!!!!!!!!!! //
+	// !!!!!!!!!!!!!!! //
+	// !! CONTROLLER LIFECYCLE CALLBACKS !! //
+	// !!!!!!!!!!!!!!! //
 
-    // called AFTER a successful handshake with the Bottango application, signifying that this controller has started.
-    // use for general case startup process
-    // Effector registration will happen after this callback, in their own callback.
-    // If you have effector registration specific needs, you should use onEffectorRegistered
-    void onThisControllerStarted()
-    {
-    }
+	// called AFTER a successful handshake with the Bottango application, signifying that this controller has started.
+	// use for general case startup process
+	// Effector registration will happen after this callback, in their own callback.
+	// If you have effector registration specific needs, you should use onEffectorRegistered
+	void onThisControllerStarted()
+	{
+	}
 
-    // called after the controller recieves a stop command. The controller will stop all movement, deregister all effectors
-    // After which this call back is triggered.
-    void onThisControllerStopped()
-    {
-    }
+	// called after the controller recieves a stop command. The controller will stop all movement, deregister all effectors
+	// After which this call back is triggered.
+	void onThisControllerStopped()
+	{
+	}
 
-    // called each loop cycle. If you have timing based code you'd like to utilize outside of the Bottango animation
-    // This callback occurs BEFORE all effectors process their movement, at the end of the loop.
-    void onEarlyLoop()
-    {
-        // Example for triggering animations in your own logic, while in offline (save to code / SD card) mode
-        // if not playing anything, play animation index 2 (the third exported animation) and set it to looping
+	// called each loop cycle. If you have timing based code you'd like to utilize outside of the Bottango animation
+	// This callback occurs BEFORE all effectors process their movement, at the end of the loop.
+	void onEarlyLoop()
+	{
+		// Example for triggering animations in your own logic, while in offline (save to code / SD card) mode
+		// if not playing anything, play animation index 2 (the third exported animation) and set it to looping
 
-        // if (BottangoCore::commandStreamProvider->streamIsInProgress() == false)
-        // {
-        //     BottangoCore::commandStreamProvider->startCommandStream(2, true);
-        // }
-        //
-        // The following will stop an offline animation from playing if any
-        // BottangoCore::commandStreamProvider->stop();
-    }
+		// if (BottangoCore::commandStreamProvider->streamIsInProgress() == false)
+		// {
+		//     BottangoCore::commandStreamProvider->startCommandStream(2, true);
+		// }
+		//
+		// The following will stop an offline animation from playing if any
+		// BottangoCore::commandStreamProvider->stop();
+	}
 
-    // called each loop cycle.
-    // This callback occurs AFTER all effectors process their movement, at the end of the loop.
-    void onLateLoop()
-    {
+	// called each loop cycle.
+	// This callback occurs AFTER all effectors process their movement, at the end of the loop.
+	void onLateLoop()
+	{
 
-        // EX: Request stop on driver, and disconnect all active connections
-        // Outgoing::outgoing_requestShutdown();
+		// EX: Request stop on driver, and disconnect all active connections
+		// Outgoing::outgoing_requestShutdown();
 
-        // EX: Pause Playing in App
-        // Outgoing::outgoing_requestStopPlay();
+		// EX: Pause Playing in App
+		// Outgoing::outgoing_requestStopPlay();
 
-        // EX: Start Playing in App (in current animation and time)
-        // Outgoing::outgoing_requestStartPlay();
+		// EX: Start Playing in App (in current animation and time)
+		// Outgoing::outgoing_requestStartPlay();
 
-        // EX: Start Playing in App (with animation index, and start time in milliseconds)
-        // Outgoing::outgoing_requestStartPlay(1,1000);
-    }
+		// EX: Start Playing in App (with animation index, and start time in milliseconds)
+		// Outgoing::outgoing_requestStartPlay(1,1000);
+	}
 
-    // !!!!!!!!!!!!!!! //
-    // !! EFFECTOR CALLBACKS !! //
-    // !!!!!!!!!!!!!!! //
+	// !!!!!!!!!!!!!!! //
+	// !! EFFECTOR CALLBACKS !! //
+	// !!!!!!!!!!!!!!! //
 
-    // All effectors have an identifier. It is an 8 char or less string. Check Bottango to see the identifier for a given effector in app.
-    // for most effectors, it is the first pin in their set of pins
-    // i2c effectors have the i2c address before the first pin
-    // you query for an effector with a c string char array, instanitated at 9 characters (8 for the identifier, and a null terminating char)
+	// All effectors have an identifier. It is an 8 char or less string. Check Bottango to see the identifier for a given effector in app.
+	// for most effectors, it is the first pin in their set of pins
+	// i2c effectors have the i2c address before the first pin
+	// you query for an effector with a c string char array, instanitated at 9 characters (8 for the identifier, and a null terminating char)
 
-    // The below are called by built in effectors at various stages in their lifecycle
+	// The below are called by built in effectors at various stages in their lifecycle
 
-    // called by an effector when registered, after registration is complete
-    void onEffectorRegistered(AbstractEffector *effector)
-    {
-        // example, turn on built in LED if effector registered with identifier "1";
+	// called by an effector when registered, after registration is complete
+	void onEffectorRegistered(AbstractEffector* effector)
+	{
+		// example, turn on built in LED if effector registered with identifier "1";
 
-        // char effectorIdentifier[9];
-        // effector->getIdentifier(effectorIdentifier, 9);
+		// char effectorIdentifier[9];
+		// effector->getIdentifier(effectorIdentifier, 9);
 
-        // if (strcmp(effectorIdentifier, "1") == 0)
-        // {
-        //     pinMode(LED_BUILTIN, OUTPUT);
-        //     digitalWrite(LED_BUILTIN, HIGH);
-        // }
-    }
+		// if (strcmp(effectorIdentifier, "1") == 0)
+		// {
+		//     pinMode(LED_BUILTIN, OUTPUT);
+		//     digitalWrite(LED_BUILTIN, HIGH);
+		// }
+	}
 
-    // called by an effector when deregistered, before deregistration is complete
-    void onEffectorDeregistered(AbstractEffector *effector)
-    {
-        // example, turn off built in LED if effector registered with identifier "1";
+	// called by an effector when deregistered, before deregistration is complete
+	void onEffectorDeregistered(AbstractEffector* effector)
+	{
+		// example, turn off built in LED if effector registered with identifier "1";
 
-        // char effectorIdentifier[9];
-        // effector->getIdentifier(effectorIdentifier, 9);
+		// char effectorIdentifier[9];
+		// effector->getIdentifier(effectorIdentifier, 9);
 
-        // if (strcmp(effectorIdentifier, "1") == 0)
-        // {
-        //     pinMode(LED_BUILTIN, OUTPUT);
-        //     digitalWrite(LED_BUILTIN, LOW);
-        // }
-    }
+		// if (strcmp(effectorIdentifier, "1") == 0)
+		// {
+		//     pinMode(LED_BUILTIN, OUTPUT);
+		//     digitalWrite(LED_BUILTIN, LOW);
+		// }
+	}
 
-    // called by effectors each loop with its current signal (example: servo PWM or stepper steps from home )
-    // didChange is true if different from last update called
-    void effectorSignalOnLoop(AbstractEffector *effector, int signal, bool didChange)
-    {
-        // example, set built in led for effector with identifier "1" based on if signal is greater than 1500
+	// called by effectors each loop with its current signal (example: servo PWM or stepper steps from home )
+	// didChange is true if different from last update called
+	void effectorSignalOnLoop(AbstractEffector* effector, int signal, bool didChange)
+	{
+		// example, set built in led for effector with identifier "1" based on if signal is greater than 1500
 
-        // char effectorIdentifier[9];
-        // effector->getIdentifier(effectorIdentifier, 9);
+		// char effectorIdentifier[9];
+		// effector->getIdentifier(effectorIdentifier, 9);
 
-        // if (strcmp(effectorIdentifier, "1") == 0)
-        // {
-        //     pinMode(LED_BUILTIN, OUTPUT);
-        //     if (signal > 1500)
-        //     {
-        //         digitalWrite(LED_BUILTIN, HIGH);
-        //     }
-        //     else
-        //     {
-        //         digitalWrite(LED_BUILTIN, LOW);
-        //     }
-        // }
+		// if (strcmp(effectorIdentifier, "1") == 0)
+		// {
+		//     pinMode(LED_BUILTIN, OUTPUT);
+		//     if (signal > 1500)
+		//     {
+		//         digitalWrite(LED_BUILTIN, HIGH);
+		//     }
+		//     else
+		//     {
+		//         digitalWrite(LED_BUILTIN, LOW);
+		//     }
+		// }
 
-        // another example, drive a custom motor, which you have coded to have a setSignal function
-        // if (strcmp(effectorIdentifier, "myMotor") == 0)
-        // {
-        //      myMotor->setSignal(signal);
-        // }
-    }
+		// another example, drive a custom motor, which you have coded to have a setSignal function
+		// if (strcmp(effectorIdentifier, "myMotor") == 0)
+		// {
+		//      myMotor->setSignal(signal);
+		// }
+	}
 
-    // !!!!!!!!!!!!!!!!!!! //
-    // !! CUSTOM EVENTS !! //
-    // !!!!!!!!!!!!!!!!!!! //
-    // The below are called by custom events so you can provide your own behaviours
+	// !!!!!!!!!!!!!!!!!!! //
+	// !! CUSTOM EVENTS !! //
+	// !!!!!!!!!!!!!!!!!!! //
+	// The below are called by custom events so you can provide your own behaviours
 
-    // called by a curved custom event any time the movement value is changed during a curved movement. (Movement is a normalized float between 0.0 - 1.0)
-    void onCurvedCustomEventMovementChanged(AbstractEffector *effector, float newMovement)
-    {
-        // example, fade an led based on the new movement value
-        // char effectorIdentifier[9];
-        // effector->getIdentifier(effectorIdentifier, 9);
+	// called by a curved custom event any time the movement value is changed during a curved movement. (Movement is a normalized float between 0.0 - 1.0)
+	void onCurvedCustomEventMovementChanged(AbstractEffector* effector, float newMovement)
+	{
+		// example, fade an led based on the new movement value
+		// char effectorIdentifier[9];
+		// effector->getIdentifier(effectorIdentifier, 9);
 
-        // if (strcmp(effectorIdentifier, "myLight") == 0)
-        // {
-        //     pinMode(5, OUTPUT);
-        //     int brightness = 255 * newMovement;
-        //     analogWrite(5, brightness);
-        // }
-    }
+		// if (strcmp(effectorIdentifier, "myLight") == 0)
+		// {
+		//     pinMode(5, OUTPUT);
+		//     int brightness = 255 * newMovement;
+		//     analogWrite(5, brightness);
+		// }
+	}
 
-    // called by a on off custom event any time the on off value is changed.
-    void onOnOffCustomEventOnOffChanged(AbstractEffector *effector, bool on)
-    {
-        // example, turn on built in led based on the on off value
-        // char effectorIdentifier[9];
-        // effector->getIdentifier(effectorIdentifier, 9);
+	// called by a on off custom event any time the on off value is changed.
+	void onOnOffCustomEventOnOffChanged(AbstractEffector* effector, bool on)
+	{
+		// example, turn on built in led based on the on off value
+		// char effectorIdentifier[9];
+		// effector->getIdentifier(effectorIdentifier, 9);
 
-        // if (strcmp(effectorIdentifier, "myLight") == 0)
-        // {
-        //     pinMode(LED_BUILTIN, OUTPUT);
-        //     digitalWrite(LED_BUILTIN, on ? HIGH : LOW);
-        // }
-    }
+		// if (strcmp(effectorIdentifier, "myLight") == 0)
+		// {
+		//     pinMode(LED_BUILTIN, OUTPUT);
+		//     digitalWrite(LED_BUILTIN, on ? HIGH : LOW);
+		// }
+	}
 
-    // called by a trigger custom event any time the on event is triggered.
-    void onTriggerCustomEventTriggered(AbstractEffector *effector)
-    {
-        // example, set led to a random brightness each trigger
-        // char effectorIdentifier[9];
-        // effector->getIdentifier(effectorIdentifier, 9);
+	// called by a trigger custom event any time the on event is triggered.
+	void onTriggerCustomEventTriggered(AbstractEffector* effector)
+	{
+		// example, set led to a random brightness each trigger
+		// char effectorIdentifier[9];
+		// effector->getIdentifier(effectorIdentifier, 9);
 
-        // if (strcmp(effectorIdentifier, "myLight") == 0)
-        // {
-        //     pinMode(5, OUTPUT);
-        //     int brightness = random(0, 256);
-        //     analogWrite(5, brightness);
-        // }
-    }
+		// if (strcmp(effectorIdentifier, "myLight") == 0)
+		// {
+		//     pinMode(5, OUTPUT);
+		//     int brightness = random(0, 256);
+		//     analogWrite(5, brightness);
+		// }
+	}
 
-    void onColorCustomEventColorChanged(AbstractEffector *effector, byte newRed, byte newGreen, byte newBlue)
-    {
-        // example, set rgb LED on pins 3, 5, and 6 to given red, green, and blue colors (represented as a byte between 0 and 255)
-        // char effectorIdentifier[9];
-        // effector->getIdentifier(effectorIdentifier, 9);
+	void onColorCustomEventColorChanged(AbstractEffector* effector, byte newRed, byte newGreen, byte newBlue)
+	{
+		// example, set rgb LED on pins 3, 5, and 6 to given red, green, and blue colors (represented as a byte between 0 and 255)
+		// char effectorIdentifier[9];
+		// effector->getIdentifier(effectorIdentifier, 9);
 
-        // if (strcmp(effectorIdentifier, "myRGB") == 0)
-        // {
-        //     pinMode(3, OUTPUT);
-        //     pinMode(5, OUTPUT);
-        //     pinMode(6, OUTPUT);
+		// if (strcmp(effectorIdentifier, "myRGB") == 0)
+		// {
+		//     pinMode(3, OUTPUT);
+		//     pinMode(5, OUTPUT);
+		//     pinMode(6, OUTPUT);
 
-        //     analogWrite(3, newRed);
-        //     analogWrite(5, newGreen);
-        //     analogWrite(6, newBlue);
-        // }
+		//     analogWrite(3, newRed);
+		//     analogWrite(5, newGreen);
+		//     analogWrite(6, newBlue);
+		// }
 
-        // code free support for addressable LED's (neopixel, etc. coming soon)
-        // in the meanwhile, get support in the Bottango discord channel for "how to" info
-    }
+		// code free support for addressable LED's (neopixel, etc. coming soon)
+		// in the meanwhile, get support in the Bottango discord channel for "how to" info
+	}
 
-    bool isEffectorAutoHomeComplete(AbstractEffector *effector, int &postAutoSyncMove, int autoSyncDirection)
-    {
-        // return true if the given stepper is at home position
-        // else return false
+	bool isEffectorAutoHomeComplete(AbstractEffector* effector, int& postAutoSyncMove, int autoSyncDirection)
+	{
+		// return true if the given stepper is at home position
+		// else return false
 
-        // example, end homing on stepper with step on pin 6, when pin 10 is read high
+		// example, end homing on stepper with step on pin 6, when pin 10 is read high
 
-        // int autoSyncDirection is the direction (+1 or -1) of the auto sync movement
+		// int autoSyncDirection is the direction (+1 or -1) of the auto sync movement
 
-        // postAutoSyncMove is additional steps you'd like to take after auto home is complete
-        // as an example, if you want to hit a limit switch, then move 200 steps clockwise
-        // set postAutoSyncMove = 200 and return true when the limit switch is hit
-        // set postAutoSyncMove to a negative number to step counter clockwise
+		// postAutoSyncMove is additional steps you'd like to take after auto home is complete
+		// as an example, if you want to hit a limit switch, then move 200 steps clockwise
+		// set postAutoSyncMove = 200 and return true when the limit switch is hit
+		// set postAutoSyncMove to a negative number to step counter clockwise
 
-        // char effectorIdentifier[9];
-        // effector->getIdentifier(effectorIdentifier, 9);
+		// char effectorIdentifier[9];
+		// effector->getIdentifier(effectorIdentifier, 9);
 
-        // if (strcmp(effectorIdentifier, "6") == 0)
-        // {
-        //     pinMode(10, INPUT);
-        //     if (digitalRead(10) == HIGH)
-        //     {
-        //         return true;
-        //     }
-        // }
+		// if (strcmp(effectorIdentifier, "6") == 0)
+		// {
+		//     pinMode(10, INPUT);
+		//     if (digitalRead(10) == HIGH)
+		//     {
+		//         return true;
+		//     }
+		// }
 
-        return false;
-    }
+		return false;
+	}
 
-    void onEffectorPostAutoHomeSecondarySyncComplete(AbstractEffector *effector)
-    {
-        // if moving a stepper after homing via the postAutoSyncMove int in isStepperAutoHomeComplete callback
-        // this callback is called after that additional move is complete
+	void onEffectorPostAutoHomeSecondarySyncComplete(AbstractEffector* effector)
+	{
+		// if moving a stepper after homing via the postAutoSyncMove int in isStepperAutoHomeComplete callback
+		// this callback is called after that additional move is complete
 
-        // in this example, after doing the additional post limit switch steps
-        // if the effector has an identifer of "6", set pin 12 high
+		// in this example, after doing the additional post limit switch steps
+		// if the effector has an identifer of "6", set pin 12 high
 
-        // char effectorIdentifier[9];
-        // effector->getIdentifier(effectorIdentifier, 9);
+		// char effectorIdentifier[9];
+		// effector->getIdentifier(effectorIdentifier, 9);
 
-        // if (strcmp(effectorIdentifier, "6") == 0)
-        // {
-        //      digitalWrite(12, HIGH);
-        // }
-    }
+		// if (strcmp(effectorIdentifier, "6") == 0)
+		// {
+		//      digitalWrite(12, HIGH);
+		// }
+	}
 
-    void onEffectorHomeReset(AbstractEffector *effector)
-    {
-        // callback when an effector is no longer considered homed, use for you own internal state tracking if needed.
-    }
+	void onEffectorHomeReset(AbstractEffector* effector)
+	{
+		// callback when an effector is no longer considered homed, use for you own internal state tracking if needed.
+	}
 } // namespace Callbacks

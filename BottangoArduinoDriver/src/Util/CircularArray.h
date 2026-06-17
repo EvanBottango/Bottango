@@ -1,116 +1,112 @@
+#pragma once
 
-#ifndef BOTTANGO_CIRCULARARRAY_H
-#define BOTTANGO_CIRCULARARRAY_H
-
-#include "Errors.h"
 #include <Arduino.h>
+#include "../System/Errors.h"
 
 template <class T>
 class CircularArray
 {
-    T **array;
-    byte capacity;
-    byte idx;
+	T** array;
+	byte capacity;
+	byte idx;
 
 public:
-    explicit CircularArray(int capacity);
+	explicit CircularArray(int capacity);
 
-    void pushBack(T *data);
+	void pushBack(T* data);
 
-    void remove(T *toRemove);
+	void remove(T* toRemove);
 
-    T *get(int index);
+	T* get(int index);
 
-    byte size();
+	byte size();
 
-    void clear();
+	void clear();
 };
 
 template <class T>
 CircularArray<T>::CircularArray(int _capacity)
 {
-    capacity = _capacity;
-    array = new T *[capacity];
-    idx = 0;
+	capacity = _capacity;
+	array = new T * [capacity];
+	idx = 0;
 
-    for (int i = 0; i < capacity; ++i)
-    {
-        array[i] = NULL;
-    }
+	for (int i = 0; i < capacity; ++i)
+	{
+		array[i] = NULL;
+	}
 }
 
 template <class T>
-void CircularArray<T>::pushBack(T *data)
+void CircularArray<T>::pushBack(T* data)
 {
-    if (idx >= capacity)
-    {
-        Error::reportError_NoSpaceAvailable();
-        return;
-    }
+	if (idx >= capacity)
+	{
+		Error::reportError_NoSpaceAvailable();
+		return;
+	}
 
-    array[idx++] = data;
+	array[idx++] = data;
 }
 
 template <class T>
-void CircularArray<T>::remove(T *toRemove)
+void CircularArray<T>::remove(T* toRemove)
 {
-    // find index of element to remove
-    int index = -1;
-    for (int i = 0; i < capacity; i++)
-    {
-        if (array[i] == toRemove)
-        {
-            index = i;
-            break;
-        }
-    }
+	// find index of element to remove
+	int index = -1;
+	for (int i = 0; i < capacity; i++)
+	{
+		if (array[i] == toRemove)
+		{
+			index = i;
+			break;
+		}
+	}
 
-    // abort if not found
-    if (index == -1)
-    {
-        return;
-    }
+	// abort if not found
+	if (index == -1)
+	{
+		return;
+	}
 
-    // Move everything ahead of the found index back one index
-    for (int i = index; i < capacity - 1; i++)
-    {
-        array[i] = array[i + 1];
-    }
+	// Move everything ahead of the found index back one index
+	for (int i = index; i < capacity - 1; i++)
+	{
+		array[i] = array[i + 1];
+	}
 
-    // if next add would add past max, move next add back to end
-    if (idx >= capacity)
-    {
-        idx = capacity - 1;
-        array[idx] = NULL;
-    }
-    // otherwise just clear at wherever idx is and move idx down
-    else
-    {
-        array[idx] = NULL;
-        idx--;
-    }
+	// if next add would add past max, move next add back to end
+	if (idx >= capacity)
+	{
+		idx = capacity - 1;
+		array[idx] = NULL;
+	}
+	// otherwise just clear at wherever idx is and move idx down
+	else
+	{
+		array[idx] = NULL;
+		idx--;
+	}
 }
 
 template <class T>
-T *CircularArray<T>::get(int index)
+T* CircularArray<T>::get(int index)
 {
-    return array[index];
+	return array[index];
 }
 
 template <class T>
 byte CircularArray<T>::size()
 {
-    return idx;
+	return idx;
 }
 
 template <class T>
 void CircularArray<T>::clear()
 {
-    for (int i = 0; i < capacity; ++i)
-    {
-        array[i] = NULL;
-    }
-    idx = 0;
+	for (int i = 0; i < capacity; ++i)
+	{
+		array[i] = NULL;
+	}
+	idx = 0;
 }
-
-#endif

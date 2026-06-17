@@ -1,6 +1,4 @@
-
-#ifndef BOTTANGOARDUINO_COLORCURVE_H
-#define BOTTANGOARDUINO_COLORCURVE_H
+#pragma once
 
 #include "Curve.h"
 #include "Color.h"
@@ -8,26 +6,24 @@
 class ColorCurve : public Curve
 {
 public:
-    ColorCurve(unsigned long startTimeInMs, unsigned long duration, byte startR, byte startG, byte startB, byte endR, byte endG, byte endB);
+	ColorCurve(unsigned long startTimeInMs, unsigned long duration, byte startR, byte startG, byte startB, byte endR, byte endG, byte endB);
 
-    Color getValue(unsigned long currentTimeMs);
+	Color getValue(unsigned long currentTimeMs);
 
-    bool isInProgress(unsigned long currentTimeMs);
+	bool isInProgress(unsigned long currentTimeMs);
 
-    unsigned long getEndTimeMs();
+	unsigned long getEndTimeMs();
 
-    virtual unsigned long getStartTimeMs();
+	virtual unsigned long getStartTimeMs();
 
-    Color getStartColor();
+	Color getStartColor();
 
-    Color getEndColor();
+	Color getEndColor();
 
 private:
-    unsigned long curveStartTimeInMs = 0;
-    unsigned long duration = 0;
+	unsigned long curveStartTimeInMs = 0;
+	unsigned long duration = 0;
 
-    Color startColor;
-    Color endColor;
+	Color startColor;
+	Color endColor;
 };
-
-#endif // BOTTANGOARDUINO_COLORCURVE_H

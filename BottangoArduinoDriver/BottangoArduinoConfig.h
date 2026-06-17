@@ -1,8 +1,7 @@
-#ifndef DevConsts_h
-#define DevConsts_h
+#pragma once
 
-#include "BottangoArduinoModules.h"
 #include <Arduino.h>
+#include "BottangoArduinoModules.h"
 
 // !! Max Registered Motors !!
 // Max effectors (motors, etc.) that can be registered at once.
@@ -89,12 +88,12 @@
 
 
 #define AVR_STEPPER_FIXED                           // in order to keep up with the demands of stepper motors, AVR boards (Arduino Uno, Nano, Mega, etc) use
-                                                    // fixed evaluation overriding the above default. Comment this line out to use the default curve evaluation on avr steppers
+													// fixed evaluation overriding the above default. Comment this line out to use the default curve evaluation on avr steppers
 
 #define VELOCITY_SEGMENT_MS 67                      // Velocity effectors (IE steppers) will segment curves into chunks of velocity. This field defines how long each chunk is in MS.
-                                                    // lower number means more segments. More segments will be more accurate to the curve, but slower to process and less smooth stepper movement
-                                                    // If you wanted to target 15 segments per second (the default) divide 1000 by 15: 1000 / 15 = 66.666, so rounded to 67
-                                                    // 30 segments per second would be 33, etc.
+													// lower number means more segments. More segments will be more accurate to the curve, but slower to process and less smooth stepper movement
+													// If you wanted to target 15 segments per second (the default) divide 1000 by 15: 1000 / 15 = 66.666, so rounded to 67
+													// 30 segments per second would be 33, etc.
 
 #define STEPPER_SYNC_SPEED 2                        // steppers will sync at 1/X percent of max speed. IE, 2 == 50% max speed, 4 == 25% max Speed, etc.
 
@@ -253,11 +252,11 @@ const char SD_AUDIO_FORMAT[] PROGMEM = ".wav";              // file format name 
 // extra Pin Remapping and Low on Launch
 #if defined(PIN_REMAPPING) || defined(PIN_LOW_LAUNCH)
 #define PIN_REMAP_LENGTH 10
-constexpr int inputPins[PIN_REMAP_LENGTH] = {1, 2, 3, 4, 5, 6, 7, 8, 9, 10};
+constexpr int inputPins[PIN_REMAP_LENGTH] = { 1, 2, 3, 4, 5, 6, 7, 8, 9, 10 };
 #ifdef BOTTANGO_IMPULSE
-constexpr int onboardPins[PIN_REMAP_LENGTH] = {32, 33, 25, 26, 27, 14, 13, 15, 17, 5};
+constexpr int onboardPins[PIN_REMAP_LENGTH] = { 32, 33, 25, 26, 27, 14, 13, 15, 17, 5 };
 #elif defined(BOTTANGO_SOLAR)
-constexpr int onboardPins[PIN_REMAP_LENGTH] = {15, 21, 22, 13, 14, 27, 26, 33, 32, 12};
+constexpr int onboardPins[PIN_REMAP_LENGTH] = { 15, 21, 22, 13, 14, 27, 26, 33, 32, 12 };
 #endif
 #endif
 
@@ -335,5 +334,3 @@ constexpr int onboardPins[PIN_REMAP_LENGTH] = {15, 21, 22, 13, 14, 27, 26, 33, 3
 #error "Persistent config modules not supported on this architecture"
 #endif
 #endif
-
-#endif // config

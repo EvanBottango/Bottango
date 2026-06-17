@@ -1,21 +1,19 @@
-#include "../BottangoArduinoModules.h"
-#if defined(ENABLE_ESP_OTA_UPDATE)
+#pragma once
 
-#ifndef OTA_UPDATE_UTIL_H
-#define OTA_UPDATE_UTIL_H
+#include "../../BottangoArduinoModules.h"
+#if defined(ENABLE_ESP_OTA_UPDATE)
 
 #include <Arduino.h>
 #include <Update.h>
 
 namespace OTAUpdateUtil
 {
-    void beginOTA();
-    void recvOTAData(const char *hexData);
-    void processHexData(uint8_t *buffer, size_t dataLength);
-    void finishOTA(const char *expectedChecksumStr);
+	void beginOTA();
+	void recvOTAData(const char* hexData);
+	void processHexData(uint8_t* buffer, size_t dataLength);
+	void finishOTA(const char* expectedChecksumStr);
 
-    extern bool otaInProgress;
+	extern bool otaInProgress;
 }
 
-#endif
 #endif
