@@ -3,7 +3,7 @@
 #include <Arduino.h>
 #include "AbstractEffector.h"
 #include "../../BottangoArduinoConfig.h"
-#include "../System/time.h"
+#include "../System/Time.h"
 #include "FloatBezierCurve.h"
 #include "FixedBezierCurve.h"
 
