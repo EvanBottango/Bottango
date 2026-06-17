@@ -316,7 +316,9 @@ int RelayChildPool::getIdForRelay(RelayChild* relayChild)
 }
 
 void RelayChildPool::onMultiMessageStart()
-{}
+{
+
+}
 
 bool RelayChildPool::emitNextChunk()
 {

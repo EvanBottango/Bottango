@@ -1086,7 +1086,9 @@ void RelayCommsRS485::registerPeer(const uint8_t* mac_addr)
 }
 
 void RelayCommsRS485::deregisterPeer(const uint8_t* mac_addr)
-{}
+{
+
+}
 
 // peer comms handling
 

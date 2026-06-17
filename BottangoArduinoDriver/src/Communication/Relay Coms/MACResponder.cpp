@@ -5,7 +5,9 @@
 #include "../../Communication/Outgoing.h"
 
 void MACResponder::onMultiMessageStart()
-{}
+{
+
+}
 
 bool MACResponder::emitNextChunk()
 {
