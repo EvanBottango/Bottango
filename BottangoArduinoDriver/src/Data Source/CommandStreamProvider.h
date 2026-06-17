@@ -11,7 +11,7 @@
 
 #ifdef USE_CODE_COMMAND_STREAM
 #include "CodeCommandStreamDataSource.h"
-#include "../GeneratedCodeAnimations.h"
+#include "../../GeneratedCodeAnimations.h"
 #endif
 
 #ifdef USE_SD_CARD_COMMAND_STREAM
