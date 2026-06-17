@@ -8,7 +8,9 @@
 #endif
 
 CommandStreamProvider::CommandStreamProvider()
-{}
+{
+
+}
 
 void CommandStreamProvider::runSetup()
 {
@@ -299,11 +301,11 @@ void CommandStreamProvider::runInProgressCommand()
 							return; // and break out for now
 						}
 					}
-				}
+			}
 #endif
 				BottangoCore::executeCommand(commandBuffer, false);
-			}
 		}
+	}
 
 		if (commandStream->complete())
 		{
@@ -328,7 +330,7 @@ void CommandStreamProvider::runInProgressCommand()
 			}
 			commandStreamIsSetup = false;
 		}
-	}
+}
 
 #ifdef RELAY_SUPPORTED
 	// after all initial curves are sent, set time back to start
@@ -396,7 +398,7 @@ void CommandStreamProvider::executeStop(bool allowSetupStop)
 	if (BottangoCore::isRelayBridge)
 	{
 		BottangoCore::relayPool->clearCurvesOnConnectedPeers();
-	}
+}
 #endif
 
 #ifdef ENABLE_STATUS_LIGHTS

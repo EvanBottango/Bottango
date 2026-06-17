@@ -3,7 +3,9 @@
 #include "Errors.h"
 
 EffectorPool::EffectorPool()
-{}
+{
+
+}
 
 void EffectorPool::addEffector(AbstractEffector* inEffector)
 {
