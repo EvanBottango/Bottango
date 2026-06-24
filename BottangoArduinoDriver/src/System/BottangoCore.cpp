@@ -5,11 +5,11 @@
 #ifdef RELAY_SUPPORTED
 
 #ifdef RELAY_COMS_ESPNOW
-#include "../Communication/Relay Coms/RelayCommsESPNow.h"
+#include "../Communication/RelayComs/RelayCommsESPNow.h"
 #endif
 
 #ifdef RELAY_COMS_RS485
-#include "../Communication/Relay Coms/RelayCommsRS485.h"
+#include "../Communication/RelayComs/RelayCommsRS485.h"
 #endif
 
 #endif
@@ -1148,7 +1148,7 @@ namespace BottangoCore
 
 				lastStopButtonPressTime = millis();
 			}
-		}
+			}
 #endif
 	}
 

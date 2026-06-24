@@ -25,8 +25,8 @@
 #endif
 
 #ifdef RELAY_SUPPORTED
-#include "../Communication/Relay Coms/IRelayComms.h"
-#include "../Communication/Relay Coms/RelayChildPool.h"
+#include "../Communication/RelayComs/IRelayComms.h"
+#include "../Communication/RelayComs/RelayChildPool.h"
 #endif
 
 namespace BottangoCore

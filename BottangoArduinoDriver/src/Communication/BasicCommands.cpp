@@ -22,9 +22,9 @@
 
 #ifdef RELAY_SUPPORTED
 #include "../Util/UDIDHelper.h"
-#include "../Communication/Relay Coms/RelayChild.h"
-#include "../Communication/Relay Coms/MACResponder.h"
-#include "../Communication/Relay Coms/IRelayComms.h"
+#include "../Communication/RelayComs/RelayChild.h"
+#include "../Communication/RelayComs/MACResponder.h"
+#include "../Communication/RelayComs/IRelayComms.h"
 #endif
 
 #ifdef ENABLE_STATUS_LIGHTS
