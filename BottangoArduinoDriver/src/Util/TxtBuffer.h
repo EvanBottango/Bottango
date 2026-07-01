@@ -11,22 +11,31 @@
 #include <freertos/semphr.h>
 #endif
 
-template <int BufferSize>
+/**
+ * @brief This class implements a circular buffer for storing text data. It is designed to handle strings and characters, providing methods to add, retrieve, and manage the buffer's contents.
+ * The buffer size is defined at compile time through the template parameter BufferSize.
+ * @tparam BufferSize The size of the buffer.
+ */
+template <unsigned int BufferSize>
 class TxtBuffer
 {
 public:
 	TxtBuffer()
 	{
-		head = 0;
-		tail = 0;
-		buffer[0] = '\0';
+		m_head = 0;
+		m_tail = 0;
+		m_buffer[0] = '\0';
 
 #ifdef ESP32
-		mutex = xSemaphoreCreateMutex();
-		configASSERT(mutex);
+		m_mutex = xSemaphoreCreateMutex();
+		configASSERT(m_mutex);
 #endif
 	}
 
+	/**
+	 * @brief Adds a string to the buffer. If the string is too long, it will be truncated to MAX_COMMAND_LENGTH. If the buffer is full, the characters will be discarded.
+	 * @param txt The string to add to the buffer., must be null-terminated.
+	 */
 	void addTxt(const char* txt)
 	{
 		int len = strlen(txt);
@@ -34,7 +43,7 @@ public:
 			len = MAX_COMMAND_LENGTH;
 
 #ifdef ESP32
-		xSemaphoreTake(mutex, portMAX_DELAY);
+		xSemaphoreTake(m_mutex, portMAX_DELAY);
 #endif
 
 		for (int i = 0; i < len; ++i)
@@ -43,117 +52,138 @@ public:
 			{
 				break;
 			}
-			buffer[head] = txt[i];
-			head = (head + 1) % BufferSize;
+			m_buffer[m_head] = txt[i];
+			m_head = (m_head + 1) % BufferSize;
 
 			// Handle overflow by advancing tail if head catches up
-			if (head == tail)
+			if (m_head == m_tail)
 			{
-				tail = (tail + 1) % BufferSize;
+				m_tail = (m_tail + 1) % BufferSize;
 			}
 		}
 #ifdef ESP32
-		xSemaphoreGive(mutex);
+		xSemaphoreGive(m_mutex);
 #endif
 	}
 
+	/**
+	 * @brief Adds a single character to the buffer. If the buffer is full, the character will be discarded.
+	 * @param c Character to add to the buffer.
+	 */
 	void addChar(const char c)
 	{
 #ifdef ESP32
-		xSemaphoreTake(mutex, portMAX_DELAY);
+		xSemaphoreTake(m_mutex, portMAX_DELAY);
 #endif
 		if (!isFullInternal())
 		{
-			buffer[head] = c;
-			head = (head + 1) % BufferSize;
-			if (head == tail)
+			m_buffer[m_head] = c;
+			m_head = (m_head + 1) % BufferSize;
+			if (m_head == m_tail)
 			{
-				tail = (tail + 1) % BufferSize;
+				m_tail = (m_tail + 1) % BufferSize;
 			}
 		}
 #ifdef ESP32
-		xSemaphoreGive(mutex);
+		xSemaphoreGive(m_mutex);
 #endif
 	}
 
-	bool available()
+	/**
+	 * @brief Indicates whether there is space available in the buffer for more data.
+	 * @return True if there is space available, false if the buffer is full.
+	 */
+	bool available() const
 	{
 #ifdef ESP32
-		xSemaphoreTake(mutex, portMAX_DELAY);
+		xSemaphoreTake(m_mutex, portMAX_DELAY);
 #endif
-		bool has = (head != tail);
+		bool has = (m_head != m_tail);
 #ifdef ESP32
-		xSemaphoreGive(mutex);
+		xSemaphoreGive(m_mutex);
 #endif
 		return has;
 	}
 
-	int getSpaceAvailable()
+	/**
+	 * @brief Returns the number of bytes available in the buffer for reading.
+	 * @return Number of bytes available to read.
+	 */
+	int getSpaceAvailable() const
 	{
 #ifdef ESP32
-		xSemaphoreTake(mutex, portMAX_DELAY);
+		xSemaphoreTake(m_mutex, portMAX_DELAY);
 #endif
 		int space;
-		if (head >= tail)
+		if (m_head >= m_tail)
 		{
-			space = BufferSize - (head - tail) - 1;
+			space = BufferSize - (m_head - m_tail) - 1;
 		}
 		else
 		{
-			space = (tail - head) - 1;
+			space = (m_tail - m_head) - 1;
 		}
 #ifdef ESP32
-		xSemaphoreGive(mutex);
+		xSemaphoreGive(m_mutex);
 #endif
 		return space;
 	}
 
-	int getSpaceUsed()
+	/**
+	 * @brief Returns the number of bytes currently used in the buffer.
+	 * @return Number of bytes currently used in the buffer.
+	 */
+	int getSpaceUsed() const
 	{
 #ifdef ESP32
-		xSemaphoreTake(mutex, portMAX_DELAY);
+		xSemaphoreTake(m_mutex, portMAX_DELAY);
 #endif
 		int used;
-		if (head >= tail)
+		if (m_head >= m_tail)
 		{
-			used = head - tail;
+			used = m_head - m_tail;
 		}
 		else
 		{
-			used = BufferSize - (tail - head);
+			used = BufferSize - (m_tail - m_head);
 		}
 #ifdef ESP32
-		xSemaphoreGive(mutex);
+		xSemaphoreGive(m_mutex);
 #endif
 		return used;
 	}
 
-	// Pop and return one full line ending in '\n'.
-	// If no complete line, outTxt = "" and buffer untouched.
-	// If peek==true, buffer is not advanced after successful read.
+	/**
+	 * @brief Retrieves the next complete line from the buffer, if available.
+		If a complete line is found, it is copied to outTxt and the buffer is advanced unless peek is true.
+		If no complete line is found, outTxt will be set to an empty string.
+	 * @param outTxt Buffer to store the retrieved line. Must be large enough to hold MAX_COMMAND_LENGTH characters.
+	 * @param peek If true, the buffer will not be advanced after retrieving the line. If false, the buffer will be advanced past the retrieved line.
+	 * @return True if a complete line was found and copied to outTxt, false if no complete line was found, or if the buffer is empty.
+	 */
 	bool getNextTxt(char* outTxt, bool peek = false)
 	{
 #ifdef ESP32
-		xSemaphoreTake(mutex, portMAX_DELAY);
+		xSemaphoreTake(m_mutex, portMAX_DELAY);
 #endif
 		// No data
-		if (head == tail)
+		if (m_head == m_tail)
 		{
 			outTxt[0] = '\0';
 #ifdef ESP32
-			xSemaphoreGive(mutex);
+			xSemaphoreGive(m_mutex);
 #endif
 			return false;
 		}
 
 		// Scan up to MAX_COMMAND_LENGTH for a newline
-		int tempTail = tail;
+		int tempTail = m_tail;
 		char temp[MAX_COMMAND_LENGTH];
 		int len = 0;
 		bool foundNewline = false;
-		while (tempTail != head && len < MAX_COMMAND_LENGTH - 1)
+		while (tempTail != m_head && len < MAX_COMMAND_LENGTH - 1)
 		{
-			char c = buffer[tempTail];
+			char c = m_buffer[tempTail];
 			temp[len++] = c;
 			tempTail = (tempTail + 1) % BufferSize;
 			if (c == '\n')
@@ -168,7 +198,7 @@ public:
 			// No complete line, return empty
 			outTxt[0] = '\0';
 #ifdef ESP32
-			xSemaphoreGive(mutex);
+			xSemaphoreGive(m_mutex);
 #endif
 			return false;
 		}
@@ -180,72 +210,85 @@ public:
 			if (!peek)
 			{
 				// Advance tail past the line
-				tail = tempTail;
+				m_tail = tempTail;
 			}
 		}
 
 #ifdef ESP32
-		xSemaphoreGive(mutex);
+		xSemaphoreGive(m_mutex);
 #endif
 		return true;
 	}
 
+	/**
+	 * @brief Returns the next character from the buffer and advances it.
+	 * @return The next character from the buffer, or '\0' if the buffer is empty.
+	 */
 	char getNextChar()
 	{
 #ifdef ESP32
-		xSemaphoreTake(mutex, portMAX_DELAY);
+		xSemaphoreTake(m_mutex, portMAX_DELAY);
 #endif
 		char c = '\0';
-		if (head != tail)
+		if (m_head != m_tail)
 		{
-			c = buffer[tail];
-			tail = (tail + 1) % BufferSize;
+			c = m_buffer[m_tail];
+			m_tail = (m_tail + 1) % BufferSize;
 		}
 #ifdef ESP32
-		xSemaphoreGive(mutex);
+		xSemaphoreGive(m_mutex);
 #endif
 		return c;
 	}
 
-	bool isFull()
+	/**
+	 * @brief Indicates, whether the buffer is full and cannot accept more data.
+	 * @return True if the buffer is full, false otherwise.
+	 */
+	bool isFull() const
 	{
 #ifdef ESP32
-		xSemaphoreTake(mutex, portMAX_DELAY);
+		xSemaphoreTake(m_mutex, portMAX_DELAY);
 #endif
 		bool full = isFullInternal();
 #ifdef ESP32
-		xSemaphoreGive(mutex);
+		xSemaphoreGive(m_mutex);
 #endif
 		return full;
 	}
 
-	// Clear entire buffer
+	/**
+	 * @brief Clears the buffer, resetting it to an empty state. All data in the buffer will be discarded.
+	 */
 	void clear()
 	{
 #ifdef ESP32
-		xSemaphoreTake(mutex, portMAX_DELAY);
+		xSemaphoreTake(m_mutex, portMAX_DELAY);
 #endif
-		head = 0;
-		tail = 0;
-		buffer[0] = '\0';
+		m_head = 0;
+		m_tail = 0;
+		m_buffer[0] = '\0';
 #ifdef ESP32
-		xSemaphoreGive(mutex);
+		xSemaphoreGive(m_mutex);
 #endif
 	}
 
 private:
-	// Internal check without taking mutex
+	/**
+	 * @brief Calculates whether the buffer is full without acquiring a mutex.
+	 * @return True if the buffer is full, false otherwise.
+	 */
 	bool isFullInternal() const
 	{
-		return ((head + 1) % BufferSize) == tail;
+		return ((m_head + 1) % BufferSize) == m_tail;
 	}
 
-	char buffer[BufferSize];
-	int head;
-	int tail;
+	char m_buffer[BufferSize];
+	int m_head;
+	int m_tail;
 #ifdef ESP32
-	SemaphoreHandle_t mutex;
+	SemaphoreHandle_t m_mutex;
 #endif
 };
 
-#endif // RELAY_COMS_* || USE_SD_CARD_COMMAND_STREAM
+#endif // RELAY_SUPPORTED || USE_SD_CARD_COMMAND_STREAM
