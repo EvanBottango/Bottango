@@ -27,6 +27,13 @@ namespace BottangoCore
 	EffectorPool effectorPool = EffectorPool();
 	AbstractMultiMessageOutgoingSource* activeOutgoingMultimessage = nullptr;
 
+	// ToDo: Staged Refactor. This section will change for each step
+	// ==========================
+	// Global module management instances
+	ScheduleManager g_phaseScheduler = ScheduleManager();
+	// ==========================
+
+
 #ifdef RELAY_SUPPORTED
 	IRelayComms* relayComs = nullptr;
 	RelayChildPool* relayPool = nullptr;
