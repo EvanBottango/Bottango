@@ -95,9 +95,23 @@ namespace BottangoCore
 		activeOutgoingMultimessage->initializeMultiMessage();
 	}
 
-	void
-		bottangoSetup()
+	void bottangoSetup()
 	{
+		// ToDo: Staged Refactor. This section will change for each step
+		// ==========================
+		
+		// 1. Factory creates all core modules
+		ServiceFactory::setup();
+		ServiceFactory::wireServices();
+
+		// 2. Scheduler registers core modules in priority order
+		g_phaseScheduler.buildModules();
+
+		// 3. Initialize all modules (core + user)
+		g_phaseScheduler.initModules();
+
+		// ==========================
+
 
 #ifdef ENABLE_STATUS_LIGHTS
 		StatusLights::initLights();
@@ -993,6 +1007,15 @@ namespace BottangoCore
 	void bottangoLoop()
 	{
 		Callbacks::onEarlyLoop();
+
+		// ToDo: Staged Refactor. This section will change for each step
+		// ==========================
+		g_phaseScheduler.executePhase(Phase::Input);
+		g_phaseScheduler.executePhase(Phase::Communication);
+		g_phaseScheduler.executePhase(Phase::Logic);
+		g_phaseScheduler.executePhase(Phase::Output);
+		// ==========================
+
 
 		updateReadBuffer(false); // standard read
 

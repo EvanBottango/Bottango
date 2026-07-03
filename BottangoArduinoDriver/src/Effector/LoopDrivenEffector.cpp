@@ -85,6 +85,7 @@ void LoopDrivenEffector::updateSignalBounds(int minSignal, int maxSignal, int si
 	this->minMicrosPerSignal = 1000000L / signalSpeed;
 }
 
+// ToDo: Typo in function name: speedLimitSingal -> speedLimitSignal
 int LoopDrivenEffector::speedLimitSingal(int newTarget, unsigned long nowInUS)
 {
 	int returnSignal = newTarget;
