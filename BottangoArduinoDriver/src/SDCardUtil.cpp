@@ -56,8 +56,8 @@ namespace SDCardUtil
 
 #ifdef SD_PIN_HIGH
             // power-on sequence if needed
-            pinMode(SD_EN_PIN, OUTPUT);
             digitalWrite(SD_EN_PIN, HIGH);
+            pinMode(SD_EN_PIN, OUTPUT);
 #endif
 
             lastMountAttemptTime = millis();

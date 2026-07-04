@@ -30,7 +30,6 @@ TriggerCustomEvent::TriggerCustomEvent(char *identifier, byte pin, bool fireIsHi
             }
         }
 #endif
-        pinMode(pin, OUTPUT);
         if (fireIsHigh)
         {
             digitalWrite(pin, LOW);
@@ -39,6 +38,7 @@ TriggerCustomEvent::TriggerCustomEvent(char *identifier, byte pin, bool fireIsHi
         {
             digitalWrite(pin, HIGH);
         }
+        pinMode(pin, OUTPUT);
     }
     Callbacks::onEffectorRegistered(this);
 }

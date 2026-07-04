@@ -28,7 +28,9 @@ CurvedCustomEvent::CurvedCustomEvent(char *identifier, float maxMovementPerSec, 
             }
         }
 #endif
+        digitalWrite(pin, LOW);
         pinMode(pin, OUTPUT);
+        analogWrite(pin, round(startingMovement * 255));
     }
     Callbacks::onEffectorRegistered(this);
 }

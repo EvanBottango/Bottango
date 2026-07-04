@@ -30,7 +30,7 @@ namespace Error
     void reportError_MultiMessageTimeout();
 
 #ifdef RELAY_SUPPORTED
-    void reportError_NoRelayForID(int id);
+    void reportError_NoRelayForID(int id, bool fatal);
     void reportError_RelayCollision(byte mac[6]);
 #endif
 

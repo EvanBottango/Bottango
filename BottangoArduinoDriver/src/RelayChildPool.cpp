@@ -65,8 +65,16 @@ void RelayChildPool::removeRelay(int id)
     RelayChild *relay = BottangoCore::relayPool->getRelay(id);
     if (relay == nullptr)
     {
-        Error::reportError_NoRelayForID(id);
+        Error::reportError_NoRelayForID(id, true);
         unlockPool();
+        return;
+    }
+
+    // don't do a wait and teardown approach on a peer that never connected in the first place
+    if (!relay->connected)
+    {
+        unlockPool();
+        finalizeRelayTeardown(id);
         return;
     }
 
@@ -99,7 +107,10 @@ void RelayChildPool::passThroughCommandToRelay(int id, char **commands, byte par
     RelayChild *relay = BottangoCore::relayPool->getRelay(id);
     if (relay == nullptr)
     {
-        Error::reportError_NoRelayForID(id);
+        // fatal if handshake
+        // non fatal if not handshake. In a race condition after sudden reboot, when port is open but BOOT message hasn't gone out
+        // need to recover from app having stale state of registered relays, so send warning instead of error.
+        Error::reportError_NoRelayForID(id, BottangoCore::handshake);
         unlockPool();
         return;
     }
