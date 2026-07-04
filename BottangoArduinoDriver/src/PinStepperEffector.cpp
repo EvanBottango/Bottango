@@ -41,15 +41,15 @@ PinStepperEffector::PinStepperEffector(byte pin0, byte pin1, byte pin2, byte pin
     this->pin2 = pin2;
     this->pin3 = pin3;
 
-    pinMode(pin0, OUTPUT);
-    pinMode(pin1, OUTPUT);
-    pinMode(pin2, OUTPUT);
-    pinMode(pin3, OUTPUT);
-
     digitalWrite(pin0, LOW);
     digitalWrite(pin1, LOW);
     digitalWrite(pin2, LOW);
     digitalWrite(pin3, LOW);
+
+    pinMode(pin0, OUTPUT);
+    pinMode(pin1, OUTPUT);
+    pinMode(pin2, OUTPUT);
+    pinMode(pin3, OUTPUT);
 
     Callbacks::onEffectorRegistered(this);
 }

@@ -334,8 +334,8 @@ void RelayCommsRS485::initializeAsPeer()
 
 void RelayCommsRS485::initConnection()
 {
-    pinMode(RS485_DE_PIN, OUTPUT);
     digitalWrite(RS485_DE_PIN, LOW); // rx
+    pinMode(RS485_DE_PIN, OUTPUT);
 
     RS485_SERIAL.begin(RS485_BAUD, SERIAL_8N1, RS485_RX_PIN, RS485_TX_PIN);
     lineStatus = LineStatus::idle;

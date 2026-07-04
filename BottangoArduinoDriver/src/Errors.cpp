@@ -70,10 +70,10 @@ namespace Error
     }
 
 #ifdef RELAY_SUPPORTED
-    void reportError_NoRelayForID(int id)
+    void reportError_NoRelayForID(int id, bool fatal)
     {
         Outgoing::printLine();
-        Outgoing::printOutputStringFlash(F("errNoRelay: "));
+        Outgoing::printOutputStringFlash(fatal ? F("errNoRelay: ") : F("warnNoRelay: "));
         Outgoing::printOutputStringMem(id);
         Outgoing::printLine();
     }
