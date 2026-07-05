@@ -12,11 +12,11 @@
 #include "../../BottangoArduinoModules.h"
 
 /**
- * @brief Slot identifiers for dynamic module slots.
+ * @brief Slot identifiers for dynamic service slots.
  * @details These are only used for compile-time size calculation via SlotSize template.
  *          NOT used for runtime service lookup (use ServiceFactory::get<T>() instead).
  */
-enum class ModuleSlotType : uint8_t
+enum class ServiceSlotType : uint8_t
 {
 	DataSource_Offline,
 	DataSource_Secondary
@@ -24,22 +24,22 @@ enum class ModuleSlotType : uint8_t
 
 #if defined(USE_SD_CARD_COMMAND_STREAM) || defined(USE_CODE_COMMAND_STREAM) || defined(RELAY_SUPPORTED) || defined(USE_ESP32_WIFI)
 /**
- * @brief Template struct to calculate the size of a module slot based on its type.
- * @tparam Slot The module slot type (ModuleSlotType).
+ * @brief Template struct to calculate the size of a service slot based on its type.
+ * @tparam Slot The service slot type (ServiceSlotType).
  */
-template <ModuleSlotType Slot>
+template <ServiceSlotType Slot>
 struct SlotSize;
 #endif
 
 #if defined(USE_SD_CARD_COMMAND_STREAM) || defined(USE_CODE_COMMAND_STREAM)
 /**
- * @brief This template struct calculates the maximum size of the module that can be placed in the DataSource_Offline slot.
+ * @brief This template struct calculates the maximum size of the service that can be placed in the DataSource_Offline slot.
  * @note The sizeof() calls can be guarded with #ifdef, as the max() function takes any amount of arguments.
  *       Any new DataSource needs to be added here, in order to make sure its size is taken into account.
- *       This is needed to get the correct size for the buffer in the ModuleSlot, to make sure any of the possible modules that can be placed in the slot will fit.
+ *       This is needed to get the correct size for the buffer in the ServiceSlot, to make sure any of the possible services that can be placed in the slot will fit.
  */
 template <>
-struct SlotSize<ModuleSlotType::DataSource_Offline>
+struct SlotSize<ServiceSlotType::DataSource_Offline>
 {
 	// ToDo: Set to 2 during this step of staged refactor (0 throws compiler error)
 	static constexpr size_t value = 2;
@@ -56,10 +56,10 @@ struct SlotSize<ModuleSlotType::DataSource_Offline>
 
 #if defined(RELAY_SUPPORTED) || defined(USE_ESP32_WIFI)
 /**
- * @brief This template struct calculates the maximum size of the module that can be placed in the DataSource_Secondary slot.
+ * @brief This template struct calculates the maximum size of the service that can be placed in the DataSource_Secondary slot.
  */
 template <>
-struct SlotSize<ModuleSlotType::DataSource_Secondary>
+struct SlotSize<ServiceSlotType::DataSource_Secondary>
 {
 	// ToDo: Set to 2 during this step of staged refactor (0 throws compiler error)
 	static constexpr size_t value = 2;
@@ -81,8 +81,8 @@ struct SlotSize<ModuleSlotType::DataSource_Secondary>
 };
 #endif // RELAY_SUPPORTED || USE_ESP32_WIFI
 
-// Note: This also works with any other module:
-/*template <> struct SlotSize<ModuleSlotType::Decoder>
+// Note: This also works with any other service:
+/*template <> struct SlotSize<ServiceSlotType::Decoder>
 {
 	static constexpr size_t value = max({
 		sizeof(AsciiCmdDecoder),
@@ -92,22 +92,22 @@ struct SlotSize<ModuleSlotType::DataSource_Secondary>
 
 #if defined(USE_SD_CARD_COMMAND_STREAM) || defined(USE_CODE_COMMAND_STREAM) || defined(RELAY_SUPPORTED) || defined(USE_ESP32_WIFI)
 /**
- * @brief This class represents a dynamic module slot that can hold a single instance of a module (e.g., a data source).
- * @tparam MaxSize The maximum size of the module that can be placed in this slot, determined by SlotSize<ModuleSlotType>::value.
+ * @brief This class represents a dynamic service slot that can hold a single instance of a service (e.g., a data source).
+ * @tparam MaxSize The maximum size of the service that can be placed in this slot, determined by SlotSize<ServiceSlotType>::value.
  */
 template <size_t MaxSize>
-class ModuleSlot
+class ServiceSlot
 {
 public:
 	/**
-	 * @brief Places a new module of type T into the slot.
-	 * @tparam T The concrete module type to place in the slot.
-	 * @return A pointer to the newly created module instance (T*).
+	 * @brief Places a new service of type T into the slot.
+	 * @tparam T The concrete service type to place in the slot.
+	 * @return A pointer to the newly created service instance (T*).
 	 */
 	template <typename T>
 	T* place()
 	{
-		static_assert(sizeof(T) <= MaxSize, "Module does not fit into this slot");
+		static_assert(sizeof(T) <= MaxSize, "Service does not fit into this slot");
 
 		destroy();
 		new (m_buffer) T();
@@ -116,8 +116,8 @@ public:
 	}
 
 	/**
-	 * @brief Returns a pointer to the currently occupied module in the slot, or nullptr if the slot is empty.
-	 * @return A pointer to the module (ISchedulable*), or nullptr if the slot is empty.
+	 * @brief Returns a pointer to the currently occupied service in the slot, or nullptr if the slot is empty.
+	 * @return A pointer to the service (ISchedulable*), or nullptr if the slot is empty.
 	 */
 	ISchedulable* get()
 	{
@@ -125,7 +125,7 @@ public:
 	}
 
 	/**
-	 * @brief Calls the destructor of the currently occupied module in the slot, if any, and marks the slot as not occupied.
+	 * @brief Calls the destructor of the currently occupied service in the slot, if any, and marks the slot as not occupied.
 	 */
 	void destroy()
 	{
