@@ -2,7 +2,7 @@
 
 #include <Arduino.h>
 #include "ISchedulable.h"
-#include "ModuleSlot.h"
+#include "ServiceSlot.h"
 
 // Forward declarations
 // Communication chain
@@ -128,7 +128,7 @@ private:
 #ifdef OFFLINE_DATA_SOURCE_ENABLED
 	// ToDo: Turned off during this step of staged refactor
 	//AnimationPlaybackControl* m_animPlaybackControl = nullptr;
-	ModuleSlot<SlotSize<ModuleSlotType::DataSource_Offline>::value> m_slotOfflineDataSource;
+	ServiceSlot<SlotSize<ServiceSlotType::DataSource_Offline>::value> m_slotOfflineDataSource;
 #endif
 
 #ifdef RELAY_SUPPORTED
@@ -147,7 +147,7 @@ private:
 #endif
 
 #ifdef SECONDARY_DATA_SOURCE_ENABLED
-	ModuleSlot<SlotSize<ModuleSlotType::DataSource_Secondary>::value> m_slotSecondaryDataSource;
+	ServiceSlot<SlotSize<ServiceSlotType::DataSource_Secondary>::value> m_slotSecondaryDataSource;
 #endif
 
 	// === Optional Modules ===

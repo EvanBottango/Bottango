@@ -14,18 +14,18 @@
 #include "../Modules/StatusLights.h"
 #include "../Modules/Audio/I2SAudioModule.h"*/
 
-void ScheduleManager::buildModules()
+void ScheduleManager::buildServices()
 {
-	// Add modules in STRICT order.
+	// Add services in STRICT order.
 	//
 	// Will init in the order shown below after they are all added to the list
-	// During each loop phase, each module will respond to phase in the order added to the internal list here.
+	// During each loop phase, each service will respond to phase in the order added to the internal list here.
 	//
-	// Note that no creation of the modules, configuration, etc. is handled here. It leaves that job up to
+	// Note that no creation of the services, configuration, etc. is handled here. It leaves that job up to
 	// service factory.
 	// This just grabs what it wants in the right order
 
-	/*static ISchedulable* const orderedModules[] =
+	/*static ISchedulable* const orderedServices[] =
 	{
 		ServiceFactory::get<SerialSource>(),				// [Core] - Serial Source
 
@@ -61,30 +61,30 @@ void ScheduleManager::buildModules()
 		&BottangoCore::effectorPool,						// [Core] - EffectorPool. Needs to be last, as they might depend on other modules being initialized first
 	};
 
-	m_orderedModules = orderedModules;
-	m_moduleCount = sizeof(orderedModules) / sizeof(orderedModules[0]);*/
+	m_orderedServices = orderedServices;
+	m_servicesCount = sizeof(orderedServices) / sizeof(orderedServices[0]);*/
 }
 
-void ScheduleManager::initModules() const
+void ScheduleManager::initServices() const
 {
-	// Initialize all modules in execution order
-	for (uint8_t i = 0; i < m_moduleCount; i++)
+	// Initialize all services in execution order
+	for (uint8_t i = 0; i < m_servicesCount; i++)
 	{
-		if (m_orderedModules[i] != nullptr)
+		if (m_orderedServices[i] != nullptr)
 		{
-			m_orderedModules[i]->init();
+			m_orderedServices[i]->init();
 		}
 	}
 }
 
 void ScheduleManager::executePhase(Phase const p) const
 {
-	// Execute all modules in priority order
-	for (uint8_t i = 0; i < m_moduleCount; i++)
+	// Execute all services in priority order
+	for (uint8_t i = 0; i < m_servicesCount; i++)
 	{
-		if (m_orderedModules[i] != nullptr)
+		if (m_orderedServices[i] != nullptr)
 		{
-			m_orderedModules[i]->onPhase(p);
+			m_orderedServices[i]->onPhase(p);
 		}
 	}
 }
