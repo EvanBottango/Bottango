@@ -121,10 +121,10 @@ namespace BottangoCore
 		ServiceFactory::wireServices();
 
 		// 2. Scheduler registers core modules in priority order
-		g_phaseScheduler.buildModules();
+		g_phaseScheduler.buildServices();
 
 		// 3. Initialize all modules (core + user)
-		g_phaseScheduler.initModules();
+		g_phaseScheduler.initServices();
 
 		// ==========================
 

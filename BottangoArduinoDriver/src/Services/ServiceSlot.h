@@ -2,6 +2,7 @@
 
 #include <Arduino.h>
 #include <math.h>
+#include "../Services/IService.h"
 // ToDo: Turned off during this step of staged refactor
 /*#include "../DataSource/SerialSource.h"
 #include "../DataSource/SdCardSource.h"
@@ -107,21 +108,26 @@ public:
 	template <typename T>
 	T* place()
 	{
+		// Check at compile time that the size of T does not exceed the maximum size of the slot.
 		static_assert(sizeof(T) <= MaxSize, "Service does not fit into this slot");
+
+		// Check if its the right base class (IService) for the slot
+		static_assert(std::is_base_of<IService, T>::value, "Service must derive from IService");
 
 		destroy();
 		new (m_buffer) T();
 		m_occupied = true;
+		reinterpret_cast<T*>(m_buffer)->onActivation();
 		return reinterpret_cast<T*>(m_buffer);
 	}
 
 	/**
 	 * @brief Returns a pointer to the currently occupied service in the slot, or nullptr if the slot is empty.
-	 * @return A pointer to the service (ISchedulable*), or nullptr if the slot is empty.
+	 * @return A pointer to the service (IService*), or nullptr if the slot is empty.
 	 */
-	ISchedulable* get()
+	IService* get()
 	{
-		return m_occupied ? reinterpret_cast<ISchedulable*>(m_buffer) : nullptr;
+		return m_occupied ? reinterpret_cast<IService*>(m_buffer) : nullptr;
 	}
 
 	/**
@@ -131,7 +137,7 @@ public:
 	{
 		if (m_occupied)
 		{
-			reinterpret_cast<ISchedulable*>(m_buffer)->~ISchedulable();
+			reinterpret_cast<IService*>(m_buffer)->~IService();
 			m_occupied = false;
 		}
 	}

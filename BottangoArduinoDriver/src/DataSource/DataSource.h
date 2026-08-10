@@ -2,9 +2,10 @@
 
 #include <Arduino.h>
 #include "../../BottangoArduinoConfig.h"
+#include "../Services/IService.h"
 #include "../Services/ISchedulable.h"
 
-class DataSource : public ISchedulable
+class DataSource : public IService, public ISchedulable
 {
 public:
 	/**
@@ -49,7 +50,11 @@ public:
 	virtual void setActiveSource(bool active)
 	{
 		m_isActive = active;
-	}	
+	}
+
+	virtual void onActivation() override
+	{
+	}
 
 protected:
 	/**
