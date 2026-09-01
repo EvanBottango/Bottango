@@ -43,6 +43,14 @@ void CommandStream::getNextCommand(char *output)
 
 bool CommandStream::readyForNextCommand()
 {
+    // A completed loop with no elapsed command time would reset immediately and spin in the provider loop.
+    // Let it complete normally instead of attempting to replay a zero-duration animation.
+    if (shouldLoop && dataSource->dataComplete && msEndOfLatestCommand == 0)
+    {
+        shouldLoop = false;
+        return false;
+    }
+
     // at end of loop
     if (shouldLoop && dataSource->dataComplete && Time::getCurrentTimeInMs() >= msEndOfLatestCommand)
     {

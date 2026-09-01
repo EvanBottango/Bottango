@@ -1,4 +1,4 @@
-// !!! DRIVER VERSION: 0.8.0c1 !!!
+// !!! DRIVER VERSION: 0.8.0d1 !!!
 // !!! Api Version: 9 !!!
 
 #include "src/BottangoCore.h"

@@ -15,8 +15,15 @@ PinServoEffector::PinServoEffector(byte pin, short minPWM, short maxPWM, int max
 #endif
 
 #ifdef ESP32
+#if defined(CONFIG_IDF_TARGET_ESP32)
+    // classic esp32 == 16 bit timer, for legacy reasons
     servo.setTimerWidth(16);
+#else
+    // anything else == 14 bit timer, for compatibility reasons
+    servo.setTimerWidth(14);
 #endif
+#endif
+
 #ifdef PIN_REMAPPING
     bool matchFound = false;
     for (int i = 0; i < PIN_REMAP_LENGTH; i++)

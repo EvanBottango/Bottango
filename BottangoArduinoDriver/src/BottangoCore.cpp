@@ -99,6 +99,13 @@ namespace BottangoCore
     void
     bottangoSetup()
     {
+        // take pins low on launch
+#ifdef PIN_LOW_LAUNCH
+        for (int i = 0; i < PIN_REMAP_LENGTH; i++)
+        {
+            pinMode(onboardPins[i], INPUT_PULLDOWN);
+        }
+#endif
 
 #ifdef ENABLE_STATUS_LIGHTS
         StatusLights::initLights();
@@ -110,14 +117,6 @@ namespace BottangoCore
 
 #ifdef NAMED_BOARD_STARTUP
         NamedBoardStartup::runNamedBoardStartup();
-#endif
-
-        // take pins low on launch
-#ifdef PIN_LOW_LAUNCH
-        for (int i = 0; i < PIN_REMAP_LENGTH; i++)
-        {
-            pinMode(onboardPins[i], INPUT_PULLDOWN);
-        }
 #endif
 
         // init comms types

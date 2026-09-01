@@ -167,7 +167,9 @@ bool ModulesResponder::sendCommandConfigResponse()
     Outgoing::printOutputStringPROGMEM(MODULES_PARAM_DELINIATOR); // MOD,CMD_CFG,
 
     // max message length
-    Outgoing::printOutputStringMem(MAX_COMMAND_LENGTH);
+    // MAX_COMMAND_LENGTH is the allocated C-string buffer size.
+    // Report the usable wire-command length, reserving one byte for '\0'.
+    Outgoing::printOutputStringMem(MAX_COMMAND_LENGTH - 1);
     Outgoing::printOutputStringPROGMEM(MODULES_PARAM_DELINIATOR); // MOD,CMD_CFG,(max message length),
 
     // max buffered curves
