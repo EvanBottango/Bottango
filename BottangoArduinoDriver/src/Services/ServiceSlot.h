@@ -1,7 +1,10 @@
 #pragma once
 
 #include <Arduino.h>
+#include <cstddef>
 #include <math.h>
+#include <new>
+#include <type_traits>
 #include "../Services/IService.h"
 // ToDo: Turned off during this step of staged refactor
 /*#include "../DataSource/SerialSource.h"
@@ -115,19 +118,20 @@ public:
 		static_assert(std::is_base_of<IService, T>::value, "Service must derive from IService");
 
 		destroy();
-		new (m_buffer) T();
-		m_occupied = true;
-		reinterpret_cast<T*>(m_buffer)->onActivation();
-		return reinterpret_cast<T*>(m_buffer);
+		T* createdService = new (m_buffer) T();
+		m_activeService = static_cast<IService*>(createdService);
+		m_activeService->onActivation();
+
+		return createdService;
 	}
 
 	/**
 	 * @brief Returns a pointer to the currently occupied service in the slot, or nullptr if the slot is empty.
 	 * @return A pointer to the service (IService*), or nullptr if the slot is empty.
 	 */
-	IService* get()
+	IService* get() const
 	{
-		return m_occupied ? reinterpret_cast<IService*>(m_buffer) : nullptr;
+		return m_activeService;
 	}
 
 	/**
@@ -135,17 +139,19 @@ public:
 	 */
 	void destroy()
 	{
-		if (m_occupied)
+		if (m_activeService == nullptr)
 		{
-			reinterpret_cast<IService*>(m_buffer)->~IService();
-			m_occupied = false;
+			return;
 		}
+
+		m_activeService->~IService();
+		m_activeService = nullptr;
 	}
 
 private:
 	// Note: The buffer needs to be aligned, otherwise it might crash
 	// std::max_align_t can be exchanged for a simple "4" for the ESP32, or "1" for AVR / 8 bit controllers, but this is more portable.
 	alignas(std::max_align_t) uint8_t m_buffer[MaxSize] = {};
-	bool m_occupied = false;
+	IService* m_activeService = nullptr;
 };
 #endif // USE_SD_CARD_COMMAND_STREAM || USE_CODE_COMMAND_STREAM || RELAY_SUPPORTED || USE_ESP32_WIFI

@@ -14,7 +14,7 @@
 #include "../Modules/StatusLights.h"
 #include "../Modules/Audio/I2SAudioModule.h"*/
 
-void ScheduleManager::buildServices()
+void ScheduleManager::composeServiceList()
 {
 	// Add services in STRICT order.
 	//

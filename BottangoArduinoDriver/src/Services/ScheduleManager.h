@@ -23,7 +23,7 @@ public:
 	/**
 	 * @brief Creates a static array and populates it with all enabled services. The order in this array is the call order for these services during the main loop.
 	 */
-	void buildServices();
+	void composeServiceList();
 
 	/**
 	 * @brief Initializes all registered services by calling their init() method.

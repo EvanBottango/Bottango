@@ -199,7 +199,8 @@ private:
 	T* placeInOfflineSlot_Impl()
 	{
 		T* moduleInstance = m_slotOfflineDataSource.place<T>();
-		moduleInstance->init();
+		// Init is called from ScheduleManager::initServices() after all modules have been created and wired together
+		//moduleInstance->init();
 
 		return moduleInstance;
 	}
@@ -218,7 +219,7 @@ private:
 	T* placeInSecondarySlot_Impl()
 	{
 		T* moduleInstance = m_slotSecondaryDataSource.place<T>();
-		moduleInstance->init();
+		//moduleInstance->init();
 
 		return moduleInstance;
 	}
