@@ -11,6 +11,12 @@
 #include "../Communication/Outgoing.h"
 #include "../Services/ModulesResponder.h"
 
+// ToDo: Staged Refactor. This section will change for each step
+// ==========================
+#include "../Services/ScheduleManager.h"
+#include "../Services/ServiceFactory.h"
+// ==========================
+
 
 #ifdef USE_ESP32_WIFI
 #include <WiFi.h>
@@ -104,5 +110,11 @@ namespace BottangoCore
 #ifdef USE_ESP32_WIFI
 	extern WiFiClient client;
 #endif
+
+	// ToDo: Staged Refactor. This section will change for each step
+	// ==========================
+	// Global instances for module management
+	extern ScheduleManager g_phaseScheduler;
+	// ==========================
 
 } // namespace BottangoCore
