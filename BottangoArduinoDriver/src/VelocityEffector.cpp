@@ -41,27 +41,19 @@ void VelocityEffector::setAutoSync(int syncValue)
     autoSync = syncValue;
     signalChangePeriodUs = minMicrosPerSignal * STEPPER_SYNC_SPEED; // move at half max speed
     lastSignalChangeTimeUs = micros();
+
+    // Avoid issuing an initial step when the home switch is already active.
+    if (autoSync != 0)
+    {
+        completeAutoSyncIfAtHome();
+    }
 }
 
 void VelocityEffector::updateSync(int delta)
 {
     if (autoSync != 0)
     {
-        int postAutoSync = 0;
-        if (Callbacks::isEffectorAutoHomeComplete(this, postAutoSync, autoSync))
-        {
-            autoSync = 0;
-            if (postAutoSync == 0)
-            {
-                homed = true;
-                notifyEndAutoSync();
-            }
-            else
-            {
-                sync = postAutoSync;
-                postAutoSyncInProgress = true;
-            }
-        }
+        completeAutoSyncIfAtHome();
     }
     else if (sync < 0)
     {
@@ -70,6 +62,25 @@ void VelocityEffector::updateSync(int delta)
     else if (sync > 0)
     {
         sync--;
+    }
+}
+
+void VelocityEffector::completeAutoSyncIfAtHome()
+{
+    int postAutoSync = 0;
+    if (Callbacks::isEffectorAutoHomeComplete(this, postAutoSync, autoSync))
+    {
+        autoSync = 0;
+        if (postAutoSync == 0)
+        {
+            homed = true;
+            notifyEndAutoSync();
+        }
+        else
+        {
+            sync = postAutoSync;
+            postAutoSyncInProgress = true;
+        }
     }
 }
 

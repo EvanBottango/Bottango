@@ -47,6 +47,7 @@ protected:
     byte inProgressCurveIdx;
 
     bool updateDrive(unsigned long nowUS, unsigned long currentTimeMs);
+    void completeAutoSyncIfAtHome();
     void notifyEndAutoSync();
 };
 

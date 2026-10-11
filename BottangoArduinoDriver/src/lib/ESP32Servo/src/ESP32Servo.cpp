@@ -191,6 +191,13 @@ void Servo::release()
         pwm.write(0);
 }
 
+#ifdef ESP32PWM_CLASSIC_ESP32_LEDC_DEFER
+void Servo::service()
+{
+    pwm.service();
+}
+#endif
+
 int Servo::read() // return the value as degrees
 {
     return (map(readMicroseconds(), this->min, this->max, 0, 180));

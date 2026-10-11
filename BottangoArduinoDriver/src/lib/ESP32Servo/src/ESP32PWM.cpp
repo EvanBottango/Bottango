@@ -9,6 +9,12 @@
 #include "ESP32PWM.h"
 #include "esp32-hal-ledc.h"
 
+#ifdef ESP32PWM_CLASSIC_ESP32_LEDC_DEFER
+#include "soc/ledc_struct.h"
+
+static const uint8_t CLASSIC_ESP32_LEDC_CHANNELS_PER_GROUP = 8;
+#endif
+
 // initialize the class variable ServoCount
 int ESP32PWM::PWMCount = -1; // the total number of attached servos
 bool ESP32PWM::explicateAllocationMode = false;
@@ -170,6 +176,10 @@ void ESP32PWM::deallocate()
 	ChannelUsed[pwmChannel] = NULL;
 	pwmChannel = -1;
 	PWMCount--;
+
+#ifdef ESP32PWM_CLASSIC_ESP32_LEDC_DEFER
+	queuedDutyPending = false;
+#endif
 }
 
 int ESP32PWM::getChannel()
@@ -226,6 +236,48 @@ void ESP32PWM::writeScaled(double duty)
 void ESP32PWM::write(uint32_t duty)
 {
 	myDuty = duty;
+
+#ifdef ESP32PWM_CLASSIC_ESP32_LEDC_DEFER
+	queuedDuty = duty;
+	queuedDutyPending = true;
+	service();
+#else
+#ifdef ESP_ARDUINO_VERSION_MAJOR
+#if ESP_ARDUINO_VERSION >= ESP_ARDUINO_VERSION_VAL(3, 0, 0)
+	ledcWrite(getPin(), duty);
+#else
+	ledcWrite(getChannel(), duty);
+#endif
+#else
+	ledcWrite(getChannel(), duty);
+#endif
+#endif
+}
+
+#ifdef ESP32PWM_CLASSIC_ESP32_LEDC_DEFER
+void ESP32PWM::service()
+{
+	if (queuedDutyPending && !dutyUpdateIsPending())
+	{
+		writeDuty(queuedDuty);
+		queuedDutyPending = false;
+	}
+}
+
+bool ESP32PWM::dutyUpdateIsPending()
+{
+	if (pwmChannel < 0)
+	{
+		return false;
+	}
+
+	const uint8_t group = pwmChannel / CLASSIC_ESP32_LEDC_CHANNELS_PER_GROUP;
+	const uint8_t channel = pwmChannel % CLASSIC_ESP32_LEDC_CHANNELS_PER_GROUP;
+	return LEDC.channel_group[group].channel[channel].conf1.duty_start;
+}
+
+void ESP32PWM::writeDuty(uint32_t duty)
+{
 #ifdef ESP_ARDUINO_VERSION_MAJOR
 #if ESP_ARDUINO_VERSION >= ESP_ARDUINO_VERSION_VAL(3, 0, 0)
 	ledcWrite(getPin(), duty);
@@ -236,6 +288,7 @@ void ESP32PWM::write(uint32_t duty)
 	ledcWrite(getChannel(), duty);
 #endif
 }
+#endif
 void ESP32PWM::adjustFrequencyLocal(double freq, double dutyScaled)
 {
 	timerFreqSet[getTimer()] = (long)freq;

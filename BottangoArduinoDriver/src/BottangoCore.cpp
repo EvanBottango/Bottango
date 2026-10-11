@@ -145,8 +145,8 @@ namespace BottangoCore
         StatusLights::setDesiredColor(CONNECTION_STATUS_LIGHT, STATUS_COLOR_NO_CONNECTION_SERIAL);
         StatusLights::setLightMode(CONNECTION_STATUS_LIGHT, StatusLights::LightMode::MODE_BLINK);
 #endif
-        StatusLights::setDesiredColor(SIGNAL_STATUS_LIGHT, CRGB::Black);
-        StatusLights::setDesiredColor(USER_STATUS_LIGHT, CRGB::Black);
+        StatusLights::setDesiredColor(SIGNAL_STATUS_LIGHT, STATUS_COLOR_BLACK);
+        StatusLights::setDesiredColor(USER_STATUS_LIGHT, STATUS_COLOR_BLACK);
 #endif
 
 // init i2s audio
@@ -633,15 +633,7 @@ namespace BottangoCore
         }
         else if (strcmp_P(commandName, BasicCommands::HANDSHAKE_REQUEST) == 0)
         {
-            // Ignore duplicate handshake requests after the initial handshake completes.
-            if (!secondary && BottangoCore::handshake)
-            {
-                sendReady = false;
-            }
-            else
-            {
-                BasicCommands::sendHandshakeResponse(splitCommandBuffer, secondary);
-            }
+            BasicCommands::sendHandshakeResponse(splitCommandBuffer, secondary);
         }
         else if (strcmp_P(commandName, BasicCommands::MODULES_REQUEST) == 0)
         {

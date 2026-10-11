@@ -13,6 +13,11 @@
 	#include "Arduino.h"
 #endif
 
+// Classic ESP32 LEDC drops a duty write issued before its prior write finishes.
+#if defined(CONFIG_IDF_TARGET_ESP32)
+#define ESP32PWM_CLASSIC_ESP32_LEDC_DEFER
+#endif
+
 #if defined(CONFIG_IDF_TARGET_ESP32C3)
 #define NUM_PWM 6
 #elif defined(CONFIG_IDF_TARGET_ESP32S2)   ||  defined(CONFIG_IDF_TARGET_ESP32S3)
@@ -56,6 +61,13 @@ private:
 	void attachPin(uint8_t pin);
 	// pin allocation
 	void deallocate();
+
+#ifdef ESP32PWM_CLASSIC_ESP32_LEDC_DEFER
+	bool dutyUpdateIsPending();
+	void writeDuty(uint32_t duty);
+	uint32_t queuedDuty = 0;
+	bool queuedDutyPending = false;
+#endif
 public:
 	// setup
 	ESP32PWM();
@@ -70,6 +82,10 @@ public:
 
 	// write raw duty cycle
 	void write(uint32_t duty);
+
+#ifdef ESP32PWM_CLASSIC_ESP32_LEDC_DEFER
+	void service();
+#endif
 	// Write a duty cycle to the PWM using a unit vector from 0.0-1.0
 	void writeScaled(double duty);
 	//Adjust frequency
