@@ -37,11 +37,11 @@ StepDirStepperEffector::StepDirStepperEffector(byte stepPin, byte dirPin, bool c
     this->stepHigh = false;
     this->dirSwitch = false;
 
-    digitalWrite(stepPin, LOW);
-    digitalWrite(dirPin, clockwiseIsLow ? LOW : HIGH);
-
     pinMode(stepPin, OUTPUT);
     pinMode(dirPin, OUTPUT);
+
+    digitalWrite(stepPin, LOW);
+    digitalWrite(dirPin, clockwiseIsLow ? LOW : HIGH);
 
     currDirectionIsClockwise = true;
 

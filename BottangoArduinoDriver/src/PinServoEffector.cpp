@@ -57,6 +57,12 @@ void PinServoEffector::driveOnLoop()
         currentSignal = targetSignal;
         didChange = true;
     }
+
+#ifdef ESP32PWM_CLASSIC_ESP32_LEDC_DEFER
+    // A queued final position still needs flushing after this effector stops changing.
+    servo.service();
+#endif
+
     LoopDrivenEffector::driveOnLoop();
     AbstractEffector::callbackOnDriveComplete(currentSignal, didChange);
 }

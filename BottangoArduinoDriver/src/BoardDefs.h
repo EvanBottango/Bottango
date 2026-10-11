@@ -104,8 +104,8 @@ namespace NamedBoardStartup
     inline void runNamedBoardStartup()
     {
 #ifdef EN_PIN_ON_STARTUP
-        digitalWrite(BOARD_EN_PIN, HIGH);
         pinMode(BOARD_EN_PIN, OUTPUT);
+        digitalWrite(BOARD_EN_PIN, HIGH);
 #endif
 
 #ifdef ONLINE_BUTTON_ACTIONS

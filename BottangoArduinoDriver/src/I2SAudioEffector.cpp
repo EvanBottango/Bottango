@@ -25,7 +25,8 @@ I2SAudioEffector::I2SAudioEffector(char *identifier, char *hash) : AbstractEffec
     char filePathBuffer[MAX_FILE_PATH_SIZE];
     SDCardUtil::getAudioHashFilePath(effectorIdentifier, filePathBuffer);
 
-    File hashFile = SDCardUtil::openFile(filePathBuffer, fileError);
+    File hashFile = SDCardUtil::openFile(filePathBuffer, fileError, true);
+    SDCardUtil::SDFileError hashFileError = fileError;
 
     int responderCode = 0;
     // got a hash file
@@ -205,6 +206,10 @@ I2SAudioEffector::I2SAudioEffector(char *identifier, char *hash) : AbstractEffec
         SDCardUtil::closeFile(audioFile);
     }
 
+    // Missing or mismatched hash metadata can still use the WAV. Card and I/O errors stay fatal.
+    bool hashWarning = responderCode == I2S_AUDIO_STATUS_NO_HASH_MATCH_ON_CARD ||
+                       (responderCode == I2S_AUDIO_STATUS_NO_HASH_ON_CARD && hashFileError == SDCardUtil::ERR_FILE_NOT_FOUND);
+
     // In offline/export mode, keep this visible on the serial log without
     // taking over the host protocol multimessage channel.
     if (BottangoCore::isOffline())
@@ -213,6 +218,10 @@ I2SAudioEffector::I2SAudioEffector(char *identifier, char *hash) : AbstractEffec
         Outgoing::printOutputStringMem(identifier);
         Outgoing::printOutputStringFlash(F(": "));
         Outgoing::printOutputStringMem(responderCode);
+        if (hashWarning)
+        {
+            Outgoing::printOutputStringFlash(F(" (hash warning)"));
+        }
         Outgoing::printLine();
     }
     else
@@ -221,7 +230,7 @@ I2SAudioEffector::I2SAudioEffector(char *identifier, char *hash) : AbstractEffec
     }
 
 #if defined(USE_CODE_COMMAND_STREAM) || defined(USE_SD_CARD_COMMAND_STREAM)
-    if (BottangoCore::isOffline() && BottangoCore::commandStreamProvider != nullptr && !(responderCode == I2S_AUDIO_STATUS_READY || responderCode == I2S_AUDIO_STATUS_NO_HASH_MATCH_ON_CARD))
+    if (BottangoCore::isOffline() && BottangoCore::commandStreamProvider != nullptr && !(responderCode == I2S_AUDIO_STATUS_READY || hashWarning))
     {
         BottangoCore::commandStreamProvider->setInvalidState();
     }

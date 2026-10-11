@@ -144,6 +144,10 @@ public:
 	int readTicks(); // returns current ticks, the smallest increment the servo can handle
 	bool attached(); // return true if this servo is attached, otherwise false
 
+#ifdef ESP32PWM_CLASSIC_ESP32_LEDC_DEFER
+	void service(); // Flush the most recent coalesced PWM duty when LEDC is ready.
+#endif
+
 	// ESP32 only functions
 	void setTimerWidth(int value);     // set the PWM timer width (ESP32 ONLY)
 	int readTimerWidth();              // get the PWM timer width (ESP32 ONLY)
@@ -167,7 +171,6 @@ private:
 	ESP32PWM * getPwm(); // get the PWM object
 	ESP32PWM pwm;
 	int REFRESH_CPS = 50;
-
 };
 #endif
 #endif

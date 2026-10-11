@@ -62,8 +62,8 @@ namespace I2SHelper
 #endif
 
 #ifdef PIN_ON_AUDIO_PLAY
-        digitalWrite(AUDIO_ENABLE_PIN, LOW);
         pinMode(AUDIO_ENABLE_PIN, OUTPUT);
+        digitalWrite(AUDIO_ENABLE_PIN, LOW);
 #endif
 
         bool configChanged = false;

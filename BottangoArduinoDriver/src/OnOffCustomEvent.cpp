@@ -29,8 +29,8 @@ OnOffCustomEvent::OnOffCustomEvent(char *identifier, bool startOn, byte pin) : A
             }
         }
 #endif
-        digitalWrite(pin, startOn ? HIGH : LOW);
         pinMode(pin, OUTPUT);
+        digitalWrite(pin, startOn ? HIGH : LOW);
         currentOn = startOn;
         targetOn = startOn;
     }
