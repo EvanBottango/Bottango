@@ -61,7 +61,10 @@ namespace BasicCommands
 #endif
 #endif
 
-		if (!secondary)
+		char* code = args[1];
+		bool shouldInitialize = !secondary && !BottangoCore::handshake;
+
+		if (shouldInitialize)
 		{
 			BottangoCore::initialized = true;
 			BottangoCore::handshake = true;
@@ -71,8 +74,6 @@ namespace BasicCommands
 				deregisterAllEffectors(NULL);
 			}
 		}
-
-		char* code = args[1];
 
 		// command name
 		Outgoing::printOutputStringPROGMEM(BasicCommands::HANDSHAKE);
@@ -90,7 +91,7 @@ namespace BasicCommands
 
 		Serial.flush();
 
-		if (!secondary)
+		if (shouldInitialize)
 		{
 #ifdef ENABLE_STATUS_LIGHTS
 #if defined(RELAY_SUPPORTED)

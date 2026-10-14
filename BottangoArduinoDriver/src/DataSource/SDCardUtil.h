@@ -21,7 +21,9 @@ namespace SDCardUtil
 		ERR_IO = 3,
 	};
 
-	File openFile(const char* filePath, SDFileError& fileError);
+	// Optional files still return ERR_FILE_NOT_FOUND, but do not set the error light.
+	// Card and I/O failures keep their normal error reporting.
+	File openFile(const char* filePath, SDFileError& fileError, bool allowMissingFile = false);
 	File openFileForWrite(const char* filePath, SDFileError& fileError);
 	bool fileExists(const char* filePath, SDFileError& fileError);
 	ssize_t writeChunk(File& file, const uint8_t* data, size_t len, SDFileError& fileError);
