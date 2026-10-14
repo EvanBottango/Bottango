@@ -96,7 +96,7 @@ namespace SDCardUtil
 		}
 	}
 
-	File openFile(const char* filePath, SDFileError& fileError)
+	File openFile(const char* filePath, SDFileError& fileError, bool allowMissingFile)
 	{
 		lockCard();
 		fileError = ensureSDMounted();
@@ -110,11 +110,14 @@ namespace SDCardUtil
 		File file = SD.open(filePath);
 		if (!file)
 		{
+			fileError = SD.exists(filePath) ? SDFileError::ERR_IO : SDFileError::ERR_FILE_NOT_FOUND;
 #ifdef ENABLE_STATUS_LIGHTS
-			StatusLights::setDesiredColor(SIGNAL_STATUS_LIGHT, STATUS_COLOR_SIGNAL_EXPORT_SD_ERROR);
+			if (!allowMissingFile || fileError != SDFileError::ERR_FILE_NOT_FOUND)
+			{
+				StatusLights::setDesiredColor(SIGNAL_STATUS_LIGHT, STATUS_COLOR_SIGNAL_EXPORT_SD_ERROR);
+			}
 #endif
 
-			fileError = SD.exists(filePath) ? SDFileError::ERR_IO : SDFileError::ERR_FILE_NOT_FOUND;
 			if (fileError == SDFileError::ERR_IO)
 			{
 				Outgoing::printOutputStringFlash(F("IO SD fail"));

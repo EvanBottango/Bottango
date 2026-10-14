@@ -3,8 +3,7 @@
 #include "../../BottangoArduinoModules.h"
 #ifdef ENABLE_STATUS_LIGHTS
 
-#include <Arduino.h>
-#include <FastLED.h>
+#include "../Effector/Color.h"
 #include "../../BottangoArduinoConfig.h"
 
 namespace StatusLights
@@ -15,12 +14,12 @@ namespace StatusLights
 		MODE_BLINK
 	};
 
-#define STATUS_COLOR_GREEN CRGB(7, 83, 0)
-#define STATUS_COLOR_YELLOW CRGB(137, 93, 0)
-#define STATUS_COLOR_BLUE CRGB(0, 95, 108)
-#define STATUS_COLOR_PURPLE CRGB(76, 2, 113)
-#define STATUS_COLOR_RED CRGB(150, 0, 0)
-#define STATUS_COLOR_BLACK CRGB(0, 0, 0)
+#define STATUS_COLOR_GREEN Color(7, 83, 0)
+#define STATUS_COLOR_YELLOW Color(137, 93, 0)
+#define STATUS_COLOR_BLUE Color(0, 95, 108)
+#define STATUS_COLOR_PURPLE Color(76, 2, 113)
+#define STATUS_COLOR_RED Color(150, 0, 0)
+#define STATUS_COLOR_BLACK Color(0, 0, 0)
 
 #define STATUS_COLOR_PWR_ON STATUS_COLOR_GREEN
 
@@ -36,18 +35,9 @@ namespace StatusLights
 
 	void initLights();
 	void updateLights();
-	void setDesiredColor(int light, CRGB color);
+	void setDesiredColor(int light, Color color);
 	void setLightMode(int light, LightMode mode);
 	void pulseSignalLight();
-
-	extern CRGB leds[NUM_STATUS_LED];
-	extern unsigned long patternStartTime;
-	extern LightMode lightModes[NUM_STATUS_LED];
-
-	extern CRGB desiredColor_Connection;
-	extern CRGB desiredColor_Signal;
-	extern CRGB desiredColor_User;
-	extern CRGB desiredColor_Pwr;
 
 } // namespace statusLights
 

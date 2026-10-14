@@ -173,14 +173,14 @@ namespace PersistentConfigUtil
 #if defined(ENABLE_STATUS_LIGHTS)
 				for (int i = 0; i < 3; i++)
 				{
-					StatusLights::setDesiredColor(CONNECTION_STATUS_LIGHT, CRGB::White * 0.33f);
-					StatusLights::setDesiredColor(SIGNAL_STATUS_LIGHT, CRGB::White * 0.33f);
-					StatusLights::setDesiredColor(USER_STATUS_LIGHT, CRGB::White * 0.33f);
+					StatusLights::setDesiredColor(CONNECTION_STATUS_LIGHT, Color(84, 84, 84));
+					StatusLights::setDesiredColor(SIGNAL_STATUS_LIGHT, Color(84, 84, 84));
+					StatusLights::setDesiredColor(USER_STATUS_LIGHT, Color(84, 84, 84));
 					StatusLights::updateLights();
 					delay(100);
-					StatusLights::setDesiredColor(CONNECTION_STATUS_LIGHT, CRGB::Black);
-					StatusLights::setDesiredColor(SIGNAL_STATUS_LIGHT, CRGB::Black);
-					StatusLights::setDesiredColor(USER_STATUS_LIGHT, CRGB::Black);
+					StatusLights::setDesiredColor(CONNECTION_STATUS_LIGHT, STATUS_COLOR_BLACK);
+					StatusLights::setDesiredColor(SIGNAL_STATUS_LIGHT, STATUS_COLOR_BLACK);
+					StatusLights::setDesiredColor(USER_STATUS_LIGHT, STATUS_COLOR_BLACK);
 					StatusLights::updateLights();
 					delay(100);
 				}
