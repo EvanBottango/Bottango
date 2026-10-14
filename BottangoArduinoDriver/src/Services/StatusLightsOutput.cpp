@@ -1,8 +1,8 @@
-#include "../BottangoArduinoModules.h"
+#include "../../BottangoArduinoModules.h"
 #ifdef ENABLE_STATUS_LIGHTS
 
 #include "StatusLightsOutput.h"
-#include "../BottangoArduinoConfig.h"
+#include "../../BottangoArduinoConfig.h"
 
 // Status lights are a fixed, four-pixel WS2812B chain.
 #if defined(ESP32) || defined(ARDUINO_ARCH_ESP32)

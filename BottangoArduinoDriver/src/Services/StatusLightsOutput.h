@@ -1,7 +1,7 @@
 #ifndef StatusLightsOutput_h
 #define StatusLightsOutput_h
 
-#include "Color.h"
+#include "../Effector/Color.h"
 
 namespace StatusLightsOutput
 {
