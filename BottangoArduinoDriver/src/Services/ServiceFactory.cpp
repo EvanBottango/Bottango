@@ -16,8 +16,8 @@
 #include "../Modules/Audio/I2SAudioModule.h"
 #include "../Modules/AnimationPlaybackControl.h"
 #include "../Modules/RelayComs/RelayESPNow.h"
-#include "../Modules/RelayComs/RelayRS485.h"
-#include "../Modules/OutgoingSerial.h"*/
+#include "../Modules/RelayComs/RelayRS485.h"*/
+#include "../Communication/OutgoingSerial.h"
 
 #ifdef RELAY_SUPPORTED
 // ToDo: Turned off during this step of staged refactor
@@ -102,10 +102,10 @@ void ServiceFactory::wireModules_Impl() const
 	static OutgoingRelayImpl outgoingRelay;
 	OutgoingRelay::bind(&outgoingRelay);
 	outgoingRelay.setRelayComs(m_relayComs);
-#endif
+#endif*/
 
 	// ==== Setup Output bindings ====
 	static OutgoingSerialImpl outgoingSerialImpl;
 	OutgoingSerial::bind(&outgoingSerialImpl);
-	Outgoing::bind(&outgoingSerialImpl);*/
+	OutgoingR::bind(&outgoingSerialImpl);
 }
