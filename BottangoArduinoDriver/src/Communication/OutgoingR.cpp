@@ -93,7 +93,7 @@ void OutgoingBase::outgoing_requestStartPlay(int index, unsigned long time)
 #ifdef ONLINE_BUTTON_ACTIONS
 void OutgoingBase::outgoing_requestStartPlayViaButton(int btnIdex)
 {
-	printOutputStringPROGMEM(START_PLAY_BUTTON);
+	printOutputStringPROGMEM(Outgoing::START_PLAY_BUTTON);
 	printOutputStringMem(String(btnIdex).c_str());
 	printLine();
 }

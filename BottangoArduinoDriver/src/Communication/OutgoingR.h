@@ -76,23 +76,23 @@ template<typename Tag>
 class OutgoingChannelAccessor
 {
 public:
-	static void bind(OutgoingBase* p) { m_s_ptr = p; }
-	static OutgoingBase* get() { return m_s_ptr; }
+	static void bind(OutgoingBase* p) { boundOutput = p; }
+	static OutgoingBase* get() { return boundOutput; }
 
-	static void printOutputStringMem(const char* str) { if (m_s_ptr) m_s_ptr->printOutputStringMem(str); }
-	static void printOutputStringMem(int v) { if (m_s_ptr) m_s_ptr->printOutputStringMem(v); }
-	static void printOutputStringMem(long v) { if (m_s_ptr) m_s_ptr->printOutputStringMem(v); }
-	static void printOutputStringMem(bool v) { if (m_s_ptr) m_s_ptr->printOutputStringMem(v); }
-	static void printOutputStringMem(char v) { if (m_s_ptr) m_s_ptr->printOutputStringMem(v); }
-	static void printOutputStringMem(uint16_t v) { if (m_s_ptr) m_s_ptr->printOutputStringMem(v); }
-	static void printOutputStringMem(uint32_t v) { if (m_s_ptr) m_s_ptr->printOutputStringMem(v); }
-	static void printOutputStringPROGMEM(const char* str) { if (m_s_ptr) m_s_ptr->printOutputStringPROGMEM(str); }
-	static void printOutputStringFlash(const __FlashStringHelper* str) { if (m_s_ptr) m_s_ptr->printOutputStringFlash(str); }
-	static void printLine() { if (m_s_ptr) m_s_ptr->printLine(); }
-	static void flush() { if (m_s_ptr) m_s_ptr->flush(); }
+	static void printOutputStringMem(const char* str) { if (boundOutput) boundOutput->printOutputStringMem(str); }
+	static void printOutputStringMem(int v) { if (boundOutput) boundOutput->printOutputStringMem(v); }
+	static void printOutputStringMem(long v) { if (boundOutput) boundOutput->printOutputStringMem(v); }
+	static void printOutputStringMem(bool v) { if (boundOutput) boundOutput->printOutputStringMem(v); }
+	static void printOutputStringMem(char v) { if (boundOutput) boundOutput->printOutputStringMem(v); }
+	static void printOutputStringMem(uint16_t v) { if (boundOutput) boundOutput->printOutputStringMem(v); }
+	static void printOutputStringMem(uint32_t v) { if (boundOutput) boundOutput->printOutputStringMem(v); }
+	static void printOutputStringPROGMEM(const char* str) { if (boundOutput) boundOutput->printOutputStringPROGMEM(str); }
+	static void printOutputStringFlash(const __FlashStringHelper* str) { if (boundOutput) boundOutput->printOutputStringFlash(str); }
+	static void printLine() { if (boundOutput) boundOutput->printLine(); }
+	static void flush() { if (boundOutput) boundOutput->flush(); }
 
 private:
-	static inline OutgoingBase* m_s_ptr = nullptr;
+	static inline OutgoingBase* boundOutput = nullptr;
 };
 
 // Channel tags (empty marker structs)
