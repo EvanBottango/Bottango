@@ -1,6 +1,5 @@
 #include "ServiceFactory.h"
 #include "../System/BottangoCore.h"
-#include "../../BottangoArduinoModules.h"
 
 // ToDo: Turned off during this step of staged refactor
 /*#include "../DataSource/SerialSource.h"
@@ -11,9 +10,9 @@
 #include "../Communication/Parser.h"*/
 
 // ToDo: Turned off during this step of staged refactor
-/*#include "../Modules/StopButtonModule.h"
-#include "../Modules/StatusLights.h"
-#include "../Modules/Audio/I2SAudioModule.h"
+//#include "../Modules/StopButtonModule.h"
+#include "../Services/StatusLights.h"
+/*#include "../Modules/Audio/I2SAudioModule.h"
 #include "../Modules/AnimationPlaybackControl.h"
 #include "../Modules/RelayComs/RelayESPNow.h"
 #include "../Modules/RelayComs/RelayRS485.h"*/
@@ -75,8 +74,7 @@ void ServiceFactory::setup_Impl()
 #endif
 
 #ifdef ENABLE_STATUS_LIGHTS
-	// ToDo: Turned off during this step of staged refactor
-	//m_statusLights = createModule<StatusLights>();
+	m_statusLights = createModule<StatusLights>();
 #endif
 
 #ifdef AUDIO_SD_I2S

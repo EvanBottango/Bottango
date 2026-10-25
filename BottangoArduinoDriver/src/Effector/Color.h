@@ -6,13 +6,21 @@ class Color
 {
 
 public:
-    Color();
-    Color(byte r, byte g, byte b);
-    byte r = 0;
-    byte g = 0;
-    byte b = 0;
+	constexpr Color() : r(0), g(0), b(0)
+	{
+		// Empty constructor for default initialization
+	}
 
-	bool operator==(const Color& other) const
+	constexpr Color(byte r, byte g, byte b) : r(r), g(g), b(b)
+	{
+		// Empty constructor for initialization with RGB values
+	}
+
+    byte r;
+    byte g;
+    byte b;
+
+	constexpr bool operator==(const Color& other) const
 	{
 		return r == other.r && g == other.g && b == other.b;
 	}

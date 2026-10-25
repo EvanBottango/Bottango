@@ -6,6 +6,7 @@
 
 #ifdef ENABLE_STATUS_LIGHTS
 #include "../Services/StatusLights.h"
+#include "../Services/ServiceFactory.h"
 #endif
 
 namespace SDCardUtil
@@ -35,7 +36,7 @@ namespace SDCardUtil
 					cardLost = true;
 					lastMountAttemptTime = millis();
 #ifdef ENABLE_STATUS_LIGHTS
-					StatusLights::setDesiredColor(SIGNAL_STATUS_LIGHT, STATUS_COLOR_SIGNAL_EXPORT_SD_ERROR);
+					ServiceFactory::get<StatusLights>()->setDesiredColor(SIGNAL_STATUS_LIGHT, StatusLights::STATUS_COLOR_SIGNAL_EXPORT_SD_ERROR);
 #endif
 					Outgoing::printOutputStringFlash(F("SD Removed"));
 					Outgoing::printLine();
@@ -73,7 +74,7 @@ namespace SDCardUtil
 			if (!SD.begin(SDPIN_CS, spi, 25000000))
 			{
 #ifdef ENABLE_STATUS_LIGHTS
-				StatusLights::setDesiredColor(SIGNAL_STATUS_LIGHT, STATUS_COLOR_SIGNAL_EXPORT_SD_ERROR);
+				ServiceFactory::get<StatusLights>()->setDesiredColor(SIGNAL_STATUS_LIGHT, StatusLights::STATUS_COLOR_SIGNAL_EXPORT_SD_ERROR);
 #endif
 				Outgoing::printOutputStringFlash(F("Can't Mount SD"));
 				Outgoing::printLine();
@@ -83,7 +84,7 @@ namespace SDCardUtil
 			if (!SD.begin(SDPIN_CS))
 			{
 #ifdef ENABLE_STATUS_LIGHTS
-				StatusLights::setDesiredColor(SIGNAL_STATUS_LIGHT, STATUS_COLOR_SIGNAL_NOSD);
+				ServiceFactory::get<StatusLights>()->setDesiredColor(SIGNAL_STATUS_LIGHT, StatusLights::STATUS_COLOR_SIGNAL_NOSD);
 #endif
 				Outgoing::printOutputStringFlash(F("Can't Mount SD"));
 				Outgoing::printLine();
@@ -114,7 +115,7 @@ namespace SDCardUtil
 #ifdef ENABLE_STATUS_LIGHTS
 			if (!allowMissingFile || fileError != SDFileError::ERR_FILE_NOT_FOUND)
 			{
-				StatusLights::setDesiredColor(SIGNAL_STATUS_LIGHT, STATUS_COLOR_SIGNAL_EXPORT_SD_ERROR);
+				ServiceFactory::get<StatusLights>()->setDesiredColor(SIGNAL_STATUS_LIGHT, StatusLights::STATUS_COLOR_SIGNAL_EXPORT_SD_ERROR);
 			}
 #endif
 

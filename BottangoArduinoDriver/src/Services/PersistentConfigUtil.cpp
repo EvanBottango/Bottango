@@ -9,6 +9,7 @@
 
 #if defined(RESET_PREFS_SUPPORTED) && defined(ENABLE_STATUS_LIGHTS)
 #include "StatusLights.h"
+#include "../Services/ServiceFactory.h"
 #endif
 
 #if defined(RESET_PREFS_SUPPORTED)
@@ -171,17 +172,19 @@ namespace PersistentConfigUtil
 #endif
 				end();
 #if defined(ENABLE_STATUS_LIGHTS)
+				StatusLights* lights = ServiceFactory::get<StatusLights>();
+
 				for (int i = 0; i < 3; i++)
 				{
-					StatusLights::setDesiredColor(CONNECTION_STATUS_LIGHT, Color(84, 84, 84));
-					StatusLights::setDesiredColor(SIGNAL_STATUS_LIGHT, Color(84, 84, 84));
-					StatusLights::setDesiredColor(USER_STATUS_LIGHT, Color(84, 84, 84));
-					StatusLights::updateLights();
+					lights->setDesiredColor(CONNECTION_STATUS_LIGHT, Color(84, 84, 84));
+					lights->setDesiredColor(SIGNAL_STATUS_LIGHT, Color(84, 84, 84));
+					lights->setDesiredColor(USER_STATUS_LIGHT, Color(84, 84, 84));
+					lights->onPhase(Phase::Output);
 					delay(100);
-					StatusLights::setDesiredColor(CONNECTION_STATUS_LIGHT, STATUS_COLOR_BLACK);
-					StatusLights::setDesiredColor(SIGNAL_STATUS_LIGHT, STATUS_COLOR_BLACK);
-					StatusLights::setDesiredColor(USER_STATUS_LIGHT, STATUS_COLOR_BLACK);
-					StatusLights::updateLights();
+					lights->setDesiredColor(CONNECTION_STATUS_LIGHT, StatusLights::STATUS_COLOR_BLACK);
+					lights->setDesiredColor(SIGNAL_STATUS_LIGHT, StatusLights::STATUS_COLOR_BLACK);
+					lights->setDesiredColor(USER_STATUS_LIGHT, StatusLights::STATUS_COLOR_BLACK);
+					lights->onPhase(Phase::Output);
 					delay(100);
 				}
 

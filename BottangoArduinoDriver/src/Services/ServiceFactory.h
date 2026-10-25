@@ -1,6 +1,8 @@
 #pragma once
 
 #include <Arduino.h>
+#include "../../BottangoArduinoModules.h"
+#include "../../BottangoArduinoConfig.h"
 #include "ISchedulable.h"
 #include "ServiceSlot.h"
 
@@ -19,9 +21,9 @@ class DataSource;
 /*class AnimationPlaybackControl;*/
 
 // Output modules
-/*class StopButtonModule;
+//class StopButtonModule;
 class StatusLights;
-class I2SAudioModule;*/
+//class I2SAudioModule;
 
 // Relay
 /*class Relay;
@@ -157,8 +159,7 @@ private:
 #endif
 
 #ifdef ENABLE_STATUS_LIGHTS
-	// ToDo: Turned off during this step of staged refactor
-	//StatusLights* m_statusLights = nullptr;
+	StatusLights* m_statusLights = nullptr;
 #endif
 
 #ifdef AUDIO_SD_I2S
@@ -272,8 +273,7 @@ private:
 #endif
 
 #ifdef ENABLE_STATUS_LIGHTS
-// ToDo: Turned off during this step of staged refactor
-//template<> inline StatusLights* ServiceFactory::get_Impl<StatusLights>() { return m_statusLights; }
+template<> inline StatusLights* ServiceFactory::get_Impl<StatusLights>() const { return m_statusLights; }
 #endif
 
 #ifdef AUDIO_SD_I2S

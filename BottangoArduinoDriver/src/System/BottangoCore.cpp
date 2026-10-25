@@ -130,11 +130,9 @@ namespace BottangoCore
 
 
 #ifdef ENABLE_STATUS_LIGHTS
-		StatusLights::initLights();
-		StatusLights::setDesiredColor(PWR_STATUS_LIGHT, STATUS_COLOR_PWR_ON);
-		StatusLights::setDesiredColor(CONNECTION_STATUS_LIGHT, STATUS_COLOR_RED);
-		StatusLights::setDesiredColor(SIGNAL_STATUS_LIGHT, STATUS_COLOR_RED);
-		StatusLights::updateLights();
+		ServiceFactory::get<StatusLights>()->setDesiredColor(PWR_STATUS_LIGHT, StatusLights::STATUS_COLOR_PWR_ON);
+		ServiceFactory::get<StatusLights>()->setDesiredColor(CONNECTION_STATUS_LIGHT, StatusLights::STATUS_COLOR_RED);
+		ServiceFactory::get<StatusLights>()->setDesiredColor(SIGNAL_STATUS_LIGHT, StatusLights::STATUS_COLOR_RED);
 #endif
 
 #ifdef NAMED_BOARD_STARTUP
@@ -155,20 +153,20 @@ namespace BottangoCore
 #ifdef RELAY_SUPPORTED
 		if (isRelayPeer)
 		{
-			StatusLights::setDesiredColor(CONNECTION_STATUS_LIGHT, STATUS_COLOR_NO_CONNECTION_PEER);
-			StatusLights::setLightMode(CONNECTION_STATUS_LIGHT, StatusLights::LightMode::MODE_BLINK);
+			ServiceFactory::get<StatusLights>()->setDesiredColor(CONNECTION_STATUS_LIGHT, StatusLights::STATUS_COLOR_NO_CONNECTION_PEER);
+			ServiceFactory::get<StatusLights>()->setLightMode(CONNECTION_STATUS_LIGHT, StatusLights::LightMode::MODE_BLINK);
 		}
 		else
 		{
-			StatusLights::setDesiredColor(CONNECTION_STATUS_LIGHT, STATUS_COLOR_NO_CONNECTION_SERIAL);
-			StatusLights::setLightMode(CONNECTION_STATUS_LIGHT, StatusLights::LightMode::MODE_BLINK);
+			ServiceFactory::get<StatusLights>()->setDesiredColor(CONNECTION_STATUS_LIGHT, StatusLights::STATUS_COLOR_NO_CONNECTION_SERIAL);
+			ServiceFactory::get<StatusLights>()->setLightMode(CONNECTION_STATUS_LIGHT, StatusLights::LightMode::MODE_BLINK);
 		}
 #else
-		StatusLights::setDesiredColor(CONNECTION_STATUS_LIGHT, STATUS_COLOR_NO_CONNECTION_SERIAL);
-		StatusLights::setLightMode(CONNECTION_STATUS_LIGHT, StatusLights::LightMode::MODE_BLINK);
+		ServiceFactory::get<StatusLights>()->setDesiredColor(CONNECTION_STATUS_LIGHT, StatusLights::STATUS_COLOR_NO_CONNECTION_SERIAL);
+		ServiceFactory::get<StatusLights>()->setLightMode(CONNECTION_STATUS_LIGHT, StatusLights::LightMode::MODE_BLINK);
 #endif
-		StatusLights::setDesiredColor(SIGNAL_STATUS_LIGHT, STATUS_COLOR_BLACK);
-		StatusLights::setDesiredColor(USER_STATUS_LIGHT, STATUS_COLOR_BLACK);
+		ServiceFactory::get<StatusLights>()->setDesiredColor(SIGNAL_STATUS_LIGHT, StatusLights::STATUS_COLOR_BLACK);
+		ServiceFactory::get<StatusLights>()->setDesiredColor(USER_STATUS_LIGHT, StatusLights::STATUS_COLOR_BLACK);
 #endif
 
 		// init i2s audio
@@ -183,8 +181,8 @@ namespace BottangoCore
 #if defined(USE_CODE_COMMAND_STREAM) || defined(USE_SD_CARD_COMMAND_STREAM)
 		{
 #ifdef ENABLE_STATUS_LIGHTS
-			StatusLights::setDesiredColor(CONNECTION_STATUS_LIGHT, STATUS_COLOR_CONNECTION_EXPORT_PLAYBACK);
-			StatusLights::setLightMode(CONNECTION_STATUS_LIGHT, StatusLights::LightMode::MODE_PULSE);
+			ServiceFactory::get<StatusLights>()->setDesiredColor(CONNECTION_STATUS_LIGHT, StatusLights::STATUS_COLOR_CONNECTION_EXPORT_PLAYBACK);
+			ServiceFactory::get<StatusLights>()->setLightMode(CONNECTION_STATUS_LIGHT, StatusLights::LightMode::MODE_PULSE);
 #endif
 			commandStreamProvider = new CommandStreamProvider();
 			initialized = true;
@@ -477,8 +475,8 @@ namespace BottangoCore
 			if (isOffline())
 			{
 #ifdef ENABLE_STATUS_LIGHTS
-				StatusLights::setDesiredColor(CONNECTION_STATUS_LIGHT, STATUS_COLOR_RED);
-				StatusLights::setLightMode(CONNECTION_STATUS_LIGHT, StatusLights::LightMode::MODE_BLINK);
+				ServiceFactory::get<StatusLights>()->setDesiredColor(CONNECTION_STATUS_LIGHT, StatusLights::STATUS_COLOR_RED);
+				ServiceFactory::get<StatusLights>()->setLightMode(CONNECTION_STATUS_LIGHT, StatusLights::LightMode::MODE_BLINK);
 #endif
 			}
 			else
@@ -783,7 +781,7 @@ namespace BottangoCore
 #ifdef ENABLE_STATUS_LIGHTS
 		if (flashCmdRcvLight)
 		{
-			StatusLights::pulseSignalLight();
+			ServiceFactory::get<StatusLights>()->pulseSignalLight();
 		}
 #endif
 		return sendReady;
@@ -1096,10 +1094,6 @@ namespace BottangoCore
 #endif
 
 		Callbacks::onLateLoop();
-
-#ifdef ENABLE_STATUS_LIGHTS
-		StatusLights::updateLights();
-#endif
 
 #if defined(RELAY_SUPPORTED) && defined(RELAY_LOGGING)
 #ifdef TOGGLE_DEBUG

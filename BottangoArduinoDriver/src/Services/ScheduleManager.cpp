@@ -2,6 +2,7 @@
 #include "ServiceFactory.h"
 #include "../System/BottangoCore.h"
 #include "../../BottangoArduinoModules.h"
+#include "../Communication/OutgoingR.h"
 
 /*#include "../DataSource/SerialSource.h"
 #include "../Communication/AsciiCmdDecoder.h"
@@ -10,9 +11,9 @@
 #include "../DataSource/EspNowSource.h"
 #include "../DataSource/RS485Source.h"
 #include "../Modules/RelayComs/Relay.h"
-#include "../Modules/StopButtonModule.h"
-#include "../Modules/StatusLights.h"
-#include "../Modules/Audio/I2SAudioModule.h"*/
+#include "../Modules/StopButtonModule.h"*/
+#include "../Services/StatusLights.h"
+//#include "../Modules/Audio/I2SAudioModule.h"
 
 void ScheduleManager::composeServiceList()
 {
@@ -25,25 +26,25 @@ void ScheduleManager::composeServiceList()
 	// service factory.
 	// This just grabs what it wants in the right order
 
-	/*static ISchedulable* const orderedServices[] =
+	static ISchedulable* const orderedServices[] =
 	{
-		ServiceFactory::get<SerialSource>(),				// [Core] - Serial Source
+		//ServiceFactory::get<SerialSource>(),				// [Core] - Serial Source
 
 #ifdef RELAY_SUPPORTED
-		ServiceFactory::get<Relay>(),						// [Optional] - Relay Communications
+		//ServiceFactory::get<Relay>(),						// [Optional] - Relay Communications
 #ifdef RELAY_COMS_ESPNOW		
-		ServiceFactory::get<EspNowSource>(),				// [Optional] - ESP Now Source
+		//ServiceFactory::get<EspNowSource>(),				// [Optional] - ESP Now Source
 #endif
 #ifdef RELAY_COMS_RS485
-		ServiceFactory::get<RS485Source>(),					// [Optional] - RS485 Source
+		//ServiceFactory::get<RS485Source>(),					// [Optional] - RS485 Source
 #endif
 #endif		
 
-		ServiceFactory::get<AsciiCmdDecoder>(),				// [Core] - Command Decoder		
-		ServiceFactory::get<Parser>(),						// [Core] - Command Parser
+		//ServiceFactory::get<AsciiCmdDecoder>(),				// [Core] - Command Decoder		
+		//ServiceFactory::get<Parser>(),						// [Core] - Command Parser
 
 #ifdef STOP_BUTTON_SUPPORTED
-		ServiceFactory::get<StopButtonModule>(),			// [Optional] - Stop Button
+		//ServiceFactory::get<StopButtonModule>(),			// [Optional] - Stop Button
 #endif
 
 #ifdef ENABLE_STATUS_LIGHTS
@@ -51,18 +52,18 @@ void ScheduleManager::composeServiceList()
 #endif
 
 #ifdef AUDIO_SD_I2S
-		ServiceFactory::get<I2SAudioModule>(),				// [Optional] - I2S Audio
+		//ServiceFactory::get<I2SAudioModule>(),				// [Optional] - I2S Audio
 #endif
 
 #ifdef OFFLINE_DATA_SOURCE_ENABLED
-		ServiceFactory::get<AnimationPlaybackControl>(),	// [Optional] - Offline Playback Control
+		//ServiceFactory::get<AnimationPlaybackControl>(),	// [Optional] - Offline Playback Control
 #endif
 
-		&BottangoCore::effectorPool,						// [Core] - EffectorPool. Needs to be last, as they might depend on other modules being initialized first
+		//&BottangoCore::effectorPool,						// [Core] - EffectorPool. Needs to be last, as they might depend on other modules being initialized first
 	};
 
 	m_orderedServices = orderedServices;
-	m_servicesCount = sizeof(orderedServices) / sizeof(orderedServices[0]);*/
+	m_servicesCount = sizeof(orderedServices) / sizeof(orderedServices[0]);
 }
 
 void ScheduleManager::initServices() const

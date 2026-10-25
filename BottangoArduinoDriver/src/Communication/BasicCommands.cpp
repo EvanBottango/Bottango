@@ -29,6 +29,7 @@
 
 #ifdef ENABLE_STATUS_LIGHTS
 #include "../Services/StatusLights.h"
+#include "../Services/ServiceFactory.h"
 #endif
 
 #ifdef ENABLE_ESP_OTA_UPDATE
@@ -97,13 +98,13 @@ namespace BasicCommands
 #if defined(RELAY_SUPPORTED)
 			if (!offlinePlayback)
 			{
-				StatusLights::setDesiredColor(CONNECTION_STATUS_LIGHT, STATUS_COLOR_HAS_CONNECTION);
-				StatusLights::setLightMode(CONNECTION_STATUS_LIGHT, StatusLights::LightMode::MODE_PULSE);
+				ServiceFactory::get<StatusLights>()->setDesiredColor(CONNECTION_STATUS_LIGHT, StatusLights::STATUS_COLOR_HAS_CONNECTION);
+				ServiceFactory::get<StatusLights>()->setLightMode(CONNECTION_STATUS_LIGHT, StatusLights::LightMode::MODE_PULSE);
 			}
 
 #elif defined(USE_USB_SERIAL)
-			StatusLights::setDesiredColor(CONNECTION_STATUS_LIGHT, STATUS_COLOR_HAS_CONNECTION);
-			StatusLights::setLightMode(CONNECTION_STATUS_LIGHT, StatusLights::LightMode::MODE_PULSE);
+			ServiceFactory::get<StatusLights>()->setDesiredColor(CONNECTION_STATUS_LIGHT, StatusLights::STATUS_COLOR_HAS_CONNECTION);
+			ServiceFactory::get<StatusLights>()->setLightMode(CONNECTION_STATUS_LIGHT, StatusLights::LightMode::MODE_PULSE);
 #endif
 #endif
 

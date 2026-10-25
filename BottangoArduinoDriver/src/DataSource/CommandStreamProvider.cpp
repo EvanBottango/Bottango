@@ -78,7 +78,7 @@ void CommandStreamProvider::startCommandStream(byte streamID, bool loop)
 #endif
 
 #ifdef ENABLE_STATUS_LIGHTS
-		StatusLights::setDesiredColor(SIGNAL_STATUS_LIGHT, STATUS_COLOR_SIGNAL_EXPORT_SD_ERROR);
+		ServiceFactory::get<StatusLights>()->setDesiredColor(SIGNAL_STATUS_LIGHT, StatusLights::STATUS_COLOR_SIGNAL_EXPORT_SD_ERROR);
 #endif
 		return;
 	}
@@ -112,7 +112,7 @@ void CommandStreamProvider::startCommandStream(byte streamID, bool loop)
 	stop();
 
 #ifdef ENABLE_STATUS_LIGHTS
-	StatusLights::setDesiredColor(SIGNAL_STATUS_LIGHT, STATUS_COLOR_SIGNAL_OFFLINEPLAY);
+	ServiceFactory::get<StatusLights>()->setDesiredColor(SIGNAL_STATUS_LIGHT, StatusLights::STATUS_COLOR_SIGNAL_OFFLINEPLAY);
 #endif
 
 #ifdef USE_CODE_COMMAND_STREAM
@@ -187,11 +187,11 @@ void CommandStreamProvider::runInProgressCommand()
 #ifdef ENABLE_STATUS_LIGHTS
 		if (streamIsInProgress() && !commandStreamIsSetup)
 		{
-			StatusLights::setDesiredColor(SIGNAL_STATUS_LIGHT, STATUS_COLOR_SIGNAL_OFFLINEPLAY);
+			ServiceFactory::get<StatusLights>()->setDesiredColor(SIGNAL_STATUS_LIGHT, StatusLights::STATUS_COLOR_SIGNAL_OFFLINEPLAY);
 		}
 		else
 		{
-			StatusLights::setDesiredColor(SIGNAL_STATUS_LIGHT, STATUS_COLOR_SIGNAL_OFFLINEREADY);
+			ServiceFactory::get<StatusLights>()->setDesiredColor(SIGNAL_STATUS_LIGHT, StatusLights::STATUS_COLOR_SIGNAL_OFFLINEREADY);
 		}
 #endif
 	}
@@ -243,7 +243,7 @@ void CommandStreamProvider::runInProgressCommand()
 #endif
 
 #ifdef ENABLE_STATUS_LIGHTS
-							StatusLights::setDesiredColor(SIGNAL_STATUS_LIGHT, STATUS_COLOR_YELLOW);
+							ServiceFactory::get<StatusLights>()->setDesiredColor(SIGNAL_STATUS_LIGHT, StatusLights::STATUS_COLOR_YELLOW);
 #endif
 						}
 						return;
@@ -294,7 +294,7 @@ void CommandStreamProvider::runInProgressCommand()
 								}
 #endif
 #ifdef ENABLE_STATUS_LIGHTS
-								StatusLights::setDesiredColor(SIGNAL_STATUS_LIGHT, STATUS_COLOR_YELLOW);
+							ServiceFactory::get<StatusLights>()->setDesiredColor(SIGNAL_STATUS_LIGHT, StatusLights::STATUS_COLOR_YELLOW);
 #endif
 							}
 							strcpy(cachedPostControlRegisterCommand, commandBuffer);
@@ -402,7 +402,7 @@ void CommandStreamProvider::executeStop(bool allowSetupStop)
 #endif
 
 #ifdef ENABLE_STATUS_LIGHTS
-	StatusLights::setDesiredColor(SIGNAL_STATUS_LIGHT, STATUS_COLOR_SIGNAL_OFFLINEREADY);
+	ServiceFactory::get<StatusLights>()->setDesiredColor(SIGNAL_STATUS_LIGHT, StatusLights::STATUS_COLOR_SIGNAL_OFFLINEREADY);
 #endif
 }
 
@@ -419,6 +419,6 @@ void CommandStreamProvider::setInvalidState()
 {
 	invalidState = true;
 #ifdef ENABLE_STATUS_LIGHTS
-	StatusLights::setDesiredColor(SIGNAL_STATUS_LIGHT, STATUS_COLOR_SIGNAL_EXPORT_SD_ERROR);
+	ServiceFactory::get<StatusLights>()->setDesiredColor(SIGNAL_STATUS_LIGHT, StatusLights::STATUS_COLOR_SIGNAL_EXPORT_SD_ERROR);
 #endif
 }
